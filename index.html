@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>門診表智慧編輯產生器 - 晉安/毅安專業復健體系</title>
+    <!-- 載入必要套件 -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <!-- 載入圖標庫 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .poster-content * { letter-spacing: 0px !important; }
+        /* 隱藏捲軸 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, forwardRef } = React;
+
+        // --- 設定常數 ---
+        const DAYS = ["週一", "週二", "週三", "週四", "週五", "週六"];
+        const SLOTS = [
+            { key: "早診", label: "早\n8:30~11:30" },
+            { key: "午診", label: "中\n14:30~17:30" },
+            { key: "晚診", label: "晚\n18:30~20:30" },
+        ];
+
+        const DOCTOR_COLORS = {
+            "劉晉瑋": "#d91e18", "莊逸玟": "#2244cc", "王文達": "#27ae60",
+            "薛琇方": "#d35400", "蔡玉麟": "#27ae60",
+            "劉": "#d91e18", "莊": "#2244cc", "王": "#27ae60", "薛": "#d35400", "蔡": "#27ae60",
+            "輪班": "#000000", "(輪班)": "#000000", "預設": "#475569"
+        };
+
+        const INITIAL_DATA = {
+            title: "115/4月", 
+            note: "● 黑點表示當時段無醫師看診 ps. 如有需掛號請記得提早五分鐘到診所喔！",
+            clinics: [
+                {
+                    id: "clinic-1",
+                    name: "晉安復健科診所 醫師門診表",
+                    theme: "teal",
+                    changes: ["4/5 (六) 早 劉 / 午 莊 / 晚 薛"],
+                    schedule: {
+                        "週一": { "早診": "劉晉瑋", "午診": "莊逸玟", "晚診": "劉晉瑋" },
+                        "週二": { "早診": "莊逸玟", "午診": "劉晉瑋", "晚診": "薛琇方" },
+                        "週三": { "早診": "薛琇方", "午診": "莊逸玟", "晚診": "王文達" },
+                        "週四": { "早診": "莊逸玟", "午診": "王文達", "晚診": "王文達" },
+                        "週五": { "早診": "劉晉瑋", "午診": "劉晉瑋", "晚診": "莊逸玟" },
+                        "週六": { "早診": "(輪班)", "午診": "休", "晚診": "休" },
+                    }
+                },
+                {
+                    id: "clinic-2",
+                    name: "毅安診所 醫師門診表",
+                    theme: "blue",
+                    changes: ["4/5 (六) 早 劉 / 午 莊 / 晚 薛"],
+                    schedule: {
+                        "週一": { "早診": "薛琇方", "午診": "劉晉瑋", "晚診": "莊逸玟" },
+                        "週二": { "早診": "薛琇方", "午診": "王文達", "晚診": "王文達" },
+                        "週三": { "早診": "劉晉瑋", "午診": "王文達", "晚診": "莊逸玟" },
+                        "週四": { "早診": "劉晉瑋", "午診": "蔡玉麟", "晚診": "蔡玉麟" },
+                        "週五": { "早診": "薛琇方", "午診": "莊逸玟", "晚診": "劉晉瑋" },
+                        "週六": { "早診": "(輪班)", "午診": "休", "晚診": "休" },
+                    }
+                }
+            ]
+        };
+
+        // --- 海報元件 ---
+        const PosterContent = forwardRef(({ data, isForCapture }, ref) => (
+            <main 
+                ref={ref}
+                style={{
+                    width: '1080px', height: '1920px', padding: '40px 60px',
+                    background: '#f8fafc', display: 'flex', flexDirection: 'column',
+                    boxSizing: 'border-box', borderRadius: isForCapture ? '0' : '24px',
+                    boxShadow: isForCapture ? 'none' : '0 20px 60px rgba(0,0,0,0.15)',
+                    position: isForCapture ? 'absolute' : 'relative',
+                    left: isForCapture ? '-9999px' : '0', top: isForCapture ? '-9999px' : '0',
+                    gap: '25px'
+                }}
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                    {data.clinics.map((clinic, cIdx) => (
+                        <section key={cIdx} style={{ 
+                            background: '#ffffff', borderRadius: '40px', padding: '25px 30px',
+                            boxShadow: '0 8px 30px rgba(0,0,0,0.03)', border: '1px solid #edf2f7',
+                            display: 'flex', flexDirection: 'column', gap: '15px', overflow: 'hidden'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginBottom: '10px' }}>
+                                <span style={{ fontSize: '36px', fontWeight: 700, color: '#4a5568' }}>{data.title}</span>
+                                <span style={{ fontSize: '48px', fontWeight: 900, color: clinic.theme === 'teal' ? '#2c7a7b' : '#2b6cb0', letterSpacing: '1px' }}>
+                                    {clinic.name}
+                                </span>
+                            </div>
+
+                            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '6px', tableLayout: 'fixed' }}>
+                                <thead>
+                                    <tr>
+                                        <th style={{ width: '16%' }}></th>
+                                        {DAYS.map(d => (
+                                            <th key={d} style={{ 
+                                                background: clinic.theme === 'teal' ? '#5f8cb3' : '#e07a7a', 
+                                                color: 'white', borderRadius: '16px', padding: '10px 5px',
+                                                fontSize: '28px', fontWeight: 900, border: 'none', lineHeight: '1.2'
+                                            }}>
+                                                {d.replace('週', '')}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {SLOTS.map(s => (
+                                        <tr key={s.key}>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <div style={{ background: '#e9d8a6', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto', fontSize: '24px', fontWeight: 900, color: '#5d4037' }}>
+                                                    {s.label.split('\n')[0]}
+                                                </div>
+                                                <div style={{ fontSize: '16px', fontWeight: 700, color: '#64748b', marginTop: '2px' }}>{s.label.split('\n')[1]}</div>
+                                            </td>
+                                            {DAYS.map(d => {
+                                                const doc = clinic.schedule[d]?.[s.key] || "●";
+                                                const color = DOCTOR_COLORS[doc] || DOCTOR_COLORS["預設"];
+                                                return (
+                                                    <td key={d} style={{ border: '2.4px solid #334155', borderRadius: '20px', textAlign: 'center', fontSize: '32px', fontWeight: 900, color: doc === "●" || doc === "休" ? "#cbd5e1" : color, height: '95px' }}>
+                                                        {doc}
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+
+                            {clinic.changes && clinic.changes.length > 0 && (
+                                <div style={{ background: '#f1f5f9', borderRadius: '24px', padding: '12px 25px', borderLeft: `8px solid ${clinic.theme === 'teal' ? '#2c7a7b' : '#2b6cb0'}`, marginTop: '5px' }}>
+                                    <div style={{ fontSize: '24px', fontWeight: 900, color: '#334155', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <span style={{ color: '#f59e0b' }}>🔺</span> 門診異動
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        {clinic.changes.map((item, i) => (
+                                            <div key={i} style={{ fontSize: clinic.changes.length > 2 ? '20px' : '24px', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                                                <span style={{ color: '#94a3b8' }}>•</span>
+                                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </section>
+                    ))}
+                </div>
+
+                <footer style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                    <div style={{ padding: '15px 30px', background: '#e2e8f0', borderRadius: '30px', width: '100%', boxSizing: 'border-box' }}>
+                        <div style={{ fontSize: '20px', fontWeight: 700, color: '#334155', textAlign: 'center', lineHeight: 1.4 }}>{data.note}</div>
+                    </div>
+                    <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                        <div style={{ fontSize: '32px', fontWeight: 900, color: '#1a365d', letterSpacing: '1px' }}>
+                            晉安 / 毅安 <span style={{ fontWeight: 400, color: '#4a5568', marginLeft: '5px' }}>|</span> <span style={{ color: '#2c7a7b', fontSize: '28px' }}>專業復健體系</span>
+                        </div>
+                        <div style={{ fontSize: '18px', fontWeight: 700, color: '#94a3b8', marginTop: '2px' }}>Tainan Rehab Medical Group</div>
+                    </div>
+                </footer>
+            </main>
+        ));
+
+        // --- 主程式 ---
+        function App() {
+            const [data, setData] = useState(INITIAL_DATA);
+            const [isCapturing, setIsCapturing] = useState(false);
+            const captureRef = useRef(null);
+
+            const updateClinicSchedule = (cIdx, day, slot, value) => {
+                const newData = JSON.parse(JSON.stringify(data));
+                newData.clinics[cIdx].schedule[day][slot] = value;
+                setData(newData);
+            };
+
+            const updateClinicChanges = (cIdx, idx, value) => {
+                const newData = JSON.parse(JSON.stringify(data));
+                newData.clinics[cIdx].changes[idx] = value;
+                setData(newData);
+            };
+
+            const handleDownload = async () => {
+                if (!captureRef.current) return;
+                setIsCapturing(true);
+                setTimeout(async () => {
+                    try {
+                        const canvas = await html2canvas(captureRef.current, {
+                            scale: 2, useCORS: true, backgroundColor: "#f8fafc", width: 1080, height: 1920
+                        });
+                        const link = document.createElement('a');
+                        link.download = `${data.title.replace('/', '-')}_醫師門診表.png`;
+                        link.href = canvas.toDataURL("image/png");
+                        link.click();
+                    } catch (err) {
+                        console.error("下載失敗:", err);
+                    } finally {
+                        setIsCapturing(false);
+                    }
+                }, 300);
+            };
+
+            return (
+                <div className="flex flex-col lg:flex-row min-h-screen bg-slate-100">
+                    <PosterContent ref={captureRef} data={data} isForCapture={true} />
+                    
+                    {/* 編輯區 */}
+                    <div className="w-full lg:w-[450px] p-6 bg-white shadow-2xl overflow-y-auto max-h-screen border-r z-10 text-slate-800">
+                        <header className="mb-6 pb-4 border-b">
+                            <h1 className="text-2xl font-black text-teal-600 flex items-center gap-2">
+                                <i data-lucide="edit-3"></i> 門診表智慧編輯
+                            </h1>
+                        </header>
+
+                        <div className="space-y-6">
+                            <section>
+                                <label className="block text-sm font-black text-slate-500 mb-1">年份月份</label>
+                                <input className="w-full p-2 border-2 border-slate-200 rounded-lg focus:border-teal-500 outline-none font-bold bg-slate-50" value={data.title} onChange={(e) => setData({...data, title: e.target.value})} />
+                            </section>
+
+                            {data.clinics.map((clinic, cIdx) => (
+                                <section key={cIdx} className="p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 space-y-4">
+                                    <div className="font-bold text-lg border-b pb-1 text-slate-700">{cIdx === 0 ? "晉安院區" : "毅安院區"}</div>
+                                    <div className="grid grid-cols-7 gap-1">
+                                        <div className="text-[10px] text-center font-bold text-slate-400">時段</div>
+                                        {DAYS.map(d => <div key={d} className="text-[10px] text-center font-bold text-slate-400">{d}</div>)}
+                                        {SLOTS.map(s => (
+                                            <React.Fragment key={s.key}>
+                                                <div className="text-[10px] flex items-center justify-center bg-slate-200 rounded py-1">{s.key.charAt(0)}</div>
+                                                {DAYS.map(d => (
+                                                    <input key={d} className="w-full p-1 text-center border rounded text-[12px] focus:ring-1 focus:ring-teal-500 outline-none" value={clinic.schedule[d]?.[s.key] || "●"} onChange={(e) => updateClinicSchedule(cIdx, d, s.key, e.target.value)} />
+                                                ))}
+                                            </React.Fragment>
+                                        ))}
+                                    </div>
+                                    <div className="border-t pt-3">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-sm font-black text-slate-600">門診異動</span>
+                                            <button onClick={() => { const n = {...data}; n.clinics[cIdx].changes.push(""); setData(n); }} className="p-1 bg-teal-600 text-white rounded"><i data-lucide="plus" className="w-4 h-4"></i></button>
+                                        </div>
+                                        {clinic.changes.map((item, idx) => (
+                                            <div key={idx} className="flex gap-2 mb-2">
+                                                <input className="flex-1 p-2 border border-slate-200 rounded-lg text-xs" value={item} onChange={(e) => updateClinicChanges(cIdx, idx, e.target.value)} />
+                                                <button onClick={() => { const n = {...data}; n.clinics[cIdx].changes.splice(idx,1); setData(n); }} className="text-rose-500"><i data-lucide="trash-2" className="w-4 h-4"></i></button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            ))}
+
+                            <section>
+                                <label className="block text-sm font-black text-slate-500 mb-1">底部備註</label>
+                                <textarea className="w-full p-2 border-2 border-slate-200 rounded-lg text-sm h-20 bg-slate-50" value={data.note} onChange={(e) => setData({...data, note: e.target.value})} />
+                            </section>
+
+                            <button onClick={handleDownload} disabled={isCapturing} className={`w-full py-4 rounded-2xl font-black text-white flex items-center justify-center gap-2 shadow-lg transition-all ${isCapturing ? 'bg-slate-400' : 'bg-teal-600 hover:bg-teal-700 active:scale-95'}`}>
+                                <i data-lucide="download"></i> {isCapturing ? '產生圖片中...' : '下載高清 PNG 海報'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* 預覽區 */}
+                    <div className="flex-1 flex justify-center items-start p-6 overflow-auto bg-slate-300">
+                        <div className="scale-[0.25] md:scale-[0.35] lg:scale-[0.3] xl:scale-[0.4] origin-top my-4 shadow-2xl">
+                            <PosterContent data={data} isForCapture={false} />
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+        // 初始化圖標
+        setTimeout(() => lucide.createIcons(), 500);
+    </script>
+</body>
+</html>

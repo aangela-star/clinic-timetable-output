@@ -12,10 +12,16 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <!-- 載入圖標庫 -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; }
-        .poster-content * { letter-spacing: 0px !important; }
+        /* 強制下載時的文字基礎設定 */
+        .poster-content * { 
+            letter-spacing: 0px !important; 
+            line-height: 1.2 !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
         /* 隱藏捲軸 */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -101,7 +107,7 @@
                         }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginBottom: '10px' }}>
                                 <span style={{ fontSize: '36px', fontWeight: 700, color: '#4a5568' }}>{data.title}</span>
-                                <span style={{ fontSize: '48px', fontWeight: 900, color: clinic.theme === 'teal' ? '#2c7a7b' : '#2b6cb0', letterSpacing: '1px' }}>
+                                <span style={{ fontSize: '48px', fontWeight: 800, color: clinic.theme === 'teal' ? '#2c7a7b' : '#2b6cb0', letterSpacing: '1px', lineHeight: 1 }}>
                                     {clinic.name}
                                 </span>
                             </div>
@@ -113,8 +119,9 @@
                                         {DAYS.map(d => (
                                             <th key={d} style={{ 
                                                 background: clinic.theme === 'teal' ? '#5f8cb3' : '#e07a7a', 
-                                                color: 'white', borderRadius: '16px', padding: '10px 5px',
-                                                fontSize: '28px', fontWeight: 900, border: 'none', lineHeight: '1.2'
+                                                color: 'white', borderRadius: '16px', padding: '12px 5px',
+                                                fontSize: '28px', fontWeight: 800, border: 'none', lineHeight: 1.1,
+                                                verticalAlign: 'middle'
                                             }}>
                                                 {d.replace('週', '')}
                                             </th>
@@ -124,18 +131,23 @@
                                 <tbody>
                                     {SLOTS.map(s => (
                                         <tr key={s.key}>
-                                            <td style={{ textAlign: 'center' }}>
-                                                <div style={{ background: '#e9d8a6', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto', fontSize: '24px', fontWeight: 900, color: '#5d4037' }}>
+                                            <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                                                <div style={{ background: '#e9d8a6', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto', fontSize: '24px', fontWeight: 800, color: '#5d4037', lineHeight: 1 }}>
                                                     {s.label.split('\n')[0]}
                                                 </div>
-                                                <div style={{ fontSize: '16px', fontWeight: 700, color: '#64748b', marginTop: '2px' }}>{s.label.split('\n')[1]}</div>
+                                                <div style={{ fontSize: '16px', fontWeight: 700, color: '#64748b', marginTop: '4px', lineHeight: 1 }}>{s.label.split('\n')[1]}</div>
                                             </td>
                                             {DAYS.map(d => {
                                                 const doc = clinic.schedule[d]?.[s.key] || "●";
                                                 const color = DOCTOR_COLORS[doc] || DOCTOR_COLORS["預設"];
                                                 return (
-                                                    <td key={d} style={{ border: '2.4px solid #334155', borderRadius: '20px', textAlign: 'center', fontSize: '32px', fontWeight: 900, color: doc === "●" || doc === "休" ? "#cbd5e1" : color, height: '95px' }}>
-                                                        {doc}
+                                                    <td key={d} style={{ 
+                                                        border: '2.4px solid #334155', borderRadius: '20px', 
+                                                        textAlign: 'center', fontSize: '30px', fontWeight: 800, 
+                                                        color: doc === "●" || doc === "休" ? "#cbd5e1" : color, 
+                                                        height: '100px', verticalAlign: 'middle', padding: '0px'
+                                                    }}>
+                                                        <div style={{ transform: 'translateY(-1px)', lineHeight: 1 }}>{doc}</div>
                                                     </td>
                                                 );
                                             })}
@@ -146,12 +158,12 @@
 
                             {clinic.changes && clinic.changes.length > 0 && (
                                 <div style={{ background: '#f1f5f9', borderRadius: '24px', padding: '12px 25px', borderLeft: `8px solid ${clinic.theme === 'teal' ? '#2c7a7b' : '#2b6cb0'}`, marginTop: '5px' }}>
-                                    <div style={{ fontSize: '24px', fontWeight: 900, color: '#334155', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <div style={{ fontSize: '22px', fontWeight: 800, color: '#334155', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '10px', lineHeight: 1 }}>
                                         <span style={{ color: '#f59e0b' }}>🔺</span> 門診異動
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                         {clinic.changes.map((item, i) => (
-                                            <div key={i} style={{ fontSize: clinic.changes.length > 2 ? '20px' : '24px', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                                            <div key={i} style={{ fontSize: clinic.changes.length > 2 ? '18px' : '22px', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'baseline', gap: '10px', lineHeight: 1.3 }}>
                                                 <span style={{ color: '#94a3b8' }}>•</span>
                                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item}</span>
                                             </div>
@@ -165,13 +177,13 @@
 
                 <footer style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
                     <div style={{ padding: '15px 30px', background: '#e2e8f0', borderRadius: '30px', width: '100%', boxSizing: 'border-box' }}>
-                        <div style={{ fontSize: '20px', fontWeight: 700, color: '#334155', textAlign: 'center', lineHeight: 1.4 }}>{data.note}</div>
+                        <div style={{ fontSize: '18px', fontWeight: 700, color: '#334155', textAlign: 'center', lineHeight: 1.4 }}>{data.note}</div>
                     </div>
-                    <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
-                        <div style={{ fontSize: '32px', fontWeight: 900, color: '#1a365d', letterSpacing: '1px' }}>
+                    <div style={{ textAlign: 'center', paddingBottom: '30px' }}>
+                        <div style={{ fontSize: '32px', fontWeight: 800, color: '#1a365d', letterSpacing: '1px', lineHeight: 1 }}>
                             晉安 / 毅安 <span style={{ fontWeight: 400, color: '#4a5568', marginLeft: '5px' }}>|</span> <span style={{ color: '#2c7a7b', fontSize: '28px' }}>專業復健體系</span>
                         </div>
-                        <div style={{ fontSize: '18px', fontWeight: 700, color: '#94a3b8', marginTop: '2px' }}>Tainan Rehab Medical Group</div>
+                        <div style={{ fontSize: '18px', fontWeight: 700, color: '#94a3b8', marginTop: '4px', lineHeight: 1 }}>Tainan Rehab Medical Group</div>
                     </div>
                 </footer>
             </main>
@@ -198,29 +210,43 @@
             const handleDownload = async () => {
                 if (!captureRef.current) return;
                 setIsCapturing(true);
+                // 確保字體完全加載
+                await document.fonts.ready;
+                
                 setTimeout(async () => {
                     try {
                         const canvas = await html2canvas(captureRef.current, {
-                            scale: 2, useCORS: true, backgroundColor: "#f8fafc", width: 1080, height: 1920
+                            scale: 2, 
+                            useCORS: true, 
+                            backgroundColor: "#f8fafc", 
+                            width: 1080, 
+                            height: 1920,
+                            onclone: (clonedDoc) => {
+                                // 在捕捉複製品中強制調整渲染補償
+                                const poster = clonedDoc.querySelector('main');
+                                if (poster) {
+                                    poster.style.fontVariantNumeric = 'tabular-nums';
+                                }
+                            }
                         });
                         const link = document.createElement('a');
                         link.download = `${data.title.replace('/', '-')}_醫師門診表.png`;
-                        link.href = canvas.toDataURL("image/png");
+                        link.href = canvas.toDataURL("image/png", 1.0);
                         link.click();
                     } catch (err) {
                         console.error("下載失敗:", err);
                     } finally {
                         setIsCapturing(false);
                     }
-                }, 300);
+                }, 400);
             };
 
             return (
-                <div className="flex flex-col lg:flex-row min-h-screen bg-slate-100">
+                <div className="flex flex-col lg:flex-row min-h-screen bg-slate-100 text-slate-900">
                     <PosterContent ref={captureRef} data={data} isForCapture={true} />
                     
                     {/* 編輯區 */}
-                    <div className="w-full lg:w-[450px] p-6 bg-white shadow-2xl overflow-y-auto max-h-screen border-r z-10 text-slate-800">
+                    <div className="w-full lg:w-[450px] p-6 bg-white shadow-2xl overflow-y-auto max-h-screen border-r z-10">
                         <header className="mb-6 pb-4 border-b">
                             <h1 className="text-2xl font-black text-teal-600 flex items-center gap-2">
                                 <i data-lucide="edit-3"></i> 門診表智慧編輯

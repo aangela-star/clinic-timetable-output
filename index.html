@@ -6,6 +6,8 @@
     <title>門診表產生器 - 結構緩衝優化版</title>
     <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+    <script src="auth-config.js"></script>
+    <script src="auth-gate.js"></script>
     <script src="https://unpkg.com/@babel/standalone@8.0.4/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -182,7 +184,7 @@
             </main>
         ));
 
-        function App() {
+        function App({ onLogout }) {
             const [data, setData] = useState(INITIAL_DATA);
             const [isCapturing, setIsCapturing] = useState(false);
             const captureRef = useRef(null);
@@ -220,10 +222,13 @@
                     <PosterContent ref={captureRef} data={data} isForCapture={true} />
                     
                     <div className="w-full lg:w-[450px] p-6 bg-white shadow-2xl overflow-y-auto max-h-screen border-r z-10 text-slate-800">
-                        <header className="mb-6 pb-4 border-b">
+                        <header className="mb-6 pb-4 border-b flex items-center justify-between gap-4">
                             <h1 className="text-2xl font-black text-teal-600 flex items-center gap-2">
                                 <i data-lucide="edit-3"></i> 門診表智慧編輯
                             </h1>
+                            <button onClick={onLogout} className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-black text-slate-500 hover:bg-slate-50">
+                                登出
+                            </button>
                         </header>
 
                         <div className="space-y-6">
@@ -312,8 +317,71 @@
             );
         }
 
+        function LoginScreen({ onLogin }) {
+            const [password, setPassword] = useState("");
+            const [error, setError] = useState("");
+            const [isChecking, setIsChecking] = useState(false);
+
+            const handleSubmit = async (event) => {
+                event.preventDefault();
+                setIsChecking(true);
+                setError("");
+
+                try {
+                    const authenticated = await AuthGate.verifyPassword(password);
+                    if (authenticated) {
+                        setPassword("");
+                        onLogin();
+                    } else {
+                        setError("密碼不正確");
+                    }
+                } finally {
+                    setIsChecking(false);
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
+                    <form onSubmit={handleSubmit} className="w-full max-w-sm bg-white border border-slate-200 shadow-xl rounded-2xl p-6 space-y-4">
+                        <h1 className="text-xl font-black text-teal-600">門診表登入</h1>
+                        <label className="block text-sm font-black text-slate-500" htmlFor="shared-password">密碼</label>
+                        <input
+                            id="shared-password"
+                            type="password"
+                            className="w-full p-3 border-2 border-slate-200 rounded-lg font-bold bg-slate-50 outline-none focus:border-teal-500"
+                            value={password}
+                            onChange={(event) => setPassword(event.target.value)}
+                            autoComplete="current-password"
+                            autoFocus
+                        />
+                        {error && <div className="text-sm font-bold text-rose-600">{error}</div>}
+                        <button disabled={isChecking} className={`w-full py-3 rounded-xl font-black text-white ${isChecking ? 'bg-slate-400' : 'bg-teal-600 active:scale-95'}`}>
+                            {isChecking ? '驗證中...' : '登入'}
+                        </button>
+                    </form>
+                </div>
+            );
+        }
+
+        function AuthenticatedApp() {
+            const [authenticated, setAuthenticated] = useState(AuthGate.isAuthenticated());
+
+            useEffect(() => {
+                if (authenticated) {
+                    setTimeout(() => lucide.createIcons(), 0);
+                }
+            }, [authenticated]);
+
+            const handleLogout = () => {
+                AuthGate.logout();
+                setAuthenticated(false);
+            };
+
+            return authenticated ? <App onLogout={handleLogout} /> : <LoginScreen onLogin={() => setAuthenticated(true)} />;
+        }
+
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(<AuthenticatedApp />);
         setTimeout(() => lucide.createIcons(), 500);
     </script>
 </body>

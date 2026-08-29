@@ -70,8 +70,13 @@ module.exports = async function handler(req, res) {
     return json(res, 405, { ok: false, error: 'METHOD_NOT_ALLOWED' });
   } catch (err) {
     const code = err && err.code ? err.code : 'UNKNOWN';
-    const upstreamStatus = err && err.upstreamStatus ? err.upstreamStatus : '-';
-    console.error(`schedule proxy failed code=${code} upstreamStatus=${upstreamStatus}`);
-    return json(res, 502, { ok: false, error: err.code || 'SCHEDULE_PROXY_FAILED', message: '門診資料服務暫時無法使用。' });
+    const upstreamStatus = err && err.upstreamStatus ? err.upstreamStatus : null;
+    console.error(`schedule proxy failed code=${code} upstreamStatus=${upstreamStatus || '-'}`);
+    return json(res, 502, {
+      ok: false,
+      error: err.code || 'SCHEDULE_PROXY_FAILED',
+      upstreamStatus,
+      message: '門診資料服務暫時無法使用。',
+    });
   }
 };

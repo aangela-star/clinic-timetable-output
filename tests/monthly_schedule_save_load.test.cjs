@@ -63,13 +63,14 @@ test('Apps Script rejects direct GET access and requires server secret for POST'
 
 test('Vercel proxy requires signed session and keeps server secret out of browser config', () => {
   const proxy = read('api/schedule.js');
-  const session = read('api/_session.js');
+  const session = read('lib/server-session.js');
   const config = read('schedule-api-config.js');
   assert.match(proxy, /hasValidSession\(req\)/);
   assert.match(proxy, /secret: getServerSecret\(\)/);
   assert.match(session, /HttpOnly; Secure; SameSite=Strict/);
   assert.match(config, /window\.location\.origin \+ "\/api\/schedule"/);
   assert.doesNotMatch(config, /CLINIC_SERVER_SECRET/);
+  assert.equal(fs.existsSync(path.join(repoRoot, 'api/_session.js')), false);
 });
 
 test('shared-password login establishes a server session before marking browser authenticated', () => {

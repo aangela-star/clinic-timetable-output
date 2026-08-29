@@ -24,27 +24,22 @@ async function forwardToAppsScript(payload) {
   const text = await response.text();
 
   if (!response.ok) {
-    console.error('apps script upstream http error', {
-      status: response.status,
-      statusText: response.statusText,
-      contentType: response.headers.get('content-type') || '',
-      responsePreview: text.slice(0, 240).replace(/\s+/g, ' '),
-    });
+    const contentType = response.headers.get('content-type') || '';
+    const responsePreview = text.slice(0, 160).replace(/\s+/g, ' ');
+    console.error(`apps script upstream http error status=${response.status} statusText=${response.statusText || '-'} contentType=${contentType} preview=${responsePreview}`);
     const error = new Error(`Apps Script HTTP ${response.status}`);
     error.code = 'UPSTREAM_HTTP_ERROR';
+    error.upstreamStatus = response.status;
     throw error;
   }
 
   try {
     return JSON.parse(text);
   } catch (_) {
-    console.error('apps script upstream invalid json', {
-      status: response.status,
-      contentType: response.headers.get('content-type') || '',
-      responsePreview: text.slice(0, 240).replace(/\s+/g, ' '),
-    });
+    console.error(`apps script upstream invalid json status=${response.status} contentType=${response.headers.get('content-type') || ''}`);
     const error = new Error('Apps Script did not return JSON.');
     error.code = 'UPSTREAM_INVALID_RESPONSE';
+    error.upstreamStatus = response.status;
     throw error;
   }
 }
@@ -74,7 +69,9 @@ module.exports = async function handler(req, res) {
     res.setHeader('Allow', 'GET, POST');
     return json(res, 405, { ok: false, error: 'METHOD_NOT_ALLOWED' });
   } catch (err) {
-    console.error('schedule proxy failed', err && err.code ? err.code : err);
+    const code = err && err.code ? err.code : 'UNKNOWN';
+    const upstreamStatus = err && err.upstreamStatus ? err.upstreamStatus : '-';
+    console.error(`schedule proxy failed code=${code} upstreamStatus=${upstreamStatus}`);
     return json(res, 502, { ok: false, error: err.code || 'SCHEDULE_PROXY_FAILED', message: '門診資料服務暫時無法使用。' });
   }
 };

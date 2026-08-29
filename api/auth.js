@@ -4,7 +4,7 @@ const {
   createSessionToken,
   sessionCookie,
   timingSafeEqualText,
-} = require('./_session');
+} = require('../lib/server-session');
 
 const EXPECTED_PASSWORD_SHA256 = 'c6cd74a999b732d791159f2e08ddf7fb52f004b60d409d14367facf0d546a615';
 

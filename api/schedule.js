@@ -1,4 +1,4 @@
-const { getServerSecret, hasValidSession } = require('./_session');
+const { getServerSecret, hasValidSession } = require('../lib/server-session');
 
 const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz5OXGNDZJWEj2-W1g-1r_SISPjYYcI-7gsUsivt3Rx7-zY6AzpQqqZTIFROVKMU1eh3w/exec';
 

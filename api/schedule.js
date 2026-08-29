@@ -21,16 +21,28 @@ async function forwardToAppsScript(payload) {
     body: JSON.stringify({ ...payload, secret: getServerSecret() }),
   });
 
+  const text = await response.text();
+
   if (!response.ok) {
+    console.error('apps script upstream http error', {
+      status: response.status,
+      statusText: response.statusText,
+      contentType: response.headers.get('content-type') || '',
+      responsePreview: text.slice(0, 240).replace(/\s+/g, ' '),
+    });
     const error = new Error(`Apps Script HTTP ${response.status}`);
     error.code = 'UPSTREAM_HTTP_ERROR';
     throw error;
   }
 
-  const text = await response.text();
   try {
     return JSON.parse(text);
   } catch (_) {
+    console.error('apps script upstream invalid json', {
+      status: response.status,
+      contentType: response.headers.get('content-type') || '',
+      responsePreview: text.slice(0, 240).replace(/\s+/g, ' '),
+    });
     const error = new Error('Apps Script did not return JSON.');
     error.code = 'UPSTREAM_INVALID_RESPONSE';
     throw error;

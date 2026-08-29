@@ -1,45 +1,44 @@
 const SHEET_NAME = 'Schedules';
 const HEADERS = ['month_key', 'data_json', 'schema_version', 'updated_at'];
 const SCHEMA_VERSION = 1;
+const SERVER_SECRET_PROPERTY = 'CLINIC_SERVER_SECRET';
 
-function doGet(e) {
-  try {
-    const action = String((e && e.parameter && e.parameter.action) || '');
-    if (action !== 'load') return json_({ ok: false, error: 'UNSUPPORTED_ACTION' });
-
-    const monthKey = String(e.parameter.month || '');
-    validateMonthKey_(monthKey);
-
-    const sheet = getScheduleSheet_();
-    const row = findMonthRow_(sheet, monthKey);
-    if (!row) return json_({ ok: true, found: false, month: monthKey });
-
-    const values = sheet.getRange(row, 1, 1, HEADERS.length).getValues()[0];
-    const data = JSON.parse(values[1]);
-    validateScheduleData_(data);
-    assertMonthTitleMatch_(monthKey, data.title);
-
-    return json_({
-      ok: true,
-      found: true,
-      month: monthKey,
-      schemaVersion: Number(values[2]) || SCHEMA_VERSION,
-      data: data,
-      updatedAt: values[3] instanceof Date ? values[3].toISOString() : String(values[3] || ''),
-    });
-  } catch (err) {
-    return json_({ ok: false, error: err.code || 'LOAD_FAILED', message: err.message || String(err) });
-  }
+function doGet() {
+  return json_({ ok: false, error: 'METHOD_NOT_ALLOWED' });
 }
 
 function doPost(e) {
   let lock;
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
-    if (body.action !== 'save') return json_({ ok: false, error: 'UNSUPPORTED_ACTION' });
+    assertServerSecret_(body.secret);
 
+    const action = String(body.action || '');
     const monthKey = String(body.month || '');
     validateMonthKey_(monthKey);
+
+    if (action === 'load') {
+      const sheet = getScheduleSheet_();
+      const row = findMonthRow_(sheet, monthKey);
+      if (!row) return json_({ ok: true, found: false, month: monthKey });
+
+      const values = sheet.getRange(row, 1, 1, HEADERS.length).getValues()[0];
+      const data = JSON.parse(values[1]);
+      validateScheduleData_(data);
+      assertMonthTitleMatch_(monthKey, data.title);
+
+      return json_({
+        ok: true,
+        found: true,
+        month: monthKey,
+        schemaVersion: Number(values[2]) || SCHEMA_VERSION,
+        data: data,
+        updatedAt: values[3] instanceof Date ? values[3].toISOString() : String(values[3] || ''),
+      });
+    }
+
+    if (action !== 'save') return json_({ ok: false, error: 'UNSUPPORTED_ACTION' });
+
     validateScheduleData_(body.data);
     assertMonthTitleMatch_(monthKey, body.data.title);
 
@@ -64,9 +63,23 @@ function doPost(e) {
     SpreadsheetApp.flush();
     return json_({ ok: true, month: monthKey, schemaVersion: SCHEMA_VERSION, updatedAt: now.toISOString() });
   } catch (err) {
-    return json_({ ok: false, error: err.code || 'SAVE_FAILED', message: err.message || String(err) });
+    return json_({ ok: false, error: err.code || 'REQUEST_FAILED', message: err.message || String(err) });
   } finally {
     if (lock && lock.hasLock()) lock.releaseLock();
+  }
+}
+
+function assertServerSecret_(provided) {
+  const expected = PropertiesService.getScriptProperties().getProperty(SERVER_SECRET_PROPERTY);
+  if (!expected) {
+    const error = new Error('Apps Script 尚未設定伺服器密鑰。');
+    error.code = 'SERVER_SECRET_NOT_CONFIGURED';
+    throw error;
+  }
+  if (typeof provided !== 'string' || provided !== expected) {
+    const error = new Error('未授權的門診資料請求。');
+    error.code = 'UNAUTHORIZED';
+    throw error;
   }
 }
 

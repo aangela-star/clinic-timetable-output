@@ -27,6 +27,17 @@
             return storage && storage.getItem(SESSION_KEY) === "1";
         }
 
+        async function establishServerSession(password) {
+            if (typeof runtime.fetch !== "function") return true;
+            var response = await runtime.fetch("/api/auth", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify({ password: password }),
+            });
+            return response.ok;
+        }
+
         async function verifyPassword(password) {
             var expectedDigest = authConfig.passwordSha256Hex;
             if (!expectedDigest || typeof password !== "string") {
@@ -35,15 +46,22 @@
 
             var actualDigest = await sha256Hex(runtime.crypto, password);
             var authenticated = actualDigest === expectedDigest;
-            if (authenticated && storage) {
-                storage.setItem(SESSION_KEY, "1");
-            }
-            return authenticated;
+            if (!authenticated) return false;
+
+            var serverAuthenticated = await establishServerSession(password);
+            if (!serverAuthenticated) return false;
+
+            if (storage) storage.setItem(SESSION_KEY, "1");
+            return true;
         }
 
         function logout() {
-            if (storage) {
-                storage.removeItem(SESSION_KEY);
+            if (storage) storage.removeItem(SESSION_KEY);
+            if (typeof runtime.fetch === "function") {
+                runtime.fetch("/api/auth", {
+                    method: "DELETE",
+                    credentials: "same-origin",
+                }).catch(function () {});
             }
         }
 

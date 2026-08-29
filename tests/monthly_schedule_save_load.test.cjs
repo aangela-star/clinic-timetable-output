@@ -53,6 +53,32 @@ test('Apps Script schema stays minimal and keyed by month_key', () => {
   assert.match(code, /findMonthRow_\(sheet, monthKey\)/);
 });
 
+test('Apps Script rejects direct GET access and requires server secret for POST', () => {
+  const code = read('apps-script/Code.gs');
+  assert.match(code, /function doGet\(\)/);
+  assert.match(code, /METHOD_NOT_ALLOWED/);
+  assert.match(code, /assertServerSecret_\(body\.secret\)/);
+  assert.match(code, /getProperty\(SERVER_SECRET_PROPERTY\)/);
+});
+
+test('Vercel proxy requires signed session and keeps server secret out of browser config', () => {
+  const proxy = read('api/schedule.js');
+  const session = read('api/_session.js');
+  const config = read('schedule-api-config.js');
+  assert.match(proxy, /hasValidSession\(req\)/);
+  assert.match(proxy, /secret: getServerSecret\(\)/);
+  assert.match(session, /HttpOnly; Secure; SameSite=Strict/);
+  assert.match(config, /window\.location\.origin \+ "\/api\/schedule"/);
+  assert.doesNotMatch(config, /CLINIC_SERVER_SECRET/);
+});
+
+test('shared-password login establishes a server session before marking browser authenticated', () => {
+  const authGate = read('auth-gate.js');
+  assert.match(authGate, /fetch\("\/api\/auth"/);
+  assert.match(authGate, /serverAuthenticated = await establishServerSession\(password\)/);
+  assert.match(authGate, /storage\.setItem\(SESSION_KEY, "1"\)/);
+});
+
 test('front end keeps load manual and preserves INITIAL_DATA fallback', () => {
   const html = read('index.html');
   assert.match(html, /useState\(INITIAL_DATA\)/);

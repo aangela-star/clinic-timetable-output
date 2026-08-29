@@ -1,3 +1,3 @@
 window.SCHEDULE_SAVE_LOAD_CONFIG = Object.freeze({
-  webAppUrl: "",
+  webAppUrl: "/api/schedule",
 });

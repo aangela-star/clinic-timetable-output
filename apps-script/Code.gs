@@ -71,14 +71,13 @@ function doPost(e) {
 }
 
 function getScheduleSheet_() {
-  const spreadsheetId = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-  if (!spreadsheetId) {
-    const error = new Error('Apps Script 尚未設定 SPREADSHEET_ID。');
-    error.code = 'SPREADSHEET_NOT_CONFIGURED';
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  if (!spreadsheet) {
+    const error = new Error('此 Apps Script 必須綁定門診資料 Google Sheet。');
+    error.code = 'BOUND_SPREADSHEET_NOT_FOUND';
     throw error;
   }
 
-  const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
   let sheet = spreadsheet.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = spreadsheet.insertSheet(SHEET_NAME);

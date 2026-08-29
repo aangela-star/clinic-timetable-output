@@ -19,9 +19,10 @@ function doPost(e) {
 
     if (action === 'load') {
       const sheet = getScheduleSheet_();
-      const row = findMonthRow_(sheet, monthKey);
-      if (!row) return json_({ ok: true, found: false, month: monthKey });
+      const rows = findMonthRows_(sheet, monthKey);
+      if (!rows.length) return json_({ ok: true, found: false, month: monthKey });
 
+      const row = rows[rows.length - 1];
       const values = sheet.getRange(row, 1, 1, HEADERS.length).getValues()[0];
       const data = JSON.parse(values[1]);
       validateScheduleData_(data);
@@ -50,14 +51,16 @@ function doPost(e) {
     }
 
     const sheet = getScheduleSheet_();
-    const row = findMonthRow_(sheet, monthKey);
+    const rows = findMonthRows_(sheet, monthKey);
+    const row = rows.length ? rows[rows.length - 1] : sheet.getLastRow() + 1;
     const now = new Date();
     const values = [monthKey, JSON.stringify(body.data), SCHEMA_VERSION, now];
 
-    if (row) {
-      sheet.getRange(row, 1, 1, HEADERS.length).setValues([values]);
-    } else {
-      sheet.appendRow(values);
+    sheet.getRange(row, 1).setNumberFormat('@');
+    sheet.getRange(row, 1, 1, HEADERS.length).setValues([values]);
+
+    for (let i = rows.length - 2; i >= 0; i -= 1) {
+      sheet.deleteRow(rows[i]);
     }
 
     SpreadsheetApp.flush();
@@ -117,15 +120,24 @@ function ensureHeaders_(sheet) {
   }
 }
 
-function findMonthRow_(sheet, monthKey) {
+function monthCellToKey_(value) {
+  if (typeof value === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value)) return value;
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone() || 'Asia/Taipei', 'yyyy-MM');
+  }
+  return String(value || '');
+}
+
+function findMonthRows_(sheet, monthKey) {
   const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return null;
+  if (lastRow < 2) return [];
 
   const values = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  const rows = [];
   for (let i = 0; i < values.length; i += 1) {
-    if (String(values[i][0]) === monthKey) return i + 2;
+    if (monthCellToKey_(values[i][0]) === monthKey) rows.push(i + 2);
   }
-  return null;
+  return rows;
 }
 
 function validateMonthKey_(monthKey) {

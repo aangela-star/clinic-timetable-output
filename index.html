@@ -8,6 +8,8 @@
     <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
     <script src="auth-config.js"></script>
     <script src="auth-gate.js"></script>
+    <script src="schedule-api-config.js"></script>
+    <script src="schedule-save-load-core.js"></script>
     <script src="https://unpkg.com/@babel/standalone@8.0.4/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -187,12 +189,108 @@
         function App({ onLogout }) {
             const [data, setData] = useState(INITIAL_DATA);
             const [isCapturing, setIsCapturing] = useState(false);
+            const [monthKey, setMonthKey] = useState(() => ScheduleSaveLoadCore.inferMonthKeyFromTitle(INITIAL_DATA.title) || "");
+            const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
+            const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+            const [scheduleStatus, setScheduleStatus] = useState("");
             const captureRef = useRef(null);
 
             const updateClinicSchedule = (cIdx, day, slot, value) => {
                 const newData = JSON.parse(JSON.stringify(data));
                 newData.clinics[cIdx].schedule[day][slot] = value;
                 setData(newData);
+            };
+
+            const getScheduleApiUrl = () => String(window.SCHEDULE_SAVE_LOAD_CONFIG?.webAppUrl || "").trim();
+
+            const handleLoadSchedule = async () => {
+                if (!ScheduleSaveLoadCore.isValidMonthKey(monthKey)) {
+                    setScheduleStatus("請先選擇正確月份（YYYY-MM）。");
+                    return;
+                }
+
+                const apiUrl = getScheduleApiUrl();
+                if (!apiUrl) {
+                    setScheduleStatus("Save / Load 尚未連接 Apps Script Web App。");
+                    return;
+                }
+
+                setIsLoadingSchedule(true);
+                setScheduleStatus("正在載入本月門診...");
+                try {
+                    const url = new URL(apiUrl);
+                    url.searchParams.set("action", "load");
+                    url.searchParams.set("month", monthKey);
+                    const response = await fetch(url.toString(), { method: "GET", redirect: "follow" });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                    const payload = await response.json();
+                    if (!payload.ok) throw new Error(payload.message || payload.error || "載入失敗");
+                    if (!payload.found) {
+                        setScheduleStatus(`「${monthKey}」尚無已儲存資料，目前畫面未變更。`);
+                        return;
+                    }
+                    if (!ScheduleSaveLoadCore.isValidScheduleData(payload.data)) {
+                        throw new Error("已儲存的門診資料格式不完整，為避免覆寫目前畫面已停止載入。");
+                    }
+                    const mismatch = ScheduleSaveLoadCore.getMonthTitleMismatch(monthKey, payload.data.title);
+                    if (mismatch) throw new Error(mismatch.message);
+
+                    setData(payload.data);
+                    setScheduleStatus(`已載入 ${monthKey} 門診資料。`);
+                    setTimeout(() => lucide.createIcons(), 0);
+                } catch (err) {
+                    console.error("載入門診失敗:", err);
+                    setScheduleStatus(`載入失敗，目前畫面未變更：${err.message || err}`);
+                } finally {
+                    setIsLoadingSchedule(false);
+                }
+            };
+
+            const handleSaveSchedule = async () => {
+                if (!ScheduleSaveLoadCore.isValidScheduleData(data)) {
+                    setScheduleStatus("門診資料格式不完整，已停止儲存。");
+                    return;
+                }
+
+                const mismatch = ScheduleSaveLoadCore.getMonthTitleMismatch(monthKey, data.title);
+                if (mismatch) {
+                    setScheduleStatus(mismatch.message);
+                    return;
+                }
+
+                const apiUrl = getScheduleApiUrl();
+                if (!apiUrl) {
+                    setScheduleStatus("Save / Load 尚未連接 Apps Script Web App。");
+                    return;
+                }
+
+                setIsSavingSchedule(true);
+                setScheduleStatus("正在儲存本月門診...");
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: "POST",
+                        redirect: "follow",
+                        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+                        body: JSON.stringify({
+                            action: "save",
+                            month: monthKey,
+                            schemaVersion: 1,
+                            data,
+                        }),
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                    const payload = await response.json();
+                    if (!payload.ok) throw new Error(payload.message || payload.error || "儲存失敗");
+                    const savedTime = payload.updatedAt ? new Date(payload.updatedAt).toLocaleString("zh-TW") : "剛剛";
+                    setScheduleStatus(`已儲存 ${monthKey} 門診資料（${savedTime}）。`);
+                } catch (err) {
+                    console.error("儲存門診失敗:", err);
+                    setScheduleStatus(`儲存失敗，目前畫面未變更：${err.message || err}`);
+                } finally {
+                    setIsSavingSchedule(false);
+                }
             };
 
             const handleDownload = async () => {
@@ -232,6 +330,38 @@
                         </header>
 
                         <div className="space-y-6">
+                            <section className="space-y-2">
+                                <label className="block text-sm font-black text-slate-500">存檔月份</label>
+                                <input
+                                    type="month"
+                                    className="w-full p-2 border-2 border-slate-200 rounded-lg font-bold bg-slate-50 outline-none"
+                                    value={monthKey}
+                                    onChange={(e) => {
+                                        setMonthKey(e.target.value);
+                                        setScheduleStatus("");
+                                    }}
+                                />
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleLoadSchedule}
+                                        disabled={isLoadingSchedule || isSavingSchedule}
+                                        className="py-2 px-3 rounded-lg border-2 border-teal-600 text-teal-700 text-sm font-black disabled:opacity-50"
+                                    >
+                                        {isLoadingSchedule ? "載入中..." : "載入本月門診"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveSchedule}
+                                        disabled={isLoadingSchedule || isSavingSchedule}
+                                        className="py-2 px-3 rounded-lg bg-teal-600 text-white text-sm font-black disabled:opacity-50"
+                                    >
+                                        {isSavingSchedule ? "儲存中..." : "儲存本月門診"}
+                                    </button>
+                                </div>
+                                {scheduleStatus && <div className="text-xs font-bold text-slate-600 leading-relaxed">{scheduleStatus}</div>}
+                            </section>
+
                             <section>
                                 <label className="block text-sm font-black text-slate-500 mb-1">年份月份</label>
                                 <input className="w-full p-2 border-2 border-slate-200 rounded-lg font-bold bg-slate-50 outline-none" value={data.title} onChange={(e) => setData({...data, title: e.target.value})} />

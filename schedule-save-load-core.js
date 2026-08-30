@@ -1,4 +1,6 @@
 (function (global) {
+  const LAST_SCHEDULE_MONTH_STORAGE_KEY = "clinic-timetable.last-schedule-month";
+
   function isValidMonthKey(value) {
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value || "")) return false;
     return true;
@@ -43,11 +45,50 @@
     );
   }
 
+  function getInitialMonthKey(runtime, title) {
+    const fallback = inferMonthKeyFromTitle(title) || "";
+    try {
+      const storage = runtime && runtime.localStorage;
+      if (!storage || typeof storage.getItem !== "function") return fallback;
+      const storedMonth = storage.getItem(LAST_SCHEDULE_MONTH_STORAGE_KEY);
+      return isValidMonthKey(storedMonth) ? storedMonth : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function rememberLastScheduleMonth(runtime, monthKey) {
+    if (!isValidMonthKey(monthKey)) return false;
+    try {
+      const storage = runtime && runtime.localStorage;
+      if (!storage || typeof storage.setItem !== "function") return false;
+      storage.setItem(LAST_SCHEDULE_MONTH_STORAGE_KEY, monthKey);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function rememberLoadedMonth(runtime, monthKey, payload) {
+    if (!payload || payload.ok !== true || payload.found !== true) return false;
+    return rememberLastScheduleMonth(runtime, monthKey);
+  }
+
+  function rememberSavedMonth(runtime, monthKey, payload) {
+    if (!payload || payload.ok !== true) return false;
+    return rememberLastScheduleMonth(runtime, monthKey);
+  }
+
   const api = Object.freeze({
+    LAST_SCHEDULE_MONTH_STORAGE_KEY,
+    getInitialMonthKey,
     isValidMonthKey,
     inferMonthKeyFromTitle,
     getMonthTitleMismatch,
     isValidScheduleData,
+    rememberLastScheduleMonth,
+    rememberLoadedMonth,
+    rememberSavedMonth,
   });
 
   global.ScheduleSaveLoadCore = api;

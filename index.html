@@ -189,7 +189,7 @@
         function App({ onLogout }) {
             const [data, setData] = useState(INITIAL_DATA);
             const [isCapturing, setIsCapturing] = useState(false);
-            const [monthKey, setMonthKey] = useState(() => ScheduleSaveLoadCore.inferMonthKeyFromTitle(INITIAL_DATA.title) || "");
+            const [monthKey, setMonthKey] = useState(() => ScheduleSaveLoadCore.getInitialMonthKey(window, INITIAL_DATA.title));
             const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
             const [isSavingSchedule, setIsSavingSchedule] = useState(false);
             const [scheduleStatus, setScheduleStatus] = useState("");
@@ -237,6 +237,7 @@
                     if (mismatch) throw new Error(mismatch.message);
 
                     setData(payload.data);
+                    ScheduleSaveLoadCore.rememberLoadedMonth(window, monthKey, payload);
                     setScheduleStatus(`已載入 ${monthKey} 門診資料。`);
                     setTimeout(() => lucide.createIcons(), 0);
                 } catch (err) {
@@ -283,6 +284,7 @@
 
                     const payload = await response.json();
                     if (!payload.ok) throw new Error(payload.message || payload.error || "儲存失敗");
+                    ScheduleSaveLoadCore.rememberSavedMonth(window, monthKey, payload);
                     const savedTime = payload.updatedAt ? new Date(payload.updatedAt).toLocaleString("zh-TW") : "剛剛";
                     setScheduleStatus(`已儲存 ${monthKey} 門診資料（${savedTime}）。`);
                 } catch (err) {

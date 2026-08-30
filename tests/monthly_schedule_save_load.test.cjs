@@ -50,7 +50,18 @@ test('Apps Script save uses ScriptLock and releases it', () => {
 test('Apps Script schema stays minimal and keyed by month_key', () => {
   const code = read('apps-script/Code.gs');
   assert.match(code, /\['month_key', 'data_json', 'schema_version', 'updated_at'\]/);
-  assert.match(code, /findMonthRow_\(sheet, monthKey\)/);
+  assert.match(code, /findMonthRows_\(sheet, monthKey\)/);
+});
+
+test('Apps Script normalizes legacy date month cells and forces new month keys to text', () => {
+  const code = read('apps-script/Code.gs');
+  assert.match(code, /function monthCellToKey_\(value\)/);
+  assert.match(code, /value instanceof Date/);
+  assert.match(code, /Utilities\.formatDate\(/);
+  assert.match(code, /function findMonthRows_\(sheet, monthKey\)/);
+  assert.match(code, /setNumberFormat\('@'\)/);
+  assert.match(code, /deleteRow\(rows\[i\]\)/);
+  assert.doesNotMatch(code, /appendRow\(values\)/);
 });
 
 test('Apps Script rejects direct GET access and requires server secret for POST', () => {

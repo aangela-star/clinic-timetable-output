@@ -18,7 +18,7 @@ test('browser schedule config uses same-origin Vercel proxy and exposes no serve
 
 test('Vercel schedule proxy requires signed session and forwards server secret only on server', () => {
   const proxy = read('api/schedule.js');
-  assert.match(proxy, /verifySessionToken/);
+  assert.match(proxy, /hasValidSession/);
   assert.match(proxy, /getServerSecret/);
   assert.match(proxy, /secret:\s*getServerSecret\(\)/);
 });
@@ -36,4 +36,11 @@ test('server secret is referenced only by server-side integration code', () => {
   for (const file of browserFiles) {
     assert.doesNotMatch(read(file), /CLINIC_SERVER_SECRET/, `${file} must not expose the server secret`);
   }
+});
+
+test('browser and server login use the same password digest', () => {
+  const browserDigest = read('auth-config.js').match(/passwordSha256Hex:\s*["']([a-f0-9]{64})["']/)?.[1];
+  const serverDigest = read('api/auth.js').match(/EXPECTED_PASSWORD_SHA256\s*=\s*["']([a-f0-9]{64})["']/)?.[1];
+  assert.ok(browserDigest);
+  assert.equal(serverDigest, browserDigest);
 });

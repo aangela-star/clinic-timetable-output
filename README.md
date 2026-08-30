@@ -3,24 +3,24 @@
 ## Static Stack
 
 - Entrypoint: `index.html`
-- Runtime: static browser app using CDN-hosted React, ReactDOM, Babel Standalone, Tailwind CDN, html2canvas, and Lucide.
+- Runtime: browser app using CDN-hosted React, ReactDOM, Babel Standalone, Tailwind CDN, html2canvas, and Lucide, with Vercel serverless API routes and a bound Google Apps Script backend for monthly schedules.
 - Install command: none required.
 - Build command: none required.
-- Required app secrets or environment variables: none.
-- App authentication: frontend-only shared password gate using a SHA-256 digest in `auth-config.js`.
+- Required server secret: `CLINIC_SERVER_SECRET` must be configured only in Vercel environment variables and the Apps Script project's Script Properties. Never place its value in browser-side files or this repository.
+- App authentication: the browser digest check is followed by `/api/auth`, which creates a signed, HttpOnly session cookie before monthly Save/Load is allowed.
 
-## Frontend-Only Password Gate
+## Password Gate and Server Session
 
 `FRONTEND_ONLY_SHARED_SECRET`
 
-This app has a minimal shared-password gate before the timetable editor renders. This is not a security boundary. The SHA-256 digest is shipped to every browser in `auth-config.js`, so it is vulnerable to source inspection, offline guessing, and client-side bypass. Never describe this as server-side secret storage.
+This app has a shared-password gate before the timetable editor renders. The SHA-256 digest is shipped to every browser in `auth-config.js`, so the digest itself is not secret. Monthly schedule API access additionally requires the signed server session created by `/api/auth`.
 
-- Password location: no production plaintext password belongs in this repository. The current local-only test password is `LOCAL_TEST_ONLY_PASSWORD` for local verification only.
+- Password location: no production plaintext password belongs in this repository. Unit tests use only test-specific credentials and digests.
 - Digest location: `auth-config.js` contains `passwordSha256Hex`.
 - Before deployment: choose the real shared password locally, compute its SHA-256 hex digest, replace `passwordSha256Hex` in `auth-config.js`, and do not commit or store the plaintext password.
 - Important limitation: the resulting digest still ships to browsers and remains inspectable by anyone who can load the app.
-- Session behavior: successful login writes only an authenticated flag to `sessionStorage`, so reloads in the same browser session stay authenticated while a new browser session starts unauthenticated.
-- Logout: the `登出` control clears the `sessionStorage` flag and returns to the login screen.
+- Session behavior: successful login stores the browser flag in `sessionStorage` and sets an HttpOnly server session cookie. A new browser session starts unauthenticated.
+- Logout: the `登出` control clears both the browser flag and server session cookie.
 
 Example local digest replacement command:
 
@@ -40,10 +40,10 @@ Open `http://127.0.0.1:4173/`.
 
 ```sh
 python3 -m unittest discover -s tests -v
-node --test tests/auth_gate.test.cjs
+node --test tests/*.test.cjs
 ```
 
-The deployment smoke tests verify the HTML entrypoint, root element, pinned runtime dependency URLs, dependency order, auth script order, login gating, logout wiring, and absence of floating runtime aliases. The Node test verifies the same framework-free auth logic used by the browser.
+The deployment smoke tests verify the HTML entrypoint, pinned runtime dependencies, login gating, logout wiring, and absence of floating runtime aliases. Node tests cover authentication, signed sessions, the schedule proxy, Apps Script Save/Load behavior, legacy Date month cells, duplicate cleanup, locking, manual Load, and PNG capture invariants.
 
 ## Browser Runtime Dependencies
 
@@ -63,7 +63,7 @@ The deployment smoke tests verify the HTML entrypoint, root element, pinned runt
 - Build Command: leave empty
 - Output Directory: `.`
 - Expected production URL form: `https://clinic-timetable-output.vercel.app`
-- Hosting-level access protection: none configured. Do not add Vercel Authentication or paid Password Protection for this task; the frontend-only `FRONTEND_ONLY_SHARED_SECRET` gate is the only planned access gate.
+- Hosting-level access protection: none configured. Monthly schedule access is protected by the app's signed server session and server-only `CLINIC_SERVER_SECRET` boundary.
 
 Production deployment requires explicit human approval and must not be run now:
 
@@ -78,7 +78,7 @@ vercel --prod
 - Login screen renders before authentication; after successful login, the timetable UI renders in the `#root` entrypoint.
 - Existing edit and export flows still work.
 - No production plaintext app passwords are present in the page source.
-- Access layer remains the frontend-only `FRONTEND_ONLY_SHARED_SECRET` gate, with no hosting-level or paid Vercel protection configured.
+- Monthly schedule access requires the signed server session and server-only Apps Script secret boundary; no hosting-level or paid Vercel protection is configured.
 
 ## Rollback
 

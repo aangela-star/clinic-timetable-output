@@ -255,7 +255,7 @@ function parseLoginForm(config, html) {
   };
 }
 
-function parseCmsEditorForm(html) {
+function parseCmsEditorForm(config, html) {
   const forms = /<form\b([^>]*)>([\s\S]*?)<\/form\s*>/gi;
   let form;
   let opening;
@@ -268,10 +268,17 @@ function parseCmsEditorForm(html) {
       break;
     }
   }
+  const expectedUrl = new URL(config.protectedEditorPath, config.origin).href;
+  let actionUrl;
+  try {
+    actionUrl = new URL(decodeHtml(opening?.action || ''), expectedUrl).href;
+  } catch {
+    actionUrl = null;
+  }
   if (!opening
-      || opening.action !== ''
-      || String(opening.method).toLowerCase() !== 'post'
-      || String(opening.enctype).toLowerCase() !== 'multipart/form-data') {
+      || actionUrl !== expectedUrl
+      || String(opening.method).trim().toLowerCase() !== 'post'
+      || String(opening.enctype).trim().toLowerCase() !== 'multipart/form-data') {
     throw new Error('Invalid addAdminFrm contract.');
   }
 
@@ -321,13 +328,111 @@ function parseCmsEditorForm(html) {
 
 function buildMainFormPayload(fields) {
   return {
-    mode: fields.mode ?? 'edit',
+    mode: 'edit',
     note: fields.note,
     wtitle: fields.wtitle,
     wkeyword: fields.wkeyword,
     wdescription: fields.wdescription,
-    Submit: fields.Submit ?? '送出',
+    Submit: '送出',
   };
+}
+
+function findTagEnd(html, start) {
+  let quote = null;
+  for (let index = start; index < html.length; index += 1) {
+    const character = html[index];
+    if (quote) {
+      if (character === quote) quote = null;
+    } else if (character === '"' || character === "'") {
+      quote = character;
+    } else if (character === '>') {
+      return index;
+    }
+  }
+  return -1;
+}
+
+function isHiddenElement(attributes) {
+  if (attributes.hidden !== undefined) return true;
+  if (String(attributes['aria-hidden'] || '').trim().toLowerCase() === 'true') return true;
+  return String(attributes.style || '').split(';').some((declaration) => {
+    const separator = declaration.indexOf(':');
+    if (separator === -1) return false;
+    const property = declaration.slice(0, separator).trim().toLowerCase();
+    const value = declaration.slice(separator + 1).trim().toLowerCase();
+    return (property === 'display' && /^none(?:\s*!important)?$/.test(value))
+      || (property === 'visibility' && /^hidden(?:\s*!important)?$/.test(value));
+  });
+}
+
+function extractIncludedDocumentContent(source) {
+  const html = String(source || '');
+  const voidElements = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+  const excludedElements = new Set(['script', 'template']);
+  const stack = [];
+  const visibleText = [];
+  const imageUrls = [];
+  let cursor = 0;
+
+  try {
+    while (cursor < html.length) {
+      const excluded = stack.at(-1)?.excluded;
+      if (excluded) {
+        const closingPattern = new RegExp(`</${excluded}\\s*>`, 'ig');
+        closingPattern.lastIndex = cursor;
+        const closing = closingPattern.exec(html);
+        if (!closing) return { uncertain: true, visibleText: '', imageUrls: [] };
+        cursor = closingPattern.lastIndex;
+        stack.pop();
+        continue;
+      }
+
+      const openingIndex = html.indexOf('<', cursor);
+      if (openingIndex === -1) {
+        if (!stack.some((entry) => entry.hidden)) visibleText.push(html.slice(cursor));
+        cursor = html.length;
+        break;
+      }
+      if (!stack.some((entry) => entry.hidden)) visibleText.push(html.slice(cursor, openingIndex));
+
+      if (html.startsWith('<!--', openingIndex)) {
+        const commentEnd = html.indexOf('-->', openingIndex + 4);
+        if (commentEnd === -1) return { uncertain: true, visibleText: '', imageUrls: [] };
+        cursor = commentEnd + 3;
+        continue;
+      }
+
+      const tagEnd = findTagEnd(html, openingIndex + 1);
+      if (tagEnd === -1) return { uncertain: true, visibleText: '', imageUrls: [] };
+      const tagSource = html.slice(openingIndex + 1, tagEnd);
+      cursor = tagEnd + 1;
+      if (/^\s*[!?]/.test(tagSource)) continue;
+
+      const closing = /^\s*\/\s*([a-z][\w:-]*)\s*$/i.exec(tagSource);
+      if (closing) {
+        const name = closing[1].toLowerCase();
+        if (stack.at(-1)?.name !== name) return { uncertain: true, visibleText: '', imageUrls: [] };
+        stack.pop();
+        continue;
+      }
+
+      const opening = /^\s*([a-z][\w:-]*)([\s\S]*?)\s*(\/)?\s*$/i.exec(tagSource);
+      if (!opening) return { uncertain: true, visibleText: '', imageUrls: [] };
+      const name = opening[1].toLowerCase();
+      const attributes = parseAttributes(opening[2]);
+      const hidden = stack.some((entry) => entry.hidden) || isHiddenElement(attributes);
+      if (name === 'img' && !hidden && attributes.src !== undefined) {
+        imageUrls.push(decodeHtml(attributes.src));
+      }
+      if (!opening[3] && !voidElements.has(name)) {
+        stack.push({ name, hidden, excluded: excludedElements.has(name) ? name : null });
+      }
+    }
+    if (stack.length !== 0) return { uncertain: true, visibleText: '', imageUrls: [] };
+    return { uncertain: false, visibleText: decodeHtml(visibleText.join('')), imageUrls };
+  } catch {
+    return { uncertain: true, visibleText: '', imageUrls: [] };
+  }
 }
 
 function verifyPublicPage({ config, html, monthText, imageUrlsByClinic }) {
@@ -339,20 +444,16 @@ function verifyPublicPage({ config, html, monthText, imageUrlsByClinic }) {
       || !value.startsWith('/') || value.startsWith('//'))) {
     throw new Error('Expected image URLs must be relative URLs.');
   }
-  const actualImageUrls = [];
-  const images = /<img\b([^>]*)>/gi;
-  let image;
-  while ((image = images.exec(html || ''))) {
-    const attributes = parseAttributes(image[1]);
-    if (attributes.src !== undefined) actualImageUrls.push(decodeHtml(attributes.src));
-  }
+  const extracted = extractIncludedDocumentContent(html);
+  const actualImageUrls = extracted.imageUrls;
   const missingImageUrls = expectedImageUrls.filter((url) => !actualImageUrls.includes(url));
   const positions = expectedImageUrls.map((url) => actualImageUrls.indexOf(url));
   const imagesInExpectedOrder = missingImageUrls.length === 0
     && positions.every((position, index) => index === 0 || position > positions[index - 1]);
-  const monthFound = typeof monthText === 'string'
+  const monthFound = !extracted.uncertain
+    && typeof monthText === 'string'
     && monthText.length > 0
-    && decodeHtml(html || '').includes(monthText);
+    && extracted.visibleText.includes(monthText);
   return {
     monthFound,
     expectedImageUrls,
@@ -363,17 +464,14 @@ function verifyPublicPage({ config, html, monthText, imageUrlsByClinic }) {
 }
 
 function classifyPublisherResult({ cmsState, publicVerification }) {
-  if (cmsState === 'confirmed') {
-    return { status: 'success', requiresPublicVerification: false };
-  }
   if (cmsState === 'failed') {
     return { status: 'failed', requiresPublicVerification: false };
   }
-  if (publicVerification) {
-    return {
-      status: publicVerification.verified ? 'success' : 'failed',
-      requiresPublicVerification: false,
-    };
+  if (cmsState === 'confirmed' && publicVerification?.verified === true) {
+    return { status: 'success', requiresPublicVerification: false };
+  }
+  if (cmsState === 'confirmed' && publicVerification?.verified === false) {
+    return { status: 'failed', requiresPublicVerification: false };
   }
   return { status: 'uncertain', requiresPublicVerification: true };
 }

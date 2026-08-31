@@ -274,6 +274,7 @@ test('malformed or mismatched QuickUpload callbacks are rejected', () => {
 });
 
 test('CMS editor parser validates the exact form contract and extracts editable values', () => {
+  const config = publisher.SITE_CONFIGS.jinan;
   const html = `
     <form name="addAdminFrm" id="addAdminFrm" action="" method="POST" enctype="multipart/form-data">
       <input type="hidden" name="mode" value="edit">
@@ -285,7 +286,7 @@ test('CMS editor parser validates the exact form contract and extracts editable 
       <input id="cke_92831" value="dynamic but unnamed">
     </form>`;
 
-  assert.deepEqual(publisher.parseCmsEditorForm(html), {
+  assert.deepEqual(publisher.parseCmsEditorForm(config, html), {
     mode: 'edit',
     note: '<p>September</p>',
     wtitle: 'Clinic & Schedule',
@@ -295,13 +296,37 @@ test('CMS editor parser validates the exact form contract and extracts editable 
 });
 
 test('CMS editor parser rejects invalid form contracts and extra named controls', () => {
+  const config = publisher.SITE_CONFIGS.jinan;
   const controls = '<input type="hidden" name="mode" value="edit"><textarea name="note"></textarea><input type="text" name="wtitle"><input type="text" name="wkeyword"><textarea name="wdescription"></textarea><input type="submit" name="Submit" value="send">';
-  assert.throws(() => publisher.parseCmsEditorForm(`<form name="addAdminFrm" action="/save" method="POST" enctype="multipart/form-data">${controls}</form>`), /contract/);
-  assert.throws(() => publisher.parseCmsEditorForm(`<form name="addAdminFrm" action="" method="POST" enctype="multipart/form-data">${controls}<input name="extra"></form>`), /named controls/);
-  assert.throws(() => publisher.parseCmsEditorForm(`<form id="addAdminFrm" action="" method="POST" enctype="multipart/form-data">${controls}</form>`), /contract/);
+  assert.throws(() => publisher.parseCmsEditorForm(config, `<form name="addAdminFrm" action="/save" method="POST" enctype="multipart/form-data">${controls}</form>`), /contract/);
+  assert.throws(() => publisher.parseCmsEditorForm(config, `<form name="addAdminFrm" action="" method="POST" enctype="multipart/form-data">${controls}<input name="extra"></form>`), /named controls/);
+  assert.throws(() => publisher.parseCmsEditorForm(config, `<form id="addAdminFrm" action="" method="POST" enctype="multipart/form-data">${controls}</form>`), /contract/);
+});
+
+test('CMS editor parser accepts equivalent current-editor actions and normalized method/enctype', () => {
+  const config = publisher.SITE_CONFIGS.jinan;
+  const controls = '<input type="hidden" name="mode" value="edit"><textarea name="note"></textarea><input type="text" name="wtitle"><input type="text" name="wkeyword"><textarea name="wdescription"></textarea><input type="submit" name="Submit" value="send">';
+  const currentUrl = new URL(config.protectedEditorPath, config.origin).href;
+  for (const action of [null, '', config.protectedEditorPath, currentUrl]) {
+    const actionAttribute = action === null ? '' : ` action="${action.replaceAll('&', '&amp;')}"`;
+    assert.equal(publisher.parseCmsEditorForm(config, `<form name="addAdminFrm"${actionAttribute} method="  pOsT " enctype=" Multipart/Form-Data ">${controls}</form>`).mode, 'edit');
+  }
+});
+
+test('CMS editor parser rejects GET, wrong endpoint, and cross-origin actions', () => {
+  const config = publisher.SITE_CONFIGS.jinan;
+  const controls = '<input type="hidden" name="mode" value="edit"><textarea name="note"></textarea><input type="text" name="wtitle"><input type="text" name="wkeyword"><textarea name="wdescription"></textarea><input type="submit" name="Submit" value="send">';
+  for (const [method, action] of [
+    ['GET', ''],
+    ['POST', '/admin/save.php'],
+    ['POST', 'https://attacker.example/admin/index.php?op=time&sub=set'],
+  ]) {
+    assert.throws(() => publisher.parseCmsEditorForm(config, `<form name="addAdminFrm" action="${action.replaceAll('&', '&amp;')}" method="${method}" enctype="multipart/form-data">${controls}</form>`), /contract/);
+  }
 });
 
 test('CMS editor parser enforces each approved tag, type, name, and mode contract', () => {
+  const config = publisher.SITE_CONFIGS.jinan;
   const validControls = [
     '<input type="hidden" name="mode" value="edit">',
     '<textarea name="note"></textarea>',
@@ -314,19 +339,19 @@ test('CMS editor parser enforces each approved tag, type, name, and mode contrac
 
   const wrongTag = [...validControls];
   wrongTag[1] = '<input type="text" name="note">';
-  assert.throws(() => publisher.parseCmsEditorForm(form(wrongTag)), /named controls/);
+  assert.throws(() => publisher.parseCmsEditorForm(config, form(wrongTag)), /named controls/);
 
   const wrongType = [...validControls];
   wrongType[2] = '<input type="hidden" name="wtitle">';
-  assert.throws(() => publisher.parseCmsEditorForm(form(wrongType)), /named controls/);
+  assert.throws(() => publisher.parseCmsEditorForm(config, form(wrongType)), /named controls/);
 
   const duplicate = [...validControls, validControls[1]];
-  assert.throws(() => publisher.parseCmsEditorForm(form(duplicate)), /named controls/);
-  assert.throws(() => publisher.parseCmsEditorForm(form(validControls.slice(0, -1))), /named controls/);
+  assert.throws(() => publisher.parseCmsEditorForm(config, form(duplicate)), /named controls/);
+  assert.throws(() => publisher.parseCmsEditorForm(config, form(validControls.slice(0, -1))), /named controls/);
 
   const wrongMode = [...validControls];
   wrongMode[0] = '<input type="hidden" name="mode" value="create">';
-  assert.throws(() => publisher.parseCmsEditorForm(form(wrongMode)), /mode/);
+  assert.throws(() => publisher.parseCmsEditorForm(config, form(wrongMode)), /mode/);
 });
 
 test('main form builder returns exactly the approved fields and preserves caller content', () => {
@@ -341,6 +366,25 @@ test('main form builder returns exactly the approved fields and preserves caller
     wtitle: 'Title',
     wkeyword: 'keywords',
     wdescription: 'Description',
+    Submit: '送出',
+  });
+});
+
+test('main form builder never permits workflow constants to be overridden', () => {
+  assert.deepEqual(publisher.buildMainFormPayload({
+    mode: 'delete',
+    note: 'note',
+    wtitle: 'title',
+    wkeyword: 'keyword',
+    wdescription: 'description',
+    Submit: 'Delete everything',
+    extra: 'not allowed',
+  }), {
+    mode: 'edit',
+    note: 'note',
+    wtitle: 'title',
+    wkeyword: 'keyword',
+    wdescription: 'description',
     Submit: '送出',
   });
 });
@@ -387,6 +431,69 @@ test('public verification reports missing images and incorrect ordering', () => 
   assert.equal(reversed.verified, false);
 });
 
+test('public verification ignores month text in comments, scripts, and templates', () => {
+  const images = '<img src="/uploads/jinan.png"><img src="/uploads/yian.png">';
+  for (const hiddenMonth of [
+    '<!-- September -->',
+    '<script>const month = "September";</script>',
+    '<template><p>September</p></template>',
+  ]) {
+    const result = publisher.verifyPublicPage({
+      config: publisher.SITE_CONFIGS.jinan,
+      html: `${hiddenMonth}${images}`,
+      monthText: 'September',
+      imageUrlsByClinic: { jinan: '/uploads/jinan.png', yian: '/uploads/yian.png' },
+    });
+    assert.equal(result.monthFound, false);
+    assert.equal(result.verified, false);
+  }
+});
+
+test('public verification accepts images only from included actual img elements', () => {
+  for (const hiddenImages of [
+    '<!-- <img src="/uploads/jinan.png"><img src="/uploads/yian.png"> -->',
+    '<script>const images = `<img src="/uploads/jinan.png"><img src="/uploads/yian.png">`;</script>',
+    '<template><img src="/uploads/jinan.png"><img src="/uploads/yian.png"></template>',
+  ]) {
+    const result = publisher.verifyPublicPage({
+      config: publisher.SITE_CONFIGS.jinan,
+      html: `<p>September</p>${hiddenImages}`,
+      monthText: 'September',
+      imageUrlsByClinic: { jinan: '/uploads/jinan.png', yian: '/uploads/yian.png' },
+    });
+    assert.deepEqual(result.missingImageUrls, ['/uploads/jinan.png', '/uploads/yian.png']);
+    assert.equal(result.verified, false);
+  }
+});
+
+test('hidden stale content cannot satisfy image existence or ordering', () => {
+  for (const hiddenOpening of [
+    '<section hidden>',
+    '<section aria-hidden="true">',
+    '<section style=" color:red; DISPLAY: none ">',
+    '<section style="visibility: hidden">',
+  ]) {
+    const result = publisher.verifyPublicPage({
+      config: publisher.SITE_CONFIGS.jinan,
+      html: `<p>September</p>${hiddenOpening}<img src="/uploads/jinan.png"></section><img src="/uploads/yian.png"><img src="/uploads/jinan.png">`,
+      monthText: 'September',
+      imageUrlsByClinic: { jinan: '/uploads/jinan.png', yian: '/uploads/yian.png' },
+    });
+    assert.equal(result.imagesInExpectedOrder, false);
+    assert.equal(result.verified, false);
+  }
+});
+
+test('public verification still accepts normal actual img order', () => {
+  const result = publisher.verifyPublicPage({
+    config: publisher.SITE_CONFIGS.jinan,
+    html: '<main><p>September</p><img src="/uploads/jinan.png"><img src="/uploads/yian.png"></main>',
+    monthText: 'September',
+    imageUrlsByClinic: { jinan: '/uploads/jinan.png', yian: '/uploads/yian.png' },
+  });
+  assert.equal(result.verified, true);
+});
+
 test('clinic image priority comes from each site config', () => {
   const images = {
     jinan: '/uploads/jinan-september.png',
@@ -410,10 +517,10 @@ test('clinic image priority comes from each site config', () => {
   assert.equal(yianResult.imagesInExpectedOrder, false);
 });
 
-test('publisher classifier returns success, failed, and uncertain', () => {
+test('publisher classifier returns success only for confirmed CMS plus verified public state', () => {
   assert.deepEqual(publisher.classifyPublisherResult({ cmsState: 'confirmed' }), {
-    status: 'success',
-    requiresPublicVerification: false,
+    status: 'uncertain',
+    requiresPublicVerification: true,
   });
   assert.deepEqual(publisher.classifyPublisherResult({ cmsState: 'failed' }), {
     status: 'failed',
@@ -424,13 +531,17 @@ test('publisher classifier returns success, failed, and uncertain', () => {
     requiresPublicVerification: true,
   });
   assert.deepEqual(publisher.classifyPublisherResult({
-    cmsState: 'ambiguous',
+    cmsState: 'confirmed',
     publicVerification: { verified: true },
   }), { status: 'success', requiresPublicVerification: false });
   assert.deepEqual(publisher.classifyPublisherResult({
     cmsState: 'ambiguous',
     publicVerification: { verified: false },
-  }), { status: 'failed', requiresPublicVerification: false });
+  }), { status: 'uncertain', requiresPublicVerification: true });
+  assert.deepEqual(publisher.classifyPublisherResult({
+    cmsState: 'unexpected-new-state',
+    publicVerification: { verified: true },
+  }), { status: 'uncertain', requiresPublicVerification: true });
 });
 
 test('unknown CMS redirect is never direct success', () => {
@@ -441,5 +552,5 @@ test('unknown CMS redirect is never direct success', () => {
   assert.deepEqual(publisher.classifyPublisherResult({
     cmsState: 'unknown-redirect',
     publicVerification: { verified: true },
-  }), { status: 'success', requiresPublicVerification: false });
+  }), { status: 'uncertain', requiresPublicVerification: true });
 });

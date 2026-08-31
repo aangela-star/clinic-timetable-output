@@ -46,15 +46,7 @@
   }
 
   function getInitialMonthKey(runtime, title) {
-    const fallback = inferMonthKeyFromTitle(title) || "";
-    try {
-      const storage = runtime && runtime.localStorage;
-      if (!storage || typeof storage.getItem !== "function") return fallback;
-      const storedMonth = storage.getItem(LAST_SCHEDULE_MONTH_STORAGE_KEY);
-      return isValidMonthKey(storedMonth) ? storedMonth : fallback;
-    } catch (_) {
-      return fallback;
-    }
+    return inferMonthKeyFromTitle(title) || "";
   }
 
   function rememberLastScheduleMonth(runtime, monthKey) {

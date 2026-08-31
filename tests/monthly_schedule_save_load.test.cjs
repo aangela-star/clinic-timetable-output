@@ -39,7 +39,7 @@ test('validates the minimal existing schedule data shape', () => {
   assert.equal(core.isValidScheduleData({ title: '115/8月', note: '', clinics: [] }), false);
 });
 
-test('valid stored month takes priority over the title-derived fallback', () => {
+test('initial month comes from the displayed title even when a later month was remembered', () => {
   const runtime = {
     localStorage: {
       getItem: (key) => {
@@ -49,7 +49,7 @@ test('valid stored month takes priority over the title-derived fallback', () => 
     },
   };
 
-  assert.equal(core.getInitialMonthKey(runtime, '115/4月'), '2026-08');
+  assert.equal(core.getInitialMonthKey(runtime, '115/4月'), '2026-04');
 });
 
 test('missing or invalid stored month falls back to the title', () => {

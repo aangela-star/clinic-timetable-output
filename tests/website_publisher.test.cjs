@@ -146,18 +146,78 @@ test('HTTP request execution uses an injected offline transport exactly once', a
 });
 
 test('cookie jar isolates origins and replaces rotated cookie metadata', () => {
-  const jar = publisher.createCookieJar();
-  jar.ingest('https://one.example', ['session=first; Path=/; HttpOnly']);
-  jar.ingest('https://two.example', ['session=other; Path=/']);
-  jar.ingest('https://one.example', ['session=replacement; Path=/admin; Secure']);
+  const jar = publisher.createCookieJar({ now: () => Date.UTC(2026, 8, 1) });
+  jar.ingest('https://one.example/admin/login.php', ['session=first; Path=/; HttpOnly']);
+  jar.ingest('https://two.example/admin/login.php', ['session=other; Path=/']);
+  jar.ingest('https://one.example/admin/login.php', ['session=replacement; Path=/admin; Secure']);
 
-  assert.equal(jar.header('https://one.example'), 'session=replacement');
-  assert.equal(jar.header('https://two.example'), 'session=other');
+  assert.equal(jar.header('https://one.example/admin/index.php'), 'session=replacement; session=first');
+  assert.equal(jar.header('https://two.example/admin/index.php'), 'session=other');
   assert.deepEqual(jar.metadata('https://one.example', 'session'), {
+    path: '/',
+    secure: false,
+    httpOnly: true,
+  });
+  assert.deepEqual(jar.metadata('https://one.example', 'session', '/admin'), {
     path: '/admin',
     secure: true,
     httpOnly: false,
   });
+});
+
+test('cookie jar matches RFC-style paths and never sends admin session to public time page', () => {
+  const jar = publisher.createCookieJar({ now: () => Date.UTC(2026, 8, 1) });
+  jar.ingest('https://www.tainanrehab.com/admin/login.php', ['admin_session=abc; Path=/admin; HttpOnly']);
+
+  assert.equal(jar.header('https://www.tainanrehab.com/admin'), 'admin_session=abc');
+  assert.equal(jar.header('https://www.tainanrehab.com/admin/index.php'), 'admin_session=abc');
+  assert.equal(jar.header('https://www.tainanrehab.com/administrator'), '');
+  assert.equal(jar.header('https://www.tainanrehab.com/time.html'), '');
+});
+
+test('cookie jar applies secure, expiration, deletion, replacement, and path ordering', () => {
+  let currentTime = Date.UTC(2026, 8, 1);
+  const jar = publisher.createCookieJar({ now: () => currentTime });
+
+  jar.ingest('https://www.tainanrehab.com/admin/login.php', [
+    'prefs=root; Path=/; Max-Age=3600',
+    'prefs=admin; Path=/admin',
+    'secure_id=s1; Path=/admin; Secure',
+    'gone=now; Path=/admin; Max-Age=0',
+    'old=stale; Path=/admin; Expires=Tue, 01 Sep 2020 00:00:00 GMT',
+  ]);
+
+  assert.equal(
+    jar.header('https://www.tainanrehab.com/admin/index.php'),
+    'prefs=admin; secure_id=s1; prefs=root',
+  );
+  assert.equal(
+    jar.header('https://www.tainanrehab.com/admin/index.php'.replace('https:', 'http:')),
+    '',
+  );
+  assert.equal(
+    jar.header('https://www.tainanrehab.com/admin/index.php'),
+    'prefs=admin; secure_id=s1; prefs=root',
+  );
+
+  jar.ingest('https://www.tainanrehab.com/admin/login.php', ['prefs=rotated; Path=/admin']);
+  assert.equal(
+    jar.header('https://www.tainanrehab.com/admin/index.php'),
+    'prefs=rotated; secure_id=s1; prefs=root',
+  );
+
+  currentTime += 3601 * 1000;
+  assert.equal(jar.header('https://www.tainanrehab.com/admin/index.php'), 'prefs=rotated; secure_id=s1');
+});
+
+test('cookie jar filters Secure cookies on the same HTTP origin', () => {
+  const jar = publisher.createCookieJar({ now: () => Date.UTC(2026, 8, 1) });
+  jar.ingest('http://www.tainanrehab.com/admin/login.php', [
+    'plain_id=p1; Path=/admin',
+    'secure_id=s1; Path=/admin; Secure',
+  ]);
+
+  assert.equal(jar.header('http://www.tainanrehab.com/admin/index.php'), 'plain_id=p1');
 });
 
 test('same-origin login redirect is unauthenticated', () => {
@@ -229,9 +289,15 @@ test('QuickUpload accepts callback number zero without hardcoding it', () => {
   const request = publisher.buildQuickUploadRequest(publisher.SITE_CONFIGS.jinan, callbackNumber);
   assert.equal(new URL(request.url).searchParams.get('CKEditorFuncNum'), String(callbackNumber));
   assert.deepEqual(publisher.parseQuickUploadCallback(
+    publisher.SITE_CONFIGS.jinan,
     `window.parent.CKEDITOR.tools.callFunction(${callbackNumber}, '/uploads/zero.png', '');`,
     callbackNumber,
-  ), { callbackNumber, relativeUrl: '/uploads/zero.png', message: '' });
+  ), {
+    callbackNumber,
+    relativeUrl: '/uploads/zero.png',
+    canonicalUrl: 'https://www.tainanrehab.com/uploads/zero.png',
+    message: '',
+  });
 });
 
 test('QuickUpload rejects negative and non-integer callback numbers', () => {
@@ -241,6 +307,7 @@ test('QuickUpload rejects negative and non-integer callback numbers', () => {
       callbackNumber,
     ), /non-negative integer/);
     assert.throws(() => publisher.parseQuickUploadCallback(
+      publisher.SITE_CONFIGS.jinan,
       "window.parent.CKEDITOR.tools.callFunction(1, '/uploads/image.png', '');",
       callbackNumber,
     ), /non-negative integer/);
@@ -249,28 +316,89 @@ test('QuickUpload rejects negative and non-integer callback numbers', () => {
 
 test('classic QuickUpload callback returns its actual relative URL and message', () => {
   assert.deepEqual(publisher.parseQuickUploadCallback(
+    publisher.SITE_CONFIGS.jinan,
     "<script>window.parent.CKEDITOR.tools.callFunction(37, '/uploads/2026/clinic.png', 'uploaded');</script>",
     37,
-  ), { callbackNumber: 37, relativeUrl: '/uploads/2026/clinic.png', message: 'uploaded' });
+  ), {
+    callbackNumber: 37,
+    relativeUrl: '/uploads/2026/clinic.png',
+    canonicalUrl: 'https://www.tainanrehab.com/uploads/2026/clinic.png',
+    message: 'uploaded',
+  });
 });
 
 test('QuickUpload callback supports an empty message', () => {
   assert.deepEqual(publisher.parseQuickUploadCallback(
+    publisher.SITE_CONFIGS.jinan,
     "window.parent.CKEDITOR.tools.callFunction(8, '/uploads/image.png', '');",
     8,
-  ), { callbackNumber: 8, relativeUrl: '/uploads/image.png', message: '' });
+  ), {
+    callbackNumber: 8,
+    relativeUrl: '/uploads/image.png',
+    canonicalUrl: 'https://www.tainanrehab.com/uploads/image.png',
+    message: '',
+  });
 });
 
 test('malformed or mismatched QuickUpload callbacks are rejected', () => {
-  assert.throws(() => publisher.parseQuickUploadCallback('not a callback', 4), /Malformed/);
   assert.throws(() => publisher.parseQuickUploadCallback(
+    publisher.SITE_CONFIGS.jinan,
+    'not a callback',
+    4,
+  ), /Malformed/);
+  assert.throws(() => publisher.parseQuickUploadCallback(
+    publisher.SITE_CONFIGS.jinan,
     "window.parent.CKEDITOR.tools.callFunction(5, '/uploads/image.png', '');",
     4,
   ), /callback number/);
   assert.throws(() => publisher.parseQuickUploadCallback(
+    publisher.SITE_CONFIGS.jinan,
     "window.parent.CKEDITOR.tools.callFunction(4, 'https://other.example/image.png', '');",
     4,
-  ), /relative URL/);
+  ), /same-origin/);
+});
+
+test('QuickUpload callback accepts only safe same-origin root-relative upload paths', () => {
+  assert.deepEqual(publisher.parseQuickUploadCallback(
+    publisher.SITE_CONFIGS.jinan,
+    "window.parent.CKEDITOR.tools.callFunction(4, '/upload/x%20file.png', 'ok');",
+    4,
+  ), {
+    callbackNumber: 4,
+    relativeUrl: '/upload/x%20file.png',
+    canonicalUrl: 'https://www.tainanrehab.com/upload/x%20file.png',
+    message: 'ok',
+  });
+
+  for (const unsafeUrl of [
+    'https://other.example/upload/x.png',
+    '//other.example/upload/x.png',
+    '/\\attacker',
+    '\\upload\\x.png',
+    '/upload\\x.png',
+    '/uploads/%5cattacker/x.png',
+    '/uploads/%5Cattacker/x.png',
+    '/uploads/%2f%2fattacker.example/x.png',
+    '/uploads/../admin/x.png',
+    '/upload/../admin/x.png',
+    '/uploads/%2e%2e/admin/x.png',
+    'javascript:alert(1)',
+    'data:text/plain,hi',
+  ]) {
+    assert.throws(() => publisher.parseQuickUploadCallback(
+      publisher.SITE_CONFIGS.jinan,
+      `window.parent.CKEDITOR.tools.callFunction(4, '${unsafeUrl.replaceAll('\\', '\\\\')}', '');`,
+      4,
+    ), /QuickUpload callback URL/);
+  }
+});
+
+test('QuickUpload callback rejects canonical origin mismatch after URL resolution', () => {
+  assert.throws(() => publisher.parseQuickUploadCallback(
+    publisher.SITE_CONFIGS.jinan,
+    "window.parent.CKEDITOR.tools.callFunction(4, 'https://www.tainanrehab.com:444/upload/x.png', '');",
+    4,
+  ), /same-origin/);
 });
 
 test('CMS editor parser validates the exact form contract and extracts editable values', () => {
@@ -389,8 +517,14 @@ test('main form builder never permits workflow constants to be overridden', () =
   });
 });
 
+const publicResponse = (html, overrides = {}) => ({
+  status: overrides.status ?? 200,
+  finalUrl: overrides.finalUrl ?? 'https://www.tainanrehab.com/time.html',
+  html,
+});
+
 const publicHtml = `
-  <main><h1>2026 年 9 月門診時間</h1>
+  <main data-public-visible="clinic-timetable"><h1>2026 年 9 月門診時間</h1>
     <img src="/uploads/jinan-september.png">
     <img src='/uploads/yian-september.png'>
   </main>`;
@@ -398,7 +532,7 @@ const publicHtml = `
 test('public verification finds caller-specified month and expected relative images', () => {
   const result = publisher.verifyPublicPage({
     config: publisher.SITE_CONFIGS.jinan,
-    html: publicHtml,
+    response: publicResponse(publicHtml),
     monthText: '2026 年 9 月',
     imageUrlsByClinic: {
       jinan: '/uploads/jinan-september.png',
@@ -414,7 +548,7 @@ test('public verification finds caller-specified month and expected relative ima
 test('public verification reports missing images and incorrect ordering', () => {
   const missing = publisher.verifyPublicPage({
     config: publisher.SITE_CONFIGS.jinan,
-    html: '<p>September</p><img src="/uploads/jinan.png">',
+    response: publicResponse('<main data-public-visible="clinic-timetable"><p>September</p><img src="/uploads/jinan.png"></main>'),
     monthText: 'September',
     imageUrlsByClinic: { jinan: '/uploads/jinan.png', yian: '/uploads/yian.png' },
   });
@@ -423,7 +557,7 @@ test('public verification reports missing images and incorrect ordering', () => 
 
   const reversed = publisher.verifyPublicPage({
     config: publisher.SITE_CONFIGS.jinan,
-    html: '<p>September</p><img src="/uploads/yian.png"><img src="/uploads/jinan.png">',
+    response: publicResponse('<main data-public-visible="clinic-timetable"><p>September</p><img src="/uploads/yian.png"><img src="/uploads/jinan.png"></main>'),
     monthText: 'September',
     imageUrlsByClinic: { jinan: '/uploads/jinan.png', yian: '/uploads/yian.png' },
   });
@@ -440,7 +574,7 @@ test('public verification ignores month text in comments, scripts, and templates
   ]) {
     const result = publisher.verifyPublicPage({
       config: publisher.SITE_CONFIGS.jinan,
-      html: `${hiddenMonth}${images}`,
+      response: publicResponse(`<main data-public-visible="clinic-timetable">${hiddenMonth}${images}</main>`),
       monthText: 'September',
       imageUrlsByClinic: { jinan: '/uploads/jinan.png', yian: '/uploads/yian.png' },
     });
@@ -457,7 +591,7 @@ test('public verification accepts images only from included actual img elements'
   ]) {
     const result = publisher.verifyPublicPage({
       config: publisher.SITE_CONFIGS.jinan,
-      html: `<p>September</p>${hiddenImages}`,
+      response: publicResponse(`<main data-public-visible="clinic-timetable"><p>September</p>${hiddenImages}</main>`),
       monthText: 'September',
       imageUrlsByClinic: { jinan: '/uploads/jinan.png', yian: '/uploads/yian.png' },
     });
@@ -475,7 +609,7 @@ test('hidden stale content cannot satisfy image existence or ordering', () => {
   ]) {
     const result = publisher.verifyPublicPage({
       config: publisher.SITE_CONFIGS.jinan,
-      html: `<p>September</p>${hiddenOpening}<img src="/uploads/jinan.png"></section><img src="/uploads/yian.png"><img src="/uploads/jinan.png">`,
+      response: publicResponse(`<main data-public-visible="clinic-timetable"><p>September</p>${hiddenOpening}<img src="/uploads/jinan.png"></section><img src="/uploads/yian.png"><img src="/uploads/jinan.png"></main>`),
       monthText: 'September',
       imageUrlsByClinic: { jinan: '/uploads/jinan.png', yian: '/uploads/yian.png' },
     });
@@ -487,11 +621,59 @@ test('hidden stale content cannot satisfy image existence or ordering', () => {
 test('public verification still accepts normal actual img order', () => {
   const result = publisher.verifyPublicPage({
     config: publisher.SITE_CONFIGS.jinan,
-    html: '<main><p>September</p><img src="/uploads/jinan.png"><img src="/uploads/yian.png"></main>',
+    response: publicResponse('<main data-public-visible="clinic-timetable"><p>September</p><img src="/uploads/jinan.png"><img src="/uploads/yian.png"></main>'),
     monthText: 'September',
     imageUrlsByClinic: { jinan: '/uploads/jinan.png', yian: '/uploads/yian.png' },
   });
   assert.equal(result.verified, true);
+});
+
+test('public verification excludes head, style-only, hidden, and class-ambiguous content', () => {
+  const images = '<img src="/uploads/jinan.png"><img src="/uploads/yian.png">';
+  for (const html of [
+    '<html><head><title>September</title></head><body><main data-public-visible="clinic-timetable"><img src="/uploads/jinan.png"><img src="/uploads/yian.png"></main></body></html>',
+    '<main data-public-visible="clinic-timetable"><style>.month::before{content:"September"}</style><img src="/uploads/jinan.png"><img src="/uploads/yian.png"></main>',
+    '<main data-public-visible="clinic-timetable"><p hidden>September</p><p>September</p><span style="display:none"><img src="/uploads/jinan.png"></span><img src="/uploads/yian.png"><img src="/uploads/jinan.png"></main>',
+    `<main data-public-visible="clinic-timetable"><p class="shown">September</p>${images}</main>`,
+  ]) {
+    const result = publisher.verifyPublicPage({
+      config: publisher.SITE_CONFIGS.jinan,
+      response: publicResponse(html),
+      monthText: 'September',
+      imageUrlsByClinic: { jinan: '/uploads/jinan.png', yian: '/uploads/yian.png' },
+    });
+    assert.equal(result.verified, false);
+  }
+});
+
+test('public verification requires complete eligible HTTP response context', () => {
+  const html = '<main data-public-visible="clinic-timetable"><p>September</p><img src="/uploads/jinan.png"><img src="/uploads/yian.png"></main>';
+  const base = {
+    config: publisher.SITE_CONFIGS.jinan,
+    monthText: 'September',
+    imageUrlsByClinic: { jinan: '/uploads/jinan.png', yian: '/uploads/yian.png' },
+  };
+
+  const pass = publisher.verifyPublicPage({
+    ...base,
+    response: publicResponse(html),
+  });
+  assert.equal(pass.context.eligible, true);
+  assert.equal(pass.verified, true);
+
+  for (const response of [
+    publicResponse(html, { status: 500 }),
+    publicResponse(html, { finalUrl: 'https://attacker.example/time.html' }),
+    publicResponse(html, { finalUrl: 'https://www.tainanrehab.com/admin/login.php' }),
+    publicResponse(html, { finalUrl: 'https://www.tainanrehab.com/error.html' }),
+    null,
+    { status: 200, html },
+    { status: 200, finalUrl: 'https://www.tainanrehab.com/time.html' },
+  ]) {
+    const result = publisher.verifyPublicPage({ ...base, response });
+    assert.equal(result.context.eligible, false);
+    assert.equal(result.verified, false);
+  }
 });
 
 test('clinic image priority comes from each site config', () => {
@@ -501,13 +683,13 @@ test('clinic image priority comes from each site config', () => {
   };
   const jinanResult = publisher.verifyPublicPage({
     config: publisher.SITE_CONFIGS.jinan,
-    html: publicHtml,
+    response: publicResponse(publicHtml),
     monthText: '2026 年 9 月',
     imageUrlsByClinic: images,
   });
   const yianResult = publisher.verifyPublicPage({
     config: publisher.SITE_CONFIGS.yian,
-    html: publicHtml,
+    response: publicResponse(publicHtml, { finalUrl: 'https://www.ian-tainan.com/time.html' }),
     monthText: '2026 年 9 月',
     imageUrlsByClinic: images,
   });
@@ -532,15 +714,23 @@ test('publisher classifier returns success only for confirmed CMS plus verified 
   });
   assert.deepEqual(publisher.classifyPublisherResult({
     cmsState: 'confirmed',
-    publicVerification: { verified: true },
+    publicVerification: { verified: true, context: { eligible: true } },
   }), { status: 'success', requiresPublicVerification: false });
   assert.deepEqual(publisher.classifyPublisherResult({
+    cmsState: 'accepted',
+    publicVerification: { verified: true, context: { eligible: true } },
+  }), { status: 'uncertain', requiresPublicVerification: true });
+  assert.deepEqual(publisher.classifyPublisherResult({
     cmsState: 'ambiguous',
-    publicVerification: { verified: false },
+    publicVerification: { verified: false, context: { eligible: true } },
   }), { status: 'uncertain', requiresPublicVerification: true });
   assert.deepEqual(publisher.classifyPublisherResult({
     cmsState: 'unexpected-new-state',
-    publicVerification: { verified: true },
+    publicVerification: { verified: true, context: { eligible: true } },
+  }), { status: 'uncertain', requiresPublicVerification: true });
+  assert.deepEqual(publisher.classifyPublisherResult({
+    cmsState: 'confirmed',
+    publicVerification: { verified: true, context: { eligible: false } },
   }), { status: 'uncertain', requiresPublicVerification: true });
 });
 

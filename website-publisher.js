@@ -46,11 +46,47 @@ function sendHttpRequest(transport, request) {
   throw new TypeError('An HTTP transport function or object with request() is required.');
 }
 
-function createCookieJar() {
+function createCookieJar(options = {}) {
   const origins = new Map();
+  const now = typeof options.now === 'function' ? options.now : () => Date.now();
+  let sequence = 0;
 
-  function ingest(origin, setCookieValues) {
-    const cookies = origins.get(origin) || new Map();
+  function parseUrl(value) {
+    try {
+      return new URL(value);
+    } catch {
+      return null;
+    }
+  }
+
+  function defaultPath(pathname) {
+    if (!pathname || pathname[0] !== '/') return '/';
+    const lastSlash = pathname.lastIndexOf('/');
+    return lastSlash <= 0 ? '/' : pathname.slice(0, lastSlash);
+  }
+
+  function normalizeCookiePath(value, requestPathname) {
+    if (typeof value !== 'string' || !value.startsWith('/')) return defaultPath(requestPathname);
+    return value;
+  }
+
+  function pathMatches(cookiePath, requestPath) {
+    if (requestPath === cookiePath) return true;
+    if (!requestPath.startsWith(cookiePath)) return false;
+    return cookiePath.endsWith('/') || requestPath[cookiePath.length] === '/';
+  }
+
+  function purgeExpired(cookies) {
+    const current = now();
+    for (const [key, cookie] of cookies) {
+      if (cookie.expiresAt !== null && cookie.expiresAt <= current) cookies.delete(key);
+    }
+  }
+
+  function ingest(requestUrl, setCookieValues) {
+    const url = parseUrl(requestUrl);
+    if (!url) return;
+    const cookies = origins.get(url.origin) || new Map();
     for (const setCookie of setCookieValues || []) {
       const parts = String(setCookie).split(';').map((part) => part.trim());
       const separator = parts[0].indexOf('=');
@@ -63,25 +99,59 @@ function createCookieJar() {
           ? [part.toLowerCase(), true]
           : [part.slice(0, index).toLowerCase(), part.slice(index + 1)];
       }));
-      cookies.set(name, {
+      const path = normalizeCookiePath(attributes.get('path'), url.pathname);
+      const maxAge = attributes.get('max-age');
+      let expiresAt = null;
+      if (maxAge !== undefined) {
+        const seconds = Number(maxAge);
+        if (Number.isFinite(seconds)) expiresAt = now() + seconds * 1000;
+      } else if (attributes.get('expires') !== undefined) {
+        const parsedExpires = Date.parse(attributes.get('expires'));
+        if (!Number.isNaN(parsedExpires)) expiresAt = parsedExpires;
+      }
+      const key = `${name}\n${path}`;
+      if (expiresAt !== null && expiresAt <= now()) {
+        cookies.delete(key);
+        continue;
+      }
+      const existing = cookies.get(key);
+      cookies.set(key, {
+        name,
         value,
+        path,
+        expiresAt,
+        sequence: existing?.sequence ?? sequence,
         metadata: {
-          path: attributes.get('path') || null,
+          path,
           secure: attributes.has('secure'),
           httpOnly: attributes.has('httponly'),
         },
       });
+      if (!existing) sequence += 1;
     }
-    origins.set(origin, cookies);
+    purgeExpired(cookies);
+    origins.set(url.origin, cookies);
   }
 
   return {
     ingest,
-    header(origin) {
-      return Array.from(origins.get(origin) || [], ([name, cookie]) => `${name}=${cookie.value}`).join('; ');
+    header(requestUrl) {
+      const url = parseUrl(requestUrl);
+      if (!url) return '';
+      const cookies = origins.get(url.origin) || new Map();
+      purgeExpired(cookies);
+      return Array.from(cookies.values())
+        .filter((cookie) => pathMatches(cookie.path, url.pathname)
+          && (!cookie.metadata.secure || url.protocol === 'https:'))
+        .sort((left, right) => right.path.length - left.path.length
+          || left.sequence - right.sequence)
+        .map((cookie) => `${cookie.name}=${cookie.value}`)
+        .join('; ');
     },
-    metadata(origin, name) {
-      const cookie = (origins.get(origin) || new Map()).get(name);
+    metadata(origin, name, path = '/') {
+      const url = parseUrl(origin);
+      const originKey = url ? url.origin : origin;
+      const cookie = (origins.get(originKey) || new Map()).get(`${name}\n${path}`);
       return cookie ? { ...cookie.metadata } : null;
     },
   };
@@ -134,7 +204,7 @@ function decodeJavaScriptString(value) {
   return value.replace(/\\(['"\\])/g, '$1');
 }
 
-function parseQuickUploadCallback(html, expectedCallbackNumber) {
+function parseQuickUploadCallback(config, html, expectedCallbackNumber) {
   validateCallbackNumber(expectedCallbackNumber);
   const match = /window\.parent\.CKEDITOR\.tools\.callFunction\(\s*(\d+)\s*,\s*(['"])((?:\\.|(?!\2).)*)\2\s*,\s*(['"])((?:\\.|(?!\4).)*)\4\s*\)\s*;?/s.exec(html || '');
   if (!match) throw new Error('Malformed CKFinder QuickUpload callback.');
@@ -142,13 +212,50 @@ function parseQuickUploadCallback(html, expectedCallbackNumber) {
   if (callbackNumber !== expectedCallbackNumber) {
     throw new Error('Unexpected CKEditor callback number.');
   }
+  if (match[3].includes('\\')) {
+    throw new Error('QuickUpload callback URL must not contain backslashes.');
+  }
   const relativeUrl = decodeJavaScriptString(match[3]);
+  if (relativeUrl.includes('\\')) {
+    throw new Error('QuickUpload callback URL must not contain backslashes.');
+  }
+  if (/%(?:2f|5c)/i.test(relativeUrl)) {
+    throw new Error('QuickUpload callback URL must not contain encoded path separators.');
+  }
+  if (/^[a-z][a-z0-9+.-]*:/i.test(relativeUrl)) {
+    let resolved;
+    try {
+      resolved = new URL(relativeUrl);
+    } catch {
+      throw new Error('QuickUpload callback URL could not be resolved.');
+    }
+    if (resolved.origin !== new URL(config.origin).origin) {
+      throw new Error('QuickUpload callback URL must resolve to same-origin.');
+    }
+    throw new Error('QuickUpload callback URL must be a root-relative upload path.');
+  }
   if (!relativeUrl.startsWith('/') || relativeUrl.startsWith('//')) {
-    throw new Error('QuickUpload callback must contain a relative URL.');
+    throw new Error('QuickUpload callback URL must be a root-relative same-origin upload path.');
+  }
+  if (!/^\/uploads?\//.test(relativeUrl)) {
+    throw new Error('QuickUpload callback URL must be a root-relative upload path.');
+  }
+  let canonicalUrl;
+  try {
+    canonicalUrl = new URL(relativeUrl, config.origin);
+  } catch {
+    throw new Error('QuickUpload callback URL could not be resolved.');
+  }
+  if (canonicalUrl.origin !== new URL(config.origin).origin) {
+    throw new Error('QuickUpload callback URL must resolve to same-origin.');
+  }
+  if (!['/upload/', '/uploads/'].some((prefix) => canonicalUrl.pathname.startsWith(prefix))) {
+    throw new Error('QuickUpload callback URL must be a root-relative upload path.');
   }
   return {
     callbackNumber,
     relativeUrl,
+    canonicalUrl: canonicalUrl.href,
     message: decodeJavaScriptString(match[5]),
   };
 }
@@ -365,13 +472,48 @@ function isHiddenElement(attributes) {
   });
 }
 
+function publicResponseContext(config, response) {
+  const context = {
+    hasContext: false,
+    statusOk: false,
+    originOk: false,
+    pathOk: false,
+    eligible: false,
+  };
+  if (!response || typeof response !== 'object') return context;
+  const { status, finalUrl, html } = response;
+  context.hasContext = Number.isInteger(status)
+    && typeof finalUrl === 'string'
+    && typeof html === 'string';
+  if (!context.hasContext) return context;
+  context.status = status;
+  context.finalUrl = finalUrl;
+  context.statusOk = status >= 200 && status < 300;
+  let actualUrl;
+  let expectedUrl;
+  try {
+    actualUrl = new URL(finalUrl);
+    expectedUrl = new URL(config.publicVerificationPath, config.origin);
+  } catch {
+    return context;
+  }
+  context.originOk = actualUrl.origin === expectedUrl.origin;
+  context.pathOk = actualUrl.pathname === expectedUrl.pathname
+    && actualUrl.search === expectedUrl.search;
+  context.eligible = context.statusOk && context.originOk && context.pathOk;
+  return context;
+}
+
 function extractIncludedDocumentContent(source) {
   const html = String(source || '');
   const voidElements = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
-  const excludedElements = new Set(['script', 'template']);
+  const excludedElements = new Set(['head', 'title', 'style', 'script', 'template', 'meta', 'link', 'base', 'noscript']);
   const stack = [];
   const visibleText = [];
   const imageUrls = [];
+  let hiddenSubtreeFound = false;
+  let classAmbiguityFound = false;
+  let contractDepth = 0;
   let cursor = 0;
 
   try {
@@ -383,17 +525,20 @@ function extractIncludedDocumentContent(source) {
         const closing = closingPattern.exec(html);
         if (!closing) return { uncertain: true, visibleText: '', imageUrls: [] };
         cursor = closingPattern.lastIndex;
-        stack.pop();
+        const popped = stack.pop();
+        if (popped.inContract) contractDepth -= 1;
         continue;
       }
 
       const openingIndex = html.indexOf('<', cursor);
       if (openingIndex === -1) {
-        if (!stack.some((entry) => entry.hidden)) visibleText.push(html.slice(cursor));
+        if (contractDepth > 0 && !stack.some((entry) => entry.hidden)) visibleText.push(html.slice(cursor));
         cursor = html.length;
         break;
       }
-      if (!stack.some((entry) => entry.hidden)) visibleText.push(html.slice(cursor, openingIndex));
+      if (contractDepth > 0 && !stack.some((entry) => entry.hidden)) {
+        visibleText.push(html.slice(cursor, openingIndex));
+      }
 
       if (html.startsWith('<!--', openingIndex)) {
         const commentEnd = html.indexOf('-->', openingIndex + 4);
@@ -412,7 +557,8 @@ function extractIncludedDocumentContent(source) {
       if (closing) {
         const name = closing[1].toLowerCase();
         if (stack.at(-1)?.name !== name) return { uncertain: true, visibleText: '', imageUrls: [] };
-        stack.pop();
+        const popped = stack.pop();
+        if (popped.inContract) contractDepth -= 1;
         continue;
       }
 
@@ -421,21 +567,37 @@ function extractIncludedDocumentContent(source) {
       const name = opening[1].toLowerCase();
       const attributes = parseAttributes(opening[2]);
       const hidden = stack.some((entry) => entry.hidden) || isHiddenElement(attributes);
-      if (name === 'img' && !hidden && attributes.src !== undefined) {
+      const entersContract = attributes['data-public-visible'] === 'clinic-timetable';
+      const inContract = contractDepth > 0 || entersContract;
+      if (inContract && attributes.class !== undefined) classAmbiguityFound = true;
+      if (inContract && hidden) hiddenSubtreeFound = true;
+      if (name === 'img' && inContract && !hidden && attributes.src !== undefined) {
         imageUrls.push(decodeHtml(attributes.src));
       }
       if (!opening[3] && !voidElements.has(name)) {
-        stack.push({ name, hidden, excluded: excludedElements.has(name) ? name : null });
+        stack.push({
+          name,
+          hidden,
+          inContract,
+          excluded: excludedElements.has(name) ? name : null,
+        });
+        if (inContract) contractDepth += 1;
       }
     }
     if (stack.length !== 0) return { uncertain: true, visibleText: '', imageUrls: [] };
-    return { uncertain: false, visibleText: decodeHtml(visibleText.join('')), imageUrls };
+    return {
+      uncertain: false,
+      visibleText: decodeHtml(visibleText.join('')),
+      imageUrls,
+      hiddenSubtreeFound,
+      classAmbiguityFound,
+    };
   } catch {
     return { uncertain: true, visibleText: '', imageUrls: [] };
   }
 }
 
-function verifyPublicPage({ config, html, monthText, imageUrlsByClinic }) {
+function verifyPublicPage({ config, response, monthText, imageUrlsByClinic }) {
   const expectedImageUrls = config.clinicPriority.flatMap((clinicId) => {
     const value = imageUrlsByClinic[clinicId];
     return Array.isArray(value) ? value : [value];
@@ -444,22 +606,34 @@ function verifyPublicPage({ config, html, monthText, imageUrlsByClinic }) {
       || !value.startsWith('/') || value.startsWith('//'))) {
     throw new Error('Expected image URLs must be relative URLs.');
   }
-  const extracted = extractIncludedDocumentContent(html);
+  const context = publicResponseContext(config, response);
+  const extracted = context.eligible
+    ? extractIncludedDocumentContent(response.html)
+    : { uncertain: true, visibleText: '', imageUrls: [] };
   const actualImageUrls = extracted.imageUrls;
   const missingImageUrls = expectedImageUrls.filter((url) => !actualImageUrls.includes(url));
   const positions = expectedImageUrls.map((url) => actualImageUrls.indexOf(url));
   const imagesInExpectedOrder = missingImageUrls.length === 0
     && positions.every((position, index) => index === 0 || position > positions[index - 1]);
   const monthFound = !extracted.uncertain
+    && context.eligible
+    && !extracted.hiddenSubtreeFound
+    && !extracted.classAmbiguityFound
     && typeof monthText === 'string'
     && monthText.length > 0
     && extracted.visibleText.includes(monthText);
   return {
+    context,
     monthFound,
     expectedImageUrls,
     missingImageUrls,
     imagesInExpectedOrder,
-    verified: monthFound && missingImageUrls.length === 0 && imagesInExpectedOrder,
+    verified: monthFound
+      && missingImageUrls.length === 0
+      && imagesInExpectedOrder
+      && context.eligible
+      && !extracted.hiddenSubtreeFound
+      && !extracted.classAmbiguityFound,
   };
 }
 
@@ -467,7 +641,9 @@ function classifyPublisherResult({ cmsState, publicVerification }) {
   if (cmsState === 'failed') {
     return { status: 'failed', requiresPublicVerification: false };
   }
-  if (cmsState === 'confirmed' && publicVerification?.verified === true) {
+  if (cmsState === 'confirmed'
+      && publicVerification?.verified === true
+      && publicVerification?.context?.eligible === true) {
     return { status: 'success', requiresPublicVerification: false };
   }
   if (cmsState === 'confirmed' && publicVerification?.verified === false) {

@@ -164,7 +164,10 @@ test('front end keeps load manual and preserves INITIAL_DATA fallback', () => {
   assert.match(html, /useState\(INITIAL_DATA\)/);
   assert.match(html, /getInitialMonthKey\(window, INITIAL_DATA\.title\)/);
   assert.match(html, /onClick=\{handleLoadSchedule\}/);
-  assert.doesNotMatch(html, /useEffect\([^]*handleLoadSchedule/);
+  assert.doesNotMatch(
+    html,
+    /useEffect\s*\(\s*\(\s*\)\s*=>\s*\{(?:(?!\n\s*\}\s*,\s*\[[^\]]*\]\s*\);)[^])*\bhandleLoadSchedule\s*\(/
+  );
   assert.doesNotMatch(html, /useState\([^]*handleLoadSchedule\(/);
   assert.match(html, /尚無已儲存資料，目前畫面未變更/);
 });

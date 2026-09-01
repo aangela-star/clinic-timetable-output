@@ -736,6 +736,44 @@ test('migration fails closed when partial state or missing active sheet exists w
   assert.deepEqual(Object.keys(finalMissing.sheets), []);
 });
 
+test('legacy load fails closed during migration state before creating Schedules', () => {
+  const harness = createHarness([], { includeSchedules: false });
+  harness.properties.SCHEDULE_VERSION_MIGRATION_STATE = JSON.stringify({ status: 'in_progress' });
+  const sheetsBefore = Object.keys(harness.sheets).sort();
+  const rowsBefore = harness.rows.map((row) => row.slice());
+  const propertiesBefore = { ...harness.properties };
+
+  const result = harness.post({ secret, action: 'load', month: '2026-09' });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'MIGRATION_INCOMPLETE');
+  assert.deepEqual(Object.keys(harness.sheets).sort(), sheetsBefore);
+  assert.equal(harness.sheets.Schedules, undefined);
+  assert.deepEqual(harness.rows, rowsBefore);
+  assert.deepEqual(harness.properties, propertiesBefore);
+  assert.deepEqual(harness.lockState.tryCalls, [10000]);
+  assert.equal(harness.lockState.releaseCalls, 1);
+});
+
+test('legacy save fails closed during migration state before creating Schedules', () => {
+  const harness = createHarness([], { includeSchedules: false });
+  harness.properties.SCHEDULE_VERSION_MIGRATION_STATE = JSON.stringify({ status: 'in_progress' });
+  const sheetsBefore = Object.keys(harness.sheets).sort();
+  const rowsBefore = harness.rows.map((row) => row.slice());
+  const propertiesBefore = { ...harness.properties };
+
+  const result = harness.post({ secret, action: 'save', month: '2026-09', data: schedule('115/9月', 'blocked') });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'MIGRATION_INCOMPLETE');
+  assert.deepEqual(Object.keys(harness.sheets).sort(), sheetsBefore);
+  assert.equal(harness.sheets.Schedules, undefined);
+  assert.deepEqual(harness.rows, rowsBefore);
+  assert.deepEqual(harness.properties, propertiesBefore);
+  assert.deepEqual(harness.lockState.tryCalls, [10000]);
+  assert.equal(harness.lockState.releaseCalls, 1);
+});
+
 test('idempotent migration on final sheet keeps authorized current version', () => {
   const harness = createHarness([
     finalHeaders,
@@ -1084,7 +1122,8 @@ test('load finds a Google Sheets Date month cell', () => {
   assert.equal(result.ok, true);
   assert.equal(result.found, true);
   assert.deepEqual(result.data, data);
-  assert.deepEqual(harness.lockState.tryCalls, []);
+  assert.deepEqual(harness.lockState.tryCalls, [10000]);
+  assert.equal(harness.lockState.releaseCalls, 1);
 });
 
 test('save overwrites the newest same-month row, removes legacy duplicates, and writes a text month key under ScriptLock', () => {

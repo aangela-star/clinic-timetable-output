@@ -59,27 +59,37 @@ function doPost(e) {
 }
 
 function legacyLoad_(body) {
-  const monthKey = String(body.month || '');
-  validateMonthKey_(monthKey);
-  const sheet = getScheduleSheet_();
-  ensureLegacyHeaders_(sheet, 'LEGACY_ACTION_UNAVAILABLE_AFTER_MIGRATION');
-  const rows = findLegacyMonthRows_(sheet, monthKey);
-  if (!rows.length) return json_({ ok: true, found: false, month: monthKey });
+  let lock;
+  try {
+    const monthKey = String(body.month || '');
+    validateMonthKey_(monthKey);
 
-  const row = rows[rows.length - 1];
-  const values = sheet.getRange(row, 1, 1, LEGACY_HEADERS.length).getValues()[0];
-  const data = JSON.parse(values[1]);
-  validateLegacyScheduleData_(data);
-  assertMonthTitleMatch_(monthKey, data.title);
+    lock = LockService.getScriptLock();
+    if (!lock.tryLock(10000)) throw codedError_('SAVE_LOCK_TIMEOUT', '目前有另一筆門診資料正在儲存，請稍後再試。');
+    assertNoMigrationState_();
 
-  return json_({
-    ok: true,
-    found: true,
-    month: monthKey,
-    schemaVersion: Number(values[2]) || SCHEMA_VERSION,
-    data: data,
-    updatedAt: isDate_(values[3]) ? values[3].toISOString() : String(values[3] || ''),
-  });
+    const sheet = getScheduleSheet_();
+    ensureLegacyHeaders_(sheet, 'LEGACY_ACTION_UNAVAILABLE_AFTER_MIGRATION');
+    const rows = findLegacyMonthRows_(sheet, monthKey);
+    if (!rows.length) return json_({ ok: true, found: false, month: monthKey });
+
+    const row = rows[rows.length - 1];
+    const values = sheet.getRange(row, 1, 1, LEGACY_HEADERS.length).getValues()[0];
+    const data = JSON.parse(values[1]);
+    validateLegacyScheduleData_(data);
+    assertMonthTitleMatch_(monthKey, data.title);
+
+    return json_({
+      ok: true,
+      found: true,
+      month: monthKey,
+      schemaVersion: Number(values[2]) || SCHEMA_VERSION,
+      data: data,
+      updatedAt: isDate_(values[3]) ? values[3].toISOString() : String(values[3] || ''),
+    });
+  } finally {
+    if (lock && lock.hasLock()) lock.releaseLock();
+  }
 }
 
 function legacySave_(body) {
@@ -92,6 +102,7 @@ function legacySave_(body) {
 
     lock = LockService.getScriptLock();
     if (!lock.tryLock(10000)) throw codedError_('SAVE_LOCK_TIMEOUT', '目前有另一筆門診資料正在儲存，請稍後再試。');
+    assertNoMigrationState_();
 
     const sheet = getScheduleSheet_();
     ensureLegacyHeaders_(sheet, 'LEGACY_ACTION_UNAVAILABLE_AFTER_MIGRATION');
@@ -376,6 +387,12 @@ function ensureLegacyHeaders_(sheet, finalSchemaErrorCode) {
 
 function ensureHeaders_(sheet) {
   ensureLegacyHeaders_(sheet);
+}
+
+function assertNoMigrationState_() {
+  if (PropertiesService.getScriptProperties().getProperty(MIGRATION_STATE_PROPERTY)) {
+    throw codedError_('MIGRATION_INCOMPLETE', '偵測到未完成的版本遷移，已停止。');
+  }
 }
 
 function ensureFinalHeaders_(sheet) {

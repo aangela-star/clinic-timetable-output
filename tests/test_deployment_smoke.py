@@ -11,6 +11,7 @@ EXPECTED_DEPENDENCIES = [
     "auth-gate.js",
     "schedule-api-config.js",
     "schedule-save-load-core.js",
+    "clinic-order.js",
     "https://unpkg.com/@babel/standalone@8.0.4/babel.min.js",
     "https://cdn.tailwindcss.com/3.4.17",
     "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js",

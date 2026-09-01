@@ -10,6 +10,7 @@
     <script src="auth-gate.js"></script>
     <script src="schedule-api-config.js"></script>
     <script src="schedule-save-load-core.js"></script>
+    <script src="clinic-order.js"></script>
     <script src="https://unpkg.com/@babel/standalone@8.0.4/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -193,7 +194,9 @@
             const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
             const [isSavingSchedule, setIsSavingSchedule] = useState(false);
             const [scheduleStatus, setScheduleStatus] = useState("");
+            const [primaryClinicId, setPrimaryClinicId] = useState(() => INITIAL_DATA.clinics[0].id);
             const captureRef = useRef(null);
+            const renderData = { ...data, clinics: ClinicOrder.orderClinicsByPriority(data.clinics, primaryClinicId) };
 
             const updateClinicSchedule = (cIdx, day, slot, value) => {
                 const newData = JSON.parse(JSON.stringify(data));
@@ -319,7 +322,7 @@
 
             return (
                 <div className="flex flex-col lg:flex-row min-h-screen bg-slate-100 text-slate-900">
-                    <PosterContent ref={captureRef} data={data} isForCapture={true} />
+                    <PosterContent ref={captureRef} data={renderData} isForCapture={true} />
                     
                     <div className="w-full lg:w-[450px] p-6 bg-white shadow-2xl overflow-y-auto max-h-screen border-r z-10 text-slate-800">
                         <header className="mb-6 pb-4 border-b flex items-center justify-between gap-4">
@@ -367,6 +370,14 @@
                             <section>
                                 <label className="block text-sm font-black text-slate-500 mb-1">年份月份</label>
                                 <input className="w-full p-2 border-2 border-slate-200 rounded-lg font-bold bg-slate-50 outline-none" value={data.title} onChange={(e) => setData({...data, title: e.target.value})} />
+                            </section>
+
+                            <section>
+                                <label className="block text-sm font-black text-slate-500 mb-1">主院所</label>
+                                <select className="w-full p-2 border-2 border-slate-200 rounded-lg font-bold bg-slate-50 outline-none" value={primaryClinicId} onChange={(e) => setPrimaryClinicId(e.target.value)}>
+                                    <option value="clinic-1">晉安優先</option>
+                                    <option value="clinic-2">毅安優先</option>
+                                </select>
                             </section>
 
                             {data.clinics.map((clinic, cIdx) => (
@@ -442,7 +453,7 @@
 
                     <div className="flex-1 flex justify-center items-start p-6 overflow-auto bg-slate-300">
                         <div className="scale-[0.25] md:scale-[0.35] lg:scale-[0.3] xl:scale-[0.4] origin-top my-4 shadow-2xl">
-                            <PosterContent data={data} isForCapture={false} />
+                            <PosterContent data={renderData} isForCapture={false} />
                         </div>
                     </div>
                 </div>

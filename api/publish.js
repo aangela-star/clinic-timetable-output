@@ -26,8 +26,8 @@ function hasSafeValidSession(req) {
 }
 
 function defaultPreflightPublish(payload) {
-  const { preflightPublish } = require('../lib/jinan-cms');
-  return preflightPublish(payload);
+  const { publishJinanCms } = require('../lib/jinan-cms');
+  return publishJinanCms(payload);
 }
 
 function skipJsonString(source, start) {
@@ -156,10 +156,16 @@ function validatePublishBody(body) {
 
 function respondToPublishResult(res, result) {
   switch (result && result.status) {
+    case 'PUBLISHED':
+      return json(res, 200, { ok: true, status: 'PUBLISHED', channels: [{ id: 'jinan-website', ok: true }] });
     case 'AUTH_FAILED':
       return json(res, 502, { ok: false, error: 'AUTH_FAILED' });
     case 'FORM_CHANGED':
       return json(res, 409, { ok: false, error: 'FORM_CHANGED' });
+    case 'UPLOAD_FAILED':
+      return json(res, 502, { ok: false, error: 'UPLOAD_FAILED' });
+    case 'SUBMIT_FAILED':
+      return json(res, 502, { ok: false, error: 'SUBMIT_FAILED' });
     case 'VERIFY_FAILED':
       return json(res, 502, { ok: false, error: 'VERIFY_FAILED' });
     case 'CMS_RESPONSE_CONTRACT_UNVERIFIED':

@@ -176,8 +176,12 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
     missingContracts.push('handleConfirmPublish no longer displays the old Step 2 placeholder 晉安官網串接尚未啟用');
   }
 
-  if (handleConfirmPublishBody && /\b(success|成功|已發布|發布完成)\b/i.test(handleConfirmPublishBody)) {
-    missingContracts.push('handleConfirmPublish never displays success wording');
+  if (!handleConfirmPublishBody || !/response\.ok\s*&&\s*result\s*&&\s*result\.ok\s*===\s*true\s*&&\s*result\.status\s*===\s*["']PUBLISHED["']/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish shows success only for HTTP ok plus exact ok:true/status:"PUBLISHED"');
+  }
+
+  if (!handleConfirmPublishBody || !/晉安官網發布完成/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish has explicit success wording for verified PUBLISHED only');
   }
 
   if (handleConfirmPublishBody && /\b(Production CMS|login|editor|upload|CMS_|VITE_|XMLHttpRequest|sendBeacon|axios|password|cookie)\b/i.test(handleConfirmPublishBody)) {

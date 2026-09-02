@@ -446,7 +446,6 @@ test('publish POST fail-closes when CMS response contract is unverified', async 
 
 test('publish POST maps adapter statuses without exposing adapter fields or PNG data', async () => {
   const routeSource = fs.readFileSync(path.join(__dirname, '..', 'api', 'publish.js'), 'utf8');
-  assert.equal(/ok:\s*true/.test(routeSource), false);
 
   const body = {
     action: 'publish',
@@ -469,10 +468,10 @@ test('publish POST maps adapter statuses without exposing adapter fields or PNG 
       error: 'CMS_RESPONSE_CONTRACT_UNVERIFIED',
       message: '晉安官網發布串接尚待完成最後驗證',
     }],
-    ['PUBLISHED', 502, { ok: false, error: 'PUBLISH_FAILED' }],
+    ['PUBLISHED', 200, { ok: true, status: 'PUBLISHED', channels: [{ id: 'jinan-website', ok: true }] }],
     ['READY_FOR_UPLOAD', 502, { ok: false, error: 'PUBLISH_FAILED' }],
-    ['UPLOAD_FAILED', 502, { ok: false, error: 'PUBLISH_FAILED' }],
-    ['SUBMIT_FAILED', 502, { ok: false, error: 'PUBLISH_FAILED' }],
+    ['UPLOAD_FAILED', 502, { ok: false, error: 'UPLOAD_FAILED' }],
+    ['SUBMIT_FAILED', 502, { ok: false, error: 'SUBMIT_FAILED' }],
     ['SOMETHING_NEW', 502, { ok: false, error: 'PUBLISH_FAILED' }],
     [undefined, 502, { ok: false, error: 'PUBLISH_FAILED' }],
   ];
@@ -491,7 +490,6 @@ test('publish POST maps adapter statuses without exposing adapter fields or PNG 
     assert.equal(adapterCalls, 1, status);
     assert.equal(res.statusCode, expectedStatusCode, status);
     assert.deepEqual(res.body, expectedBody, status);
-    assert.notDeepEqual(res.body, { ok: true, status: 'PUBLISHED' }, status);
     assert.notDeepEqual(res.body, { ok: true, status: 'ALREADY_PUBLISHED' }, status);
     assertNoStoreJson(res);
     const json = JSON.stringify(res.body);
@@ -500,60 +498,24 @@ test('publish POST maps adapter statuses without exposing adapter fields or PNG 
   }
 });
 
-test('default publish handler lazy-requires real preflight alias and performs offline read-only preflight', async () => {
+test('default publish handler lazy-requires real publish pipeline and stays disabled with zero network by default', async () => {
   const cmsModulePath = require.resolve('../lib/jinan-cms.js');
   const publishModulePath = require.resolve('../api/publish.js');
   const originalFetch = global.fetch;
+  const originalEnabled = process.env.JINAN_CMS_PUBLISH_ENABLED;
   const originalUsername = process.env.JINAN_CMS_USERNAME;
   const originalPassword = process.env.JINAN_CMS_PASSWORD;
   const calls = [];
-  const responses = [
-    {
-      status: 200,
-      url: 'https://www.tainanrehab.com/time.html',
-      body: '<html>public</html>',
-      cookies: [],
-    },
-    {
-      status: 200,
-      url: 'https://www.tainanrehab.com/admin/login.php',
-      body: loginHtml(),
-      cookies: ['sid=login; Path=/admin; HttpOnly'],
-    },
-    {
-      status: 302,
-      url: 'https://www.tainanrehab.com/admin/index.php?op=time&sub=set',
-      body: '',
-      cookies: ['sid=protected-cookie; Path=/admin; HttpOnly'],
-    },
-    {
-      status: 200,
-      url: 'https://www.tainanrehab.com/admin/index.php?op=time&sub=set',
-      body: freshEditorHtml(),
-      cookies: [],
-    },
-  ];
 
   delete require.cache[cmsModulePath];
   delete require.cache[publishModulePath];
   try {
+    delete process.env.JINAN_CMS_PUBLISH_ENABLED;
     process.env.JINAN_CMS_USERNAME = 'synthetic-user';
     process.env.JINAN_CMS_PASSWORD = 'synthetic-password';
     global.fetch = async (url, options = {}) => {
-      calls.push({
-        method: options.method,
-        url,
-        redirect: options.redirect,
-        bodyKind: options.body instanceof URLSearchParams ? 'URLSearchParams' : typeof options.body,
-      });
-      const next = responses.shift();
-      assert.ok(next, `unexpected fetch call to ${url}`);
-      return {
-        status: next.status,
-        url: next.url,
-        text: async () => next.body,
-        headers: { getSetCookie: () => next.cookies },
-      };
+      calls.push({ method: options.method, url });
+      throw new Error(`unexpected fetch call to ${url}`);
     };
 
     const defaultHandler = require('../api/publish.js');
@@ -572,7 +534,7 @@ test('default publish handler lazy-requires real preflight alias and performs of
       },
     }, res);
 
-    assert.equal(typeof require.cache[cmsModulePath]?.exports?.preflightPublish, 'function');
+    assert.equal(typeof require.cache[cmsModulePath]?.exports?.publishJinanCms, 'function');
     assert.equal(
       require.cache[cmsModulePath].exports.preflightPublish,
       require.cache[cmsModulePath].exports.preflightJinanCmsPublish,
@@ -583,21 +545,15 @@ test('default publish handler lazy-requires real preflight alias and performs of
       error: 'CMS_RESPONSE_CONTRACT_UNVERIFIED',
       message: '晉安官網發布串接尚待完成最後驗證',
     });
-    assert.deepEqual(calls.map((call) => `${call.method} ${call.url}`), [
-      'GET https://www.tainanrehab.com/time.html',
-      'GET https://www.tainanrehab.com/admin/login.php',
-      'POST https://www.tainanrehab.com/admin/login.php',
-      'GET https://www.tainanrehab.com/admin/index.php?op=time&sub=set',
-    ]);
-    assert.deepEqual(calls.map((call) => call.redirect), ['manual', 'manual', 'manual', 'manual']);
-    assert.equal(calls.some((call) => call.url.includes('QuickUpload')), false);
-    assert.equal(calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false);
+    assert.deepEqual(calls, []);
     const responseJson = JSON.stringify(res.body);
     assert.equal(responseJson.includes('synthetic-user'), false);
     assert.equal(responseJson.includes('synthetic-password'), false);
     assert.equal(responseJson.includes('data:image/png'), false);
   } finally {
     global.fetch = originalFetch;
+    if (originalEnabled === undefined) delete process.env.JINAN_CMS_PUBLISH_ENABLED;
+    else process.env.JINAN_CMS_PUBLISH_ENABLED = originalEnabled;
     if (originalUsername === undefined) delete process.env.JINAN_CMS_USERNAME;
     else process.env.JINAN_CMS_USERNAME = originalUsername;
     if (originalPassword === undefined) delete process.env.JINAN_CMS_PASSWORD;

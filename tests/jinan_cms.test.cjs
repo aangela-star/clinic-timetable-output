@@ -14,6 +14,7 @@ const {
   markUploadRecorded,
   parseCmsEditorForm,
   parseLoginForm,
+  publishJinanCms,
   parseSubmitResponse,
   parseUploadResponse,
   planRetry,
@@ -115,6 +116,14 @@ function makeTransport(responses) {
   return transport;
 }
 
+function uploadSuccessBody(pathname = '/uploads/2026/jinan.png', callbackNumber = 37, message = '') {
+  return `<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(${callbackNumber},${JSON.stringify(pathname)},${JSON.stringify(message)});</script>`;
+}
+
+function publicHtml(pathname = '/uploads/2026/jinan.png') {
+  return `<main><img src="${pathname}"></main>`;
+}
+
 function assertCode(fn, code) {
   assert.throws(fn, (error) => error && error.code === code);
 }
@@ -126,6 +135,7 @@ test('A. config exposes only public endpoints and env-name strings; result const
     editorUrl: 'https://www.tainanrehab.com/admin/index.php?op=time&sub=set',
     publicUrl: 'https://www.tainanrehab.com/time.html',
     quickUploadUrl: 'https://www.tainanrehab.com/scripts/ckfinder/core/connector/php/connector.php',
+    publishEnabledEnvName: 'JINAN_CMS_PUBLISH_ENABLED',
     usernameEnvName: 'JINAN_CMS_USERNAME',
     passwordEnvName: 'JINAN_CMS_PASSWORD',
   });
@@ -138,7 +148,9 @@ test('A. config exposes only public endpoints and env-name strings; result const
     'PUBLISHED',
     'READY_FOR_UPLOAD',
     'SUBMIT_FAILED',
+    'SUBMIT_SUCCEEDED',
     'UPLOAD_FAILED',
+    'UPLOAD_SUCCEEDED',
     'VERIFY_FAILED',
   ].sort());
 });
@@ -514,9 +526,29 @@ test('D2d. submit request fail-closes hidden target images on self or inherited 
     '<section style="display/**/:none"><img src="/upload/115晉安門診表.png"></section>',
     '<section style="dis/**/play:none"><img src="/upload/115晉安門診表.png"></section>',
     '<section style="DISPLAY: NONE !IMPORTANT"><img src="/upload/115晉安門診表.png"></section>',
+    '<section style="visibility:hidden"><img src="/upload/115晉安門診表.png"></section>',
+    '<section style="visibility: collapse !important"><img src="/upload/115晉安門診表.png"></section>',
+    '<section style="vis/**/ibility : hidden ! important"><img src="/upload/115晉安門診表.png"></section>',
+    '<section style="content-visibility:hidden"><img src="/upload/115晉安門診表.png"></section>',
+    '<section style="content/**/-visibility : hidden !important"><img src="/upload/115晉安門診表.png"></section>',
+    '<section style="opacity:0"><img src="/upload/115晉安門診表.png"></section>',
+    '<section style="opacity:+0.000e2 ! important"><img src="/upload/115晉安門診表.png"></section>',
     '<section style="display/* unterminated"><img src="/upload/115晉安門診表.png"></section>',
+    '<section style="vis\\69 bility:hidden"><img src="/upload/115晉安門診表.png"></section>',
+    '<section style="--v:hidden;visibility:var(--v)"><img src="/upload/115晉安門診表.png"></section>',
+    '<section style="opacity:calc(0)"><img src="/upload/115晉安門診表.png"></section>',
+    '<section style="text-align:center"><img src="/upload/115晉安門診表.png"></section>',
     '<p><img style="display/**/: none !important" src="/upload/115晉安門診表.png"></p>',
+    '<p><img style="visibility:hidden" src="/upload/115晉安門診表.png"></p>',
+    '<p><img style="visibility:collapse !important" src="/upload/115晉安門診表.png"></p>',
+    '<p><img style="content-visibility:hidden" src="/upload/115晉安門診表.png"></p>',
+    '<p><img style="opacity:.0" src="/upload/115晉安門診表.png"></p>',
+    '<p><img style="opacity:-0.0e-2 !important" src="/upload/115晉安門診表.png"></p>',
     '<p><img style="display/* unterminated" src="/upload/115晉安門診表.png"></p>',
+    '<p><img style="vis\\69 bility:hidden" src="/upload/115晉安門診表.png"></p>',
+    '<p><img style="--v:hidden;visibility:var(--v)" src="/upload/115晉安門診表.png"></p>',
+    '<p><img style="opacity:calc(0)" src="/upload/115晉安門診表.png"></p>',
+    '<p><img style="text-align:center" src="/upload/115晉安門診表.png"></p>',
     '<section hidden><img src="/upload/115晉安門診表.png"></section><p><img src="/upload/115晉安門診表.png"></p>',
   ]) {
     const html = freshEditorHtml().replace('<p><img src="/upload/115晉安門診表.png"></p>', note);
@@ -533,6 +565,19 @@ test('D2d. submit request fail-closes hidden target images on self or inherited 
     buildSubmitRequest(parseCmsEditorForm(html), '/upload/new.png').multipartFields.note,
     `<main>${excluded}<section><img src="/upload/new.png"></section></main>`,
   );
+
+  for (const noteWithEmptyStyle of [
+    '<main style=""><img src="/upload/115晉安門診表.png"></main>',
+    '<main style=" \n\t\r\f "><img src="/upload/115晉安門診表.png"></main>',
+    '<main><img style="" src="/upload/115晉安門診表.png"></main>',
+    '<main><img style=" \n\t\r\f " src="/upload/115晉安門診表.png"></main>',
+  ]) {
+    const htmlWithEmptyStyle = freshEditorHtml().replace('<p><img src="/upload/115晉安門診表.png"></p>', noteWithEmptyStyle);
+    assert.equal(
+      buildSubmitRequest(parseCmsEditorForm(htmlWithEmptyStyle), '/upload/new.png').multipartFields.note,
+      noteWithEmptyStyle.replace('/upload/115晉安門診表.png', '/upload/new.png'),
+    );
+  }
 });
 
 test('D3. parser decodes supported numeric entities and fails closed on unknown entity tokens', () => {
@@ -573,12 +618,95 @@ test('E. upload request builds exact QuickUpload descriptor with PNG metadata', 
   assertCode(() => buildUploadRequest({ png: Buffer.from('png'), callbackNumber: 1.2 }), 'FORM_CHANGED');
 });
 
-test('F. response parsers never guess publication success', () => {
+test('F. upload response parser verifies one complete CKEditor callback and fails closed', () => {
+  const expectedRequestUrl = `${JINAN_CMS_CONFIG.quickUploadUrl}?command=QuickUpload&type=Images&CKEditor=note&CKEditorFuncNum=37&langCode=zh`;
   assert.deepEqual(parseUploadResponse({ status: 500, body: 'x' }), { status: 'UPLOAD_FAILED' });
-  assert.deepEqual(parseSubmitResponse({ status: 500, body: 'x' }), { status: 'SUBMIT_FAILED' });
-  assert.deepEqual(parseUploadResponse({ status: 200, body: 'ok' }), { status: 'CMS_RESPONSE_CONTRACT_UNVERIFIED' });
-  assert.deepEqual(parseSubmitResponse({ status: 204, body: '' }), { status: 'CMS_RESPONSE_CONTRACT_UNVERIFIED' });
+  assert.deepEqual(parseUploadResponse({
+    status: 200,
+    finalUrl: expectedRequestUrl,
+    contentType: 'Text/HTML; charset=utf-8',
+    body: ` \n${uploadSuccessBody('/uploads/2026/jinan.png', 37)} ; \n`,
+  }, expectedRequestUrl, 37), { status: 'UPLOAD_SUCCEEDED', finalImageUrl: '/uploads/2026/jinan.png' });
+  assert.deepEqual(parseUploadResponse({
+    status: 200,
+    finalUrl: expectedRequestUrl,
+    headers: { 'content-type': 'text/html' },
+    body: 'window.parent.CKEDITOR.tools.callFunction(37,"/upload/new.png","")',
+  }, expectedRequestUrl, 37), { status: 'UPLOAD_SUCCEEDED', finalImageUrl: '/upload/new.png' });
+  assert.deepEqual(parseUploadResponse({
+    status: 200,
+    finalUrl: expectedRequestUrl,
+    contentType: 'text/html',
+    body: uploadSuccessBody('/uploads/2026/%E6%B8%AC%E8%A9%A6.png', 37),
+  }, expectedRequestUrl, 37), { status: 'UPLOAD_SUCCEEDED', finalImageUrl: '/uploads/2026/%E6%B8%AC%E8%A9%A6.png' });
+  assert.deepEqual(parseUploadResponse({
+    status: 200,
+    finalUrl: expectedRequestUrl,
+    contentType: 'text/html',
+    body: uploadSuccessBody('/upload/%E9%96%80%E8%A8%BA%20schedule.png', 37),
+  }, expectedRequestUrl, 37), { status: 'UPLOAD_SUCCEEDED', finalImageUrl: '/upload/%E9%96%80%E8%A8%BA%20schedule.png' });
+
+  let excessiveNestedUnicode = '%E6%B8%AC%E8%A9%A6.png';
+  for (let index = 0; index < 10; index += 1) excessiveNestedUnicode = encodeURIComponent(excessiveNestedUnicode);
+
+  for (const response of [
+    { status: 201, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, contentType: 'application/json', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, finalUrl: 'https://attacker.example/x', contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, finalUrl: `${expectedRequestUrl}&extra=1`, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, finalUrl: expectedRequestUrl, location: '/admin/index.php', contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, contentType: 'text/html', body: `${uploadSuccessBody('/uploads/2026/jinan.png', 37)}${uploadSuccessBody('/uploads/other.png', 37)}` },
+    { status: 200, contentType: 'text/html', body: `${uploadSuccessBody('/uploads/2026/jinan.png', 37)} alert(1)` },
+    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 38) },
+    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37, 'ok') },
+    { status: 200, contentType: 'text/html', body: uploadSuccessBody('https://www.tainanrehab.com/uploads/2026/jinan.png', 37) },
+    { status: 200, contentType: 'text/html', body: uploadSuccessBody('//www.tainanrehab.com/uploads/2026/jinan.png', 37) },
+    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png?x=1', 37) },
+    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/../jinan.png', 37) },
+    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/%2e%2e/jinan.png', 37) },
+    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/%252e%252e/jinan.png', 37) },
+    { status: 200, finalUrl: expectedRequestUrl, contentType: 'text/html', body: uploadSuccessBody('/uploads/%2525252e%2525252e/secret.png', 37) },
+    { status: 200, finalUrl: expectedRequestUrl, contentType: 'text/html', body: uploadSuccessBody(`/uploads/${excessiveNestedUnicode}`, 37) },
+    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/a\\b.png', 37) },
+    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/a\u0085b.png', 37) },
+    { status: 200, contentType: 'text/html', body: '<script>window.parent.CKEDITOR.tools.callFunction(37,"/uploads/bad.png","\\x")</script>' },
+    { status: 200, contentType: 'text/html', body: '<script src="/x.js"></script>' },
+    { status: 200, contentType: 'text/html', body: '<script async>window.parent.CKEDITOR.tools.callFunction(37,"/uploads/bad.png","")</script>' },
+    { status: 200, contentType: 'text/html', body: 'ok' },
+  ]) {
+    assert.deepEqual(parseUploadResponse(response, expectedRequestUrl, 37), { status: 'CMS_RESPONSE_CONTRACT_UNVERIFIED' });
+  }
   assert.notEqual(parseUploadResponse({ status: 200, body: 'published' }).status, 'PUBLISHED');
+});
+
+test('F2. submit response parser verifies exact safe redirect contract and fails closed', () => {
+  assert.deepEqual(parseSubmitResponse({ status: 500, body: 'x' }), { status: 'SUBMIT_FAILED' });
+  for (const location of [
+    '/admin/index.php?op=time&sub=set&mesCode=1',
+    'https://www.tainanrehab.com/admin/index.php?nonce=abc&op=time&sub=set&mesCode=1',
+  ]) {
+    assert.deepEqual(parseSubmitResponse({ status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location }, JINAN_CMS_CONFIG.editorUrl), { status: 'SUBMIT_SUCCEEDED' });
+  }
+
+  for (const response of [
+    { status: 302, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
+    { status: 302, finalUrl: 'https://attacker.example/admin/index.php?op=time&sub=set', location: '/admin/index.php?op=time&sub=set&mesCode=1' },
+    { status: 302, finalUrl: `${JINAN_CMS_CONFIG.editorUrl}&x=1`, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
+    { status: 200, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
+    { status: 301, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
+    { status: 302, location: '/admin/index.php?op=time&sub=set&mesCode=2' },
+    { status: 302, location: '/admin/index.php?op=time&sub=set' },
+    { status: 302, location: '/admin/index.php?op=time&op=time&sub=set&mesCode=1' },
+    { status: 302, location: '/admin/index.php?op=time&sub=set&mesCode=1#ok' },
+    { status: 302, location: 'http://www.tainanrehab.com/admin/index.php?op=time&sub=set&mesCode=1' },
+    { status: 302, location: 'https://attacker.example/admin/index.php?op=time&sub=set&mesCode=1' },
+    { status: 302, location: '/admin/other.php?op=time&sub=set&mesCode=1' },
+    { status: 302, location: '//www.tainanrehab.com/admin/index.php?op=time&sub=set&mesCode=1' },
+    { status: 302 },
+  ]) {
+    assert.deepEqual(parseSubmitResponse(response, JINAN_CMS_CONFIG.editorUrl), { status: 'CMS_RESPONSE_CONTRACT_UNVERIFIED' });
+  }
   assert.notEqual(parseSubmitResponse({ status: 200, body: 'published' }).status, 'PUBLISHED');
 });
 
@@ -906,6 +1034,210 @@ test('G4. preflight validates login GET form before sending credentials', async 
   assert.deepEqual(transport.calls.map((call) => call.method), ['GET', 'GET']);
 });
 
+test('M. publish pipeline gate-disabled returns unverified before credentials or transport', async () => {
+  const transport = makeTransport([new Error('must not call')]);
+  const result = await publishJinanCms({
+    pngDataUrl: pngDataUrl(),
+    env: {
+      JINAN_CMS_PUBLISH_ENABLED: 'false',
+      JINAN_CMS_USERNAME: 'synthetic-user',
+      JINAN_CMS_PASSWORD: 'synthetic-password',
+    },
+    transport,
+  });
+
+  assert.deepEqual(result, { status: 'CMS_RESPONSE_CONTRACT_UNVERIFIED' });
+  assert.equal(transport.calls.length, 0);
+});
+
+test('M2. publish pipeline succeeds only after verified upload, submit redirect, and fresh public match', async () => {
+  const transport = makeTransport([
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '<main></main>' },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login; Path=/admin; HttpOnly'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'] },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml().replace('fresh-token', 'before-upload') },
+    { status: 200, contentType: 'text/html; charset=utf-8', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml().replace('fresh-token', 'after-upload') },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '<main></main>' },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicHtml('/uploads/2026/jinan.png') },
+  ]);
+  const sleeps = [];
+
+  const result = await publishJinanCms({
+    pngDataUrl: pngDataUrl(),
+    callbackNumber: 37,
+    env: {
+      JINAN_CMS_PUBLISH_ENABLED: 'true',
+      JINAN_CMS_USERNAME: 'synthetic-user',
+      JINAN_CMS_PASSWORD: 'synthetic-password',
+    },
+    transport,
+    sleep: async (ms) => { sleeps.push(ms); },
+    verificationDelaysMs: [5, 10],
+  });
+
+  assert.deepEqual(result, {
+    status: 'PUBLISHED',
+    channels: [{ id: 'jinan-website', ok: true }],
+  });
+  assert.deepEqual(transport.calls.map((call) => `${call.method} ${call.url}`), [
+    `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+    `GET ${JINAN_CMS_CONFIG.loginUrl}`,
+    `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+    `GET ${JINAN_CMS_CONFIG.editorUrl}`,
+    `POST ${JINAN_CMS_CONFIG.quickUploadUrl}?command=QuickUpload&type=Images&CKEditor=note&CKEditorFuncNum=37&langCode=zh`,
+    `GET ${JINAN_CMS_CONFIG.editorUrl}`,
+    `POST ${JINAN_CMS_CONFIG.editorUrl}`,
+    `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+    `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+  ]);
+  assert.equal(transport.calls.filter((call) => call.url.includes('QuickUpload')).length, 1);
+  assert.equal(transport.calls.filter((call) => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl).length, 1);
+  assert.deepEqual(sleeps, [5]);
+  const json = JSON.stringify(result);
+  for (const secret of ['synthetic-user', 'synthetic-password', 'protected-cookie', 'data:image/png', 'after-upload', '/uploads/2026/jinan.png']) {
+    assert.equal(json.includes(secret), false);
+  }
+});
+
+test('M2b. publish pipeline performs post-submit public verification anonymously', async () => {
+  const transport = makeTransport([
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '<main></main>' },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login; Path=/admin; HttpOnly'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=authenticated; Path=/; HttpOnly'] },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml().replace('fresh-token', 'before-upload') },
+    { status: 200, contentType: 'text/html; charset=utf-8', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml().replace('fresh-token', 'after-upload') },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicHtml('/uploads/2026/jinan.png') },
+  ]);
+
+  const result = await publishJinanCms({
+    pngDataUrl: pngDataUrl(),
+    callbackNumber: 37,
+    env: {
+      JINAN_CMS_PUBLISH_ENABLED: 'true',
+      JINAN_CMS_USERNAME: 'synthetic-user',
+      JINAN_CMS_PASSWORD: 'synthetic-password',
+    },
+    transport,
+    sleep: async () => {},
+  });
+
+  assert.equal(result.status, 'PUBLISHED');
+  const postSubmitPublicCalls = transport.calls
+    .slice(7)
+    .filter((call) => call.method === 'GET' && call.url === JINAN_CMS_CONFIG.publicUrl);
+  assert.equal(postSubmitPublicCalls.length, 1);
+  assert.equal(postSubmitPublicCalls.every((call) => call.hasCookie === false && call.cookie === ''), true);
+});
+
+test('M3. publish pipeline stops at each failed phase and never retries mutations', async () => {
+  const env = {
+    JINAN_CMS_PUBLISH_ENABLED: 'true',
+    JINAN_CMS_USERNAME: 'synthetic-user',
+    JINAN_CMS_PASSWORD: 'synthetic-password',
+  };
+  const cases = [
+    ['invalid png', [], { pngDataUrl: 'data:image/png;base64,bad' }, 'VERIFY_FAILED'],
+    ['initial public unavailable', [{ status: 302, finalUrl: JINAN_CMS_CONFIG.publicUrl, location: '/time.html', body: '' }], {}, 'VERIFY_FAILED'],
+    ['login form changed', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '' },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: '<form></form>' },
+    ], {}, 'FORM_CHANGED'],
+    ['login post network ambiguity', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '' },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      new Error('timeout after login mutation'),
+    ], {}, 'VERIFY_FAILED'],
+    ['editor auth failed', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '' },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/login.php' },
+    ], {}, 'AUTH_FAILED'],
+    ['upload contract unknown', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '' },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
+      { status: 200, contentType: 'text/html', body: 'ok' },
+    ], {}, 'CMS_RESPONSE_CONTRACT_UNVERIFIED'],
+    ['upload non-2xx', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '' },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
+      { status: 500, contentType: 'text/html', body: 'no' },
+    ], {}, 'UPLOAD_FAILED'],
+    ['fresh editor after upload changed', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '' },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
+      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: '<form></form>' },
+    ], {}, 'FORM_CHANGED'],
+    ['submit ambiguity', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '' },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
+      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
+      new Error('timeout after submit mutation'),
+    ], {}, 'CMS_RESPONSE_CONTRACT_UNVERIFIED'],
+  ];
+
+  for (const [name, responses, options, expectedStatus] of cases) {
+    const transport = makeTransport(responses);
+    const result = await publishJinanCms({
+      pngDataUrl: pngDataUrl(),
+      callbackNumber: 37,
+      env,
+      transport,
+      sleep: async () => {},
+      ...options,
+    });
+    assert.equal(result.status, expectedStatus, name);
+    assert.equal(transport.calls.filter((call) => call.url.includes('QuickUpload')).length <= 1, true, name);
+    assert.equal(transport.calls.filter((call) => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl).length <= 1, true, name);
+  }
+});
+
+test('M4. publish pipeline exhausts bounded public verification GET retries safely', async () => {
+  const transport = makeTransport([
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '<main></main>' },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
+    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '<main></main>' },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '<main></main>' },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '<main></main>' },
+  ]);
+  const sleeps = [];
+  const result = await publishJinanCms({
+    pngDataUrl: pngDataUrl(),
+    callbackNumber: 37,
+    env: {
+      JINAN_CMS_PUBLISH_ENABLED: 'true',
+      JINAN_CMS_USERNAME: 'synthetic-user',
+      JINAN_CMS_PASSWORD: 'synthetic-password',
+    },
+    transport,
+    sleep: async (ms) => { sleeps.push(ms); },
+    verificationDelaysMs: [1, 2, 999],
+  });
+
+  assert.equal(result.status, 'VERIFY_FAILED');
+  assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === JINAN_CMS_CONFIG.publicUrl).length, 4);
+  assert.deepEqual(sleeps, [1, 2]);
+});
+
 test('I. pure retry/idempotency and public-current inspection model', () => {
   const attempt = createAttemptRecord('attempt-1');
   assert.deepEqual(attempt, { id: 'attempt-1', uploadedImageUrl: null, status: 'READY_FOR_UPLOAD' });
@@ -1052,9 +1384,29 @@ test('I7. public-current inspection fail-closes hidden target images on self or 
     '<main style="display/**/:none"><img src="/uploads/2026/jinan.png"></main>',
     '<main style="dis/**/play: none !important"><img src="/uploads/2026/jinan.png"></main>',
     '<main style="DISPLAY: NONE !IMPORTANT"><img src="/uploads/2026/jinan.png"></main>',
+    '<main style="visibility:hidden"><img src="/uploads/2026/jinan.png"></main>',
+    '<main style="visibility:collapse !important"><img src="/uploads/2026/jinan.png"></main>',
+    '<main style="vis/**/ibility : hidden ! important"><img src="/uploads/2026/jinan.png"></main>',
+    '<main style="content-visibility:hidden"><img src="/uploads/2026/jinan.png"></main>',
+    '<main style="content/**/-visibility : hidden !important"><img src="/uploads/2026/jinan.png"></main>',
+    '<main style="opacity:0"><img src="/uploads/2026/jinan.png"></main>',
+    '<main style="opacity:+0.000e2 ! important"><img src="/uploads/2026/jinan.png"></main>',
     '<main style="display/* unterminated"><img src="/uploads/2026/jinan.png"></main>',
+    '<main style="vis\\69 bility:hidden"><img src="/uploads/2026/jinan.png"></main>',
+    '<main style="--v:hidden;visibility:var(--v)"><img src="/uploads/2026/jinan.png"></main>',
+    '<main style="opacity:calc(0)"><img src="/uploads/2026/jinan.png"></main>',
+    '<main style="text-align:center"><img src="/uploads/2026/jinan.png"></main>',
     '<main><img style="display/**/: none !important" src="/uploads/2026/jinan.png"></main>',
+    '<main><img style="visibility:hidden" src="/uploads/2026/jinan.png"></main>',
+    '<main><img style="visibility:collapse !important" src="/uploads/2026/jinan.png"></main>',
+    '<main><img style="content-visibility:hidden" src="/uploads/2026/jinan.png"></main>',
+    '<main><img style="opacity:.0" src="/uploads/2026/jinan.png"></main>',
+    '<main><img style="opacity:-0.0e-2 !important" src="/uploads/2026/jinan.png"></main>',
     '<main><img style="display/* unterminated" src="/uploads/2026/jinan.png"></main>',
+    '<main><img style="vis\\69 bility:hidden" src="/uploads/2026/jinan.png"></main>',
+    '<main><img style="--v:hidden;visibility:var(--v)" src="/uploads/2026/jinan.png"></main>',
+    '<main><img style="opacity:calc(0)" src="/uploads/2026/jinan.png"></main>',
+    '<main><img style="text-align:center" src="/uploads/2026/jinan.png"></main>',
     '<main hidden><img src="/uploads/2026/jinan.png"></main><img src="/uploads/2026/jinan.png">',
   ]) {
     assert.deepEqual(inspectPublicCurrent({
@@ -1075,6 +1427,18 @@ test('I7. public-current inspection fail-closes hidden target images on self or 
     },
     savedTargetUrl: '/uploads/2026/jinan.png',
   }), { status: 'ALREADY_PUBLISHED' });
+
+  for (const body of [
+    '<main style=""><img src="/uploads/2026/jinan.png"></main>',
+    '<main style=" \n\t\r\f "><img src="/uploads/2026/jinan.png"></main>',
+    '<main><img style="" src="/uploads/2026/jinan.png"></main>',
+    '<main><img style=" \n\t\r\f " src="/uploads/2026/jinan.png"></main>',
+  ]) {
+    assert.deepEqual(inspectPublicCurrent({
+      response: { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body },
+      savedTargetUrl: '/uploads/2026/jinan.png',
+    }), { status: 'ALREADY_PUBLISHED' });
+  }
 });
 
 test('K. cookie jar scopes Path, Secure, expiry, deletion, and same-name ordering', () => {
@@ -1106,7 +1470,12 @@ test('L. default fetch transport never follows redirects and returns Location pl
         url,
         text: async () => 'manual body',
         headers: {
-          get: (name) => (String(name).toLowerCase() === 'location' ? '/admin/index.php' : null),
+          get: (name) => {
+            const lower = String(name).toLowerCase();
+            if (lower === 'location') return '/admin/index.php';
+            if (lower === 'content-length') return '11';
+            return null;
+          },
           getSetCookie: () => ['sid=protected-cookie; Path=/admin; HttpOnly'],
         },
       };
@@ -1128,9 +1497,136 @@ test('L. default fetch transport never follows redirects and returns Location pl
       body: 'manual body',
       setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'],
       location: '/admin/index.php',
+      contentType: null,
     });
   } finally {
     global.fetch = originalFetch;
+  }
+});
+
+test('L2. default fetch transport streams split UTF-8 safely within the body limit', async () => {
+  const originalFetch = global.fetch;
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode('A你B');
+  try {
+    global.fetch = async () => ({
+      status: 200,
+      url: JINAN_CMS_CONFIG.publicUrl,
+      headers: { get: () => null, getSetCookie: () => [] },
+      body: {
+        getReader() {
+          const chunks = [
+            bytes.slice(0, 2),
+            bytes.slice(2, 4),
+            bytes.slice(4),
+          ];
+          return {
+            async read() {
+              return chunks.length > 0 ? { done: false, value: chunks.shift() } : { done: true };
+            },
+            async cancel() {},
+          };
+        },
+      },
+    });
+
+    const transport = createDefaultFetchTransport({ timeoutMs: 1000, maxBodyBytes: 5 });
+    const result = await transport({ method: 'GET', url: JINAN_CMS_CONFIG.publicUrl });
+    assert.equal(result.body, 'A你B');
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('L3. default fetch transport cancels streaming responses immediately above max bytes', async () => {
+  const originalFetch = global.fetch;
+  let reads = 0;
+  let cancelled = false;
+  try {
+    global.fetch = async () => ({
+      status: 200,
+      url: JINAN_CMS_CONFIG.publicUrl,
+      headers: { get: () => null, getSetCookie: () => [] },
+      body: {
+        getReader() {
+          const chunks = [new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6]), new Uint8Array([7])];
+          return {
+            async read() {
+              reads += 1;
+              return chunks.length > 0 ? { done: false, value: chunks.shift() } : { done: true };
+            },
+            async cancel() {
+              cancelled = true;
+            },
+          };
+        },
+      },
+      async text() {
+        throw new Error('must not materialize oversized response');
+      },
+    });
+
+    const transport = createDefaultFetchTransport({ timeoutMs: 1000, maxBodyBytes: 5 });
+    await assert.rejects(
+      () => transport({ method: 'GET', url: JINAN_CMS_CONFIG.publicUrl }),
+      /too large/i,
+    );
+    assert.equal(cancelled, true);
+    assert.equal(reads, 2);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('L4. default fetch transport without a web stream requires bounded Content-Length', async () => {
+  const originalFetch = global.fetch;
+  const cases = [
+    [null, 'abc', false],
+    ['bad', 'abc', false],
+    ['4', 'abcd', true],
+    ['6', 'abcdef', false],
+    ['4', 'abcde', false],
+  ];
+  try {
+    for (const [contentLength, bodyText, shouldPass] of cases) {
+      global.fetch = async () => ({
+        status: 200,
+        url: JINAN_CMS_CONFIG.publicUrl,
+        headers: {
+          get(name) {
+            return name.toLowerCase() === 'content-length' ? contentLength : null;
+          },
+          getSetCookie: () => [],
+        },
+        async text() {
+          return bodyText;
+        },
+      });
+      const transport = createDefaultFetchTransport({ timeoutMs: 1000, maxBodyBytes: 5 });
+      if (shouldPass) {
+        const result = await transport({ method: 'GET', url: JINAN_CMS_CONFIG.publicUrl });
+        assert.equal(result.body, bodyText);
+      } else {
+        await assert.rejects(
+          () => transport({ method: 'GET', url: JINAN_CMS_CONFIG.publicUrl }),
+          /content-length|too large/i,
+        );
+      }
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('L5. default fetch transport validates body limit and timeout options', () => {
+  for (const options of [
+    { timeoutMs: 0, maxBodyBytes: 100 },
+    { timeoutMs: Number.POSITIVE_INFINITY, maxBodyBytes: 100 },
+    { timeoutMs: 100, maxBodyBytes: 0 },
+    { timeoutMs: 100, maxBodyBytes: 1.5 },
+    { timeoutMs: 100, maxBodyBytes: Number.POSITIVE_INFINITY },
+  ]) {
+    assert.throws(() => createDefaultFetchTransport(options), /positive bounded integer/i);
   }
 });
 

@@ -380,8 +380,8 @@
                         result = null;
                     }
 
-                    if (response.ok && result && result.ok) {
-                        setPublishStatus("晉安官網發布串接尚待完成最後驗證");
+                    if (response.ok && result && result.ok === true && result.status === "PUBLISHED") {
+                        setPublishStatus("晉安官網發布完成");
                     } else if (result && result.error === "AUTH_REQUIRED") {
                         setPublishStatus("請重新登入後再操作。");
                     } else {

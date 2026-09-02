@@ -199,6 +199,7 @@
             const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
             const [selectedPublishChannelIds, setSelectedPublishChannelIds] = useState([]);
             const [publishStatus, setPublishStatus] = useState("");
+            const [isPublishing, setIsPublishing] = useState(false);
             const captureRef = useRef(null);
             const publishButtonRef = useRef(null);
             const publishDialogRef = useRef(null);
@@ -328,6 +329,15 @@
                 }, 500);
             };
 
+            const generatePublishPngDataUrl = async () => {
+                if (!captureRef.current) return;
+                await document.fonts.ready;
+                const canvas = await html2canvas(captureRef.current, {
+                    scale: 2, useCORS: true, backgroundColor: "#f8fafc", width: 1080, height: 1920
+                });
+                return canvas.toDataURL("image/png", 1.0);
+            };
+
             const handleOpenPublish = () => {
                 setSelectedPublishChannelIds([]);
                 setPublishStatus("");
@@ -343,9 +353,45 @@
                 setPublishStatus("");
             };
 
-            const handleConfirmPublish = () => {
+            const handleConfirmPublish = async () => {
                 if (!publishReadiness.canConfirm) return;
-                setPublishStatus("晉安官網串接尚未啟用");
+                if (isPublishing) return;
+
+                setIsPublishing(true);
+                try {
+                    const pngDataUrl = await generatePublishPngDataUrl();
+                    const response = await fetch("/api/publish", {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            action: "publish",
+                            channelIds: selectedPublishChannelIds,
+                            primaryClinicId,
+                            title: data.title,
+                            pngDataUrl,
+                        }),
+                    });
+
+                    let result = null;
+                    try {
+                        result = await response.json();
+                    } catch (err) {
+                        result = null;
+                    }
+
+                    if (response.ok && result && result.ok) {
+                        setPublishStatus("晉安官網發布串接尚待完成最後驗證");
+                    } else if (result && result.error === "AUTH_REQUIRED") {
+                        setPublishStatus("請重新登入後再操作。");
+                    } else {
+                        setPublishStatus("晉安官網發布串接尚待完成最後驗證");
+                    }
+                } catch (err) {
+                    setPublishStatus("晉安官網發布串接尚待完成最後驗證");
+                } finally {
+                    setIsPublishing(false);
+                }
             };
 
             useEffect(() => {
@@ -595,7 +641,7 @@
                                     <button type="button" onClick={() => setIsPublishDialogOpen(false)} className="py-2 px-3 rounded-lg border-2 border-slate-200 text-slate-600 text-sm font-black">
                                         取消
                                     </button>
-                                    <button type="button" onClick={handleConfirmPublish} disabled={!publishReadiness.canConfirm} className="py-2 px-3 rounded-lg bg-teal-600 text-white text-sm font-black disabled:opacity-50">
+                                    <button type="button" onClick={handleConfirmPublish} disabled={!publishReadiness.canConfirm || isPublishing} className="py-2 px-3 rounded-lg bg-teal-600 text-white text-sm font-black disabled:opacity-50">
                                         確認發布
                                     </button>
                                 </div>

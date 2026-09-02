@@ -22,6 +22,23 @@ function getFunctionBody(source, functionName) {
   return source.slice(declarationMatch.index + declarationMatch[0].length, cursor - 1);
 }
 
+function getFunctionSource(source, functionName) {
+  const declarationPattern = new RegExp(`const\\s+${functionName}\\s*=\\s*(?:async\\s*)?\\([^)]*\\)\\s*=>\\s*\\{`);
+  const declarationMatch = declarationPattern.exec(source);
+  if (!declarationMatch) return '';
+
+  let depth = 1;
+  let cursor = declarationMatch.index + declarationMatch[0].length;
+  while (cursor < source.length && depth > 0) {
+    const char = source[cursor];
+    if (char === '{') depth += 1;
+    if (char === '}') depth -= 1;
+    cursor += 1;
+  }
+
+  return source.slice(declarationMatch.index, cursor);
+}
+
 test('publish confirmation UI source contracts are wired end-to-end', () => {
   const missingContracts = [];
 
@@ -48,6 +65,10 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
 
   if (!/\[\s*publishStatus\s*,\s*setPublishStatus\s*\]\s*=\s*useState\s*\(\s*["']{2}\s*\)/.test(indexHtml)) {
     missingContracts.push('App state publishStatus defaults ""');
+  }
+
+  if (!/\[\s*isPublishing\s*,\s*setIsPublishing\s*\]\s*=\s*useState\s*\(\s*false\s*\)/.test(indexHtml)) {
+    missingContracts.push('App state isPublishing defaults false');
   }
 
   const handleOpenPublishBody = getFunctionBody(indexHtml, 'handleOpenPublish');
@@ -111,21 +132,90 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
     missingContracts.push('primary-clinic warning must render only once via primaryClinicGuard');
   }
 
-  if (!/<button[\s\S]*onClick=\{handleConfirmPublish\}[\s\S]*disabled=\{!publishReadiness\.canConfirm\}[\s\S]*確認發布[\s\S]*<\/button>/.test(indexHtml)) {
-    missingContracts.push('確認發布 is disabled when !publishReadiness.canConfirm');
+  if (!/<button[\s\S]*onClick=\{handleConfirmPublish\}[\s\S]*disabled=\{!publishReadiness\.canConfirm\s*\|\|\s*isPublishing\}[\s\S]*確認發布[\s\S]*<\/button>/.test(indexHtml)) {
+    missingContracts.push('確認發布 is disabled when !publishReadiness.canConfirm || isPublishing');
   }
 
+  const handleConfirmPublishSource = getFunctionSource(indexHtml, 'handleConfirmPublish');
   const handleConfirmPublishBody = getFunctionBody(indexHtml, 'handleConfirmPublish');
   if (
-    !handleConfirmPublishBody ||
-    !/if\s*\(\s*!publishReadiness\.canConfirm\s*\)\s*return/.test(handleConfirmPublishBody) ||
-    !/setPublishStatus\s*\(\s*["']晉安官網串接尚未啟用["']\s*\)/.test(handleConfirmPublishBody)
+    !handleConfirmPublishSource ||
+    !/const\s+handleConfirmPublish\s*=\s*async\s*\(\s*\)\s*=>\s*\{\s*if\s*\(\s*!publishReadiness\.canConfirm\s*\)\s*return\s*;/.test(handleConfirmPublishSource)
   ) {
-    missingContracts.push('handleConfirmPublish guards readiness and only sets "晉安官網串接尚未啟用"');
+    missingContracts.push('handleConfirmPublish is async and starts with if (!publishReadiness.canConfirm) return;');
   }
 
-  if (!handleConfirmPublishBody || /\b(fetch|XMLHttpRequest|sendBeacon|axios|URL)\b/.test(handleConfirmPublishBody)) {
-    missingContracts.push('handleConfirmPublish body contains no fetch, XMLHttpRequest, sendBeacon, axios, or URL');
+  if (!handleConfirmPublishBody || !/const\s+pngDataUrl\s*=\s*await\s+generatePublishPngDataUrl\s*\(\s*\)/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish awaits generatePublishPngDataUrl()');
+  }
+
+  if (
+    !handleConfirmPublishBody ||
+    !/fetch\s*\(\s*["']\/api\/publish["']\s*,\s*\{[\s\S]*method\s*:\s*["']POST["'][\s\S]*credentials\s*:\s*["']same-origin["'][\s\S]*headers\s*:\s*\{[\s\S]*["']Content-Type["']\s*:\s*["']application\/json["'][\s\S]*\}[\s\S]*body\s*:\s*JSON\.stringify\s*\(\s*\{[\s\S]*action\s*:\s*["']publish["'][\s\S]*channelIds\s*:\s*selectedPublishChannelIds[\s\S]*primaryClinicId[\s\S]*title\s*:\s*data\.title[\s\S]*pngDataUrl[\s\S]*\}\s*\)[\s\S]*\}\s*\)/.test(handleConfirmPublishBody)
+  ) {
+    missingContracts.push('handleConfirmPublish POSTs only to same-origin /api/publish with selected channel ids, primaryClinicId, title, and pngDataUrl');
+  }
+
+  if (!handleConfirmPublishBody || !/setIsPublishing\s*\(\s*true\s*\)/.test(handleConfirmPublishBody) || !/setIsPublishing\s*\(\s*false\s*\)/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish sets and clears isPublishing');
+  }
+
+  if (!handleConfirmPublishBody || !/晉安官網發布串接尚待完成最後驗證/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish fallback status is exactly 晉安官網發布串接尚待完成最後驗證');
+  }
+
+  if (!handleConfirmPublishBody || !/\bcatch\s*\(/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish has a catch path for publish errors');
+  }
+
+  if (!handleConfirmPublishBody || !/AUTH_REQUIRED/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish may handle AUTH_REQUIRED with re-login text');
+  }
+
+  if (handleConfirmPublishBody && /晉安官網串接尚未啟用/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish no longer displays the old Step 2 placeholder 晉安官網串接尚未啟用');
+  }
+
+  if (handleConfirmPublishBody && /\b(success|成功|已發布|發布完成)\b/i.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish never displays success wording');
+  }
+
+  if (handleConfirmPublishBody && /\b(Production CMS|login|editor|upload|CMS_|VITE_|XMLHttpRequest|sendBeacon|axios|password|cookie)\b/i.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish contains no CMS origins, login/editor/upload URLs, CMS env names, alternate transports, or credential fields');
+  }
+
+  assert.deepEqual(missingContracts, []);
+});
+
+test('publish PNG helper uses current preview capture without download side effects', () => {
+  const missingContracts = [];
+  const helperBody = getFunctionBody(indexHtml, 'generatePublishPngDataUrl');
+
+  if (!/const\s+generatePublishPngDataUrl\s*=\s*async\s*\(\s*\)\s*=>\s*\{/.test(indexHtml)) {
+    missingContracts.push('generatePublishPngDataUrl is a dedicated async helper');
+  }
+
+  if (!helperBody || !/captureRef\.current/.test(helperBody)) {
+    missingContracts.push('generatePublishPngDataUrl uses current captureRef.current');
+  }
+
+  if (!helperBody || !/await\s+document\.fonts\.ready/.test(helperBody)) {
+    missingContracts.push('generatePublishPngDataUrl awaits document.fonts.ready');
+  }
+
+  if (
+    !helperBody ||
+    !/html2canvas\s*\(\s*captureRef\.current\s*,\s*\{[\s\S]*scale\s*:\s*2[\s\S]*useCORS\s*:\s*true[\s\S]*backgroundColor\s*:\s*["']#f8fafc["'][\s\S]*width\s*:\s*1080[\s\S]*height\s*:\s*1920[\s\S]*\}\s*\)/.test(helperBody)
+  ) {
+    missingContracts.push('generatePublishPngDataUrl calls html2canvas with scale:2,useCORS:true,backgroundColor:"#f8fafc",width:1080,height:1920');
+  }
+
+  if (!helperBody || !/return\s+canvas\.toDataURL\s*\(\s*["']image\/png["']\s*,\s*1\.0\s*\)/.test(helperBody)) {
+    missingContracts.push('generatePublishPngDataUrl returns canvas.toDataURL("image/png", 1.0)');
+  }
+
+  if (helperBody && /\.(click|download)\b|createElement\s*\(\s*["']a["']\s*\)|input\.click|fileInput|selectedFile/.test(helperBody)) {
+    missingContracts.push('generatePublishPngDataUrl does not click/download/reselect a file');
   }
 
   assert.deepEqual(missingContracts, []);

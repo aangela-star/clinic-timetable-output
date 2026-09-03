@@ -8,6 +8,16 @@ process.env.CLINIC_SERVER_SECRET = 'test-only-secret-value-that-is-longer-than-3
 
 const { createSessionToken } = require('../lib/server-session.js');
 const { createHandler } = require('../api/publish.js');
+const cmsModulePath = require.resolve('../lib/jinan-cms.js');
+const {
+  JINAN_CMS_CONFIG,
+} = require('../lib/jinan-cms.js');
+let { publishJinanCms } = require('../lib/jinan-cms.js');
+
+function reloadJinanCmsModule() {
+  delete require.cache[cmsModulePath];
+  ({ publishJinanCms } = require('../lib/jinan-cms.js'));
+}
 
 function responseRecorder() {
   return {
@@ -463,6 +473,8 @@ test('publish POST maps adapter statuses without exposing adapter fields or PNG 
       error: 'CMS_RESPONSE_CONTRACT_UNVERIFIED',
       message: '晉安官網發布串接尚待完成最後驗證',
     }],
+    ['PUBLISH_IN_PROGRESS', 409, { ok: false, error: 'PUBLISH_IN_PROGRESS' }],
+    ['MANUAL_CHECK_REQUIRED', 409, { ok: false, error: 'MANUAL_CHECK_REQUIRED', orphanUploadRisk: true }],
     ['ALREADY_PUBLISHED', 409, {
       ok: false,
       error: 'CMS_RESPONSE_CONTRACT_UNVERIFIED',
@@ -484,6 +496,7 @@ test('publish POST maps adapter statuses without exposing adapter fields or PNG 
         status,
         secret: 'adapter-secret-must-not-leak',
         pngDataUrl: body.pngDataUrl,
+        finalImagePath: '/uploads/adapter-must-not-leak.png',
         summary: { internal: true },
       }),
     });
@@ -495,11 +508,62 @@ test('publish POST maps adapter statuses without exposing adapter fields or PNG 
     const json = JSON.stringify(res.body);
     assert.equal(json.includes('adapter-secret-must-not-leak'), false, status);
     assert.equal(json.includes('data:image/png'), false, status);
+    assert.equal(json.includes('/uploads/adapter-must-not-leak.png'), false, status);
   }
 });
 
+test('publish POST maps real pipeline concurrent admission lock through route without duplicate mutation work', async () => {
+  reloadJinanCmsModule();
+  const body = {
+    action: 'publish',
+    channelIds: ['jinan-website'],
+    primaryClinicId: 'clinic-1',
+    title: '晉安門診表',
+    pngDataUrl: currentPreviewPngDataUrl(),
+  };
+  let releaseFirst;
+  const transportCalls = [];
+  const firstPublicResponse = new Promise((resolve) => {
+    releaseFirst = () => resolve({ status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '<main></main>' });
+  });
+  const transport = async (request) => {
+    transportCalls.push(request);
+    if (transportCalls.length === 1) return firstPublicResponse;
+    throw new Error('second concurrent route call must not reach transport');
+  };
+  const env = {
+    JINAN_CMS_PUBLISH_ENABLED: 'true',
+    JINAN_CMS_USERNAME: 'synthetic-user',
+    JINAN_CMS_PASSWORD: 'synthetic-password',
+  };
+  const handler = createHandler({
+    preflightPublish: (payload) => publishJinanCms({
+      ...payload,
+      env,
+      transport,
+      logger: () => {},
+      sleep: async () => {},
+    }),
+  });
+  const firstRes = responseRecorder();
+  const secondRes = responseRecorder();
+
+  const first = handler({ method: 'POST', headers: { cookie: signedCookie() }, body }, firstRes);
+  await Promise.resolve();
+  await handler({ method: 'POST', headers: { cookie: signedCookie() }, body }, secondRes);
+
+  assert.equal(secondRes.statusCode, 409);
+  assert.deepEqual(secondRes.body, { ok: false, error: 'PUBLISH_IN_PROGRESS' });
+  assert.equal(transportCalls.length, 1);
+
+  releaseFirst();
+  await first;
+  assert.equal(firstRes.statusCode, 502);
+  assert.deepEqual(firstRes.body, { ok: false, error: 'VERIFY_FAILED' });
+  reloadJinanCmsModule();
+});
+
 test('default publish handler lazy-requires real publish pipeline and stays disabled with zero network by default', async () => {
-  const cmsModulePath = require.resolve('../lib/jinan-cms.js');
   const publishModulePath = require.resolve('../api/publish.js');
   const originalFetch = global.fetch;
   const originalEnabled = process.env.JINAN_CMS_PUBLISH_ENABLED;

@@ -168,6 +168,10 @@ function respondToPublishResult(res, result) {
       return json(res, 502, { ok: false, error: 'SUBMIT_FAILED' });
     case 'VERIFY_FAILED':
       return json(res, 502, { ok: false, error: 'VERIFY_FAILED' });
+    case 'PUBLISH_IN_PROGRESS':
+      return json(res, 409, { ok: false, error: 'PUBLISH_IN_PROGRESS' });
+    case 'MANUAL_CHECK_REQUIRED':
+      return json(res, 409, { ok: false, error: 'MANUAL_CHECK_REQUIRED', orphanUploadRisk: true });
     case 'CMS_RESPONSE_CONTRACT_UNVERIFIED':
     case 'ALREADY_PUBLISHED':
       return json(res, 409, {

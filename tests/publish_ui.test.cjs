@@ -71,6 +71,10 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
     missingContracts.push('App state isPublishing defaults false');
   }
 
+  if (!/const\s+publishRequestInFlightRef\s*=\s*useRef\s*\(\s*false\s*\)/.test(indexHtml)) {
+    missingContracts.push('publishRequestInFlightRef is created with useRef(false)');
+  }
+
   const handleOpenPublishBody = getFunctionBody(indexHtml, 'handleOpenPublish');
   if (
     !handleOpenPublishBody ||
@@ -160,8 +164,8 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
     missingContracts.push('handleConfirmPublish sets and clears isPublishing');
   }
 
-  if (!handleConfirmPublishBody || !/晉安官網發布串接尚待完成最後驗證/.test(handleConfirmPublishBody)) {
-    missingContracts.push('handleConfirmPublish fallback status is exactly 晉安官網發布串接尚待完成最後驗證');
+  if (!/PUBLISH_FAILED：發布失敗，請停止操作，不要重複點擊；請記錄安全代碼與 attemptId 後本機調查。/.test(indexHtml)) {
+    missingContracts.push('handleConfirmPublish fallback status is exact fixed PUBLISH_FAILED fail-closed text');
   }
 
   if (!handleConfirmPublishBody || !/\bcatch\s*\(/.test(handleConfirmPublishBody)) {
@@ -186,6 +190,114 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
 
   if (handleConfirmPublishBody && /\b(Production CMS|login|editor|upload|CMS_|VITE_|XMLHttpRequest|sendBeacon|axios|password|cookie)\b/i.test(handleConfirmPublishBody)) {
     missingContracts.push('handleConfirmPublish contains no CMS origins, login/editor/upload URLs, CMS env names, alternate transports, or credential fields');
+  }
+
+  assert.deepEqual(missingContracts, []);
+});
+
+test('publish confirmation has synchronous duplicate-submission ref guard before side effects', () => {
+  const missingContracts = [];
+  const handleConfirmPublishBody = getFunctionBody(indexHtml, 'handleConfirmPublish');
+
+  if (!/const\s+publishRequestInFlightRef\s*=\s*useRef\s*\(\s*false\s*\)/.test(indexHtml)) {
+    missingContracts.push('publishRequestInFlightRef is created with useRef(false)');
+  }
+
+  if (!handleConfirmPublishBody || !/if\s*\(\s*publishRequestInFlightRef\.current\s*\)\s*return\s*;/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish checks publishRequestInFlightRef.current');
+  }
+
+  if (!handleConfirmPublishBody || !/publishRequestInFlightRef\.current\s*=\s*true\s*;/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish sets publishRequestInFlightRef.current = true synchronously');
+  }
+
+  if (!handleConfirmPublishBody || !/publishRequestInFlightRef\.current\s*=\s*false\s*;/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish clears publishRequestInFlightRef.current in finally');
+  }
+
+  const readinessIndex = handleConfirmPublishBody.indexOf('if (!publishReadiness.canConfirm) return;');
+  const refCheckIndex = handleConfirmPublishBody.indexOf('if (publishRequestInFlightRef.current) return;');
+  const refSetIndex = handleConfirmPublishBody.indexOf('publishRequestInFlightRef.current = true;');
+  const isPublishingCheckIndex = handleConfirmPublishBody.indexOf('if (isPublishing)');
+  const setPublishingIndex = handleConfirmPublishBody.indexOf('setIsPublishing(true);');
+  const pngIndex = handleConfirmPublishBody.indexOf('generatePublishPngDataUrl');
+  const fetchIndex = handleConfirmPublishBody.indexOf('fetch("/api/publish"');
+  const finallyIndex = handleConfirmPublishBody.indexOf('finally');
+  const refClearIndex = handleConfirmPublishBody.lastIndexOf('publishRequestInFlightRef.current = false;');
+
+  if (
+    !(
+      readinessIndex !== -1 &&
+      refCheckIndex > readinessIndex &&
+      refSetIndex > refCheckIndex &&
+      isPublishingCheckIndex > refSetIndex &&
+      setPublishingIndex > refSetIndex &&
+      pngIndex > setPublishingIndex &&
+      fetchIndex > pngIndex
+    )
+  ) {
+    missingContracts.push('ref guard check/set happen before React state, PNG generation, and fetch');
+  }
+
+  if (!(finallyIndex !== -1 && refClearIndex > finallyIndex)) {
+    missingContracts.push('ref guard is cleared in finally');
+  }
+
+  assert.deepEqual(missingContracts, []);
+});
+
+test('publish failure status mapping is fixed allowlist and never renders arbitrary server or exception text', () => {
+  const missingContracts = [];
+  const handleConfirmPublishBody = getFunctionBody(indexHtml, 'handleConfirmPublish');
+  const mappingBody = getFunctionBody(indexHtml, 'getPublishFailureStatusText');
+  const expectedCodes = [
+    'AUTH_FAILED',
+    'FORM_CHANGED',
+    'UPLOAD_FAILED',
+    'SUBMIT_FAILED',
+    'VERIFY_FAILED',
+    'MANUAL_CHECK_REQUIRED',
+    'PUBLISH_IN_PROGRESS',
+    'CMS_RESPONSE_CONTRACT_UNVERIFIED',
+  ];
+
+  if (!/const\s+PUBLISH_FAILURE_STATUS_TEXT\s*=\s*Object\.freeze\s*\(\s*\{/.test(indexHtml)) {
+    missingContracts.push('PUBLISH_FAILURE_STATUS_TEXT is an Object.freeze fixed map');
+  }
+
+  for (const code of expectedCodes) {
+    const codeTextPattern = new RegExp(`${code}\\s*:\\s*["']${code}：[^"']*停止[^"']*(不要重複|請勿重複|不可重複)`);
+    if (!codeTextPattern.test(indexHtml)) {
+      missingContracts.push(`${code} maps to fixed Traditional Chinese stop/no-retry text containing exact code`);
+    }
+  }
+
+  if (!/PUBLISH_FAILED：發布失敗，請停止操作，不要重複點擊；請記錄安全代碼與 attemptId 後本機調查。/.test(indexHtml)) {
+    missingContracts.push('PUBLISH_FAILED fixed fail-closed text is present');
+  }
+
+  if (!mappingBody || !/Object\.prototype\.hasOwnProperty\.call\s*\(\s*PUBLISH_FAILURE_STATUS_TEXT\s*,\s*code\s*\)/.test(mappingBody)) {
+    missingContracts.push('getPublishFailureStatusText uses hasOwnProperty allowlist check');
+  }
+
+  if (!mappingBody || !/return\s+PUBLISH_FAILURE_STATUS_TEXT\.PUBLISH_FAILED\s*;/.test(mappingBody)) {
+    missingContracts.push('getPublishFailureStatusText defaults to fixed PUBLISH_FAILED');
+  }
+
+  if (!handleConfirmPublishBody || !/setPublishStatus\s*\(\s*getPublishFailureStatusText\s*\(\s*result\s*\)\s*\)/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish displays only getPublishFailureStatusText(result) for server failures');
+  }
+
+  if (!handleConfirmPublishBody || !/catch\s*\(\s*err\s*\)\s*\{\s*setPublishStatus\s*\(\s*PUBLISH_FAILURE_STATUS_TEXT\.PUBLISH_FAILED\s*\)/.test(handleConfirmPublishBody)) {
+    missingContracts.push('network/exception catch displays only fixed PUBLISH_FAILED');
+  }
+
+  if (handleConfirmPublishBody && /\b(result|err|error)\s*\.\s*(message|body|path|stack|adapter|details|url|credential|credentials|password|token|secret)\b/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish does not render arbitrary result.message/err.message/raw sensitive fields');
+  }
+
+  if (handleConfirmPublishBody && /setPublishStatus\s*\(\s*`/.test(handleConfirmPublishBody)) {
+    missingContracts.push('handleConfirmPublish does not use template literals for publish failure status');
   }
 
   assert.deepEqual(missingContracts, []);

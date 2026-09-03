@@ -49,7 +49,7 @@
         };
 
         const INITIAL_DATA = {
-            title: "115/4月", 
+            title: "115/4月",
             note: "● 黑點表示當時段無醫師看診 ps. 如有需掛號請記得提早五分鐘到診所喔！",
             clinics: [
                 {
@@ -81,6 +81,26 @@
                     }
                 }
             ]
+        };
+
+        const PUBLISH_FAILURE_STATUS_TEXT = Object.freeze({
+            AUTH_FAILED: "AUTH_FAILED：授權失敗，請停止操作，不要重複點擊；請檢查伺服器設定或人工登入狀態。",
+            FORM_CHANGED: "FORM_CHANGED：表單已變更，請停止操作，不要重複點擊；請人工檢查 CMS 表單。",
+            UPLOAD_FAILED: "UPLOAD_FAILED：圖片上傳失敗，請停止操作，不要重複點擊；請人工檢查公開頁面與媒體庫。",
+            SUBMIT_FAILED: "SUBMIT_FAILED：送出失敗，請停止操作，不要重複點擊；請人工檢查公開頁面與編輯器。",
+            VERIFY_FAILED: "VERIFY_FAILED：驗證失敗，請停止操作，不要重複點擊；請人工檢查公開頁面與圖片。",
+            MANUAL_CHECK_REQUIRED: "MANUAL_CHECK_REQUIRED：需要人工確認，請停止操作，不要重複點擊；請人工檢查公開頁面與 CMS。",
+            PUBLISH_IN_PROGRESS: "PUBLISH_IN_PROGRESS：已有發布進行中，請停止操作，不要重複點擊；請等待原本操作結果。",
+            CMS_RESPONSE_CONTRACT_UNVERIFIED: "CMS_RESPONSE_CONTRACT_UNVERIFIED：CMS 回應契約未驗證，請停止操作，不要重複點擊；請檢查 gate、部署與設定。",
+            PUBLISH_FAILED: "PUBLISH_FAILED：發布失敗，請停止操作，不要重複點擊；請記錄安全代碼與 attemptId 後本機調查。",
+        });
+
+        const getPublishFailureStatusText = (result) => {
+            const code = result && typeof result.error === "string" ? result.error : "";
+            if (Object.prototype.hasOwnProperty.call(PUBLISH_FAILURE_STATUS_TEXT, code)) {
+                return PUBLISH_FAILURE_STATUS_TEXT[code];
+            }
+            return PUBLISH_FAILURE_STATUS_TEXT.PUBLISH_FAILED;
         };
 
         const PosterContent = forwardRef(({ data, isForCapture }, ref) => (
@@ -203,6 +223,7 @@
             const captureRef = useRef(null);
             const publishButtonRef = useRef(null);
             const publishDialogRef = useRef(null);
+            const publishRequestInFlightRef = useRef(false);
             const renderData = { ...data, clinics: ClinicOrder.orderClinicsByPriority(data.clinics, primaryClinicId) };
             const publishReadiness = PublishCore.evaluatePublishSelection(PublishCore.PUBLISH_CHANNELS, selectedPublishChannelIds, primaryClinicId);
             const primaryClinicGuard = PublishCore.evaluatePublishSelection(PublishCore.PUBLISH_CHANNELS, PublishCore.PUBLISH_CHANNELS.map((channel) => channel.id), primaryClinicId);
@@ -355,8 +376,13 @@
 
             const handleConfirmPublish = async () => {
                 if (!publishReadiness.canConfirm) return;
-                if (isPublishing) return;
+                if (publishRequestInFlightRef.current) return;
 
+                publishRequestInFlightRef.current = true;
+                if (isPublishing) {
+                    publishRequestInFlightRef.current = false;
+                    return;
+                }
                 setIsPublishing(true);
                 try {
                     const pngDataUrl = await generatePublishPngDataUrl();
@@ -383,13 +409,14 @@
                     if (response.ok && result && result.ok === true && result.status === "PUBLISHED") {
                         setPublishStatus("晉安官網發布完成");
                     } else if (result && result.error === "AUTH_REQUIRED") {
-                        setPublishStatus("請重新登入後再操作。");
+                        setPublishStatus("AUTH_REQUIRED：請重新登入後再操作；請停止操作，不要重複點擊。");
                     } else {
-                        setPublishStatus("晉安官網發布串接尚待完成最後驗證");
+                        setPublishStatus(getPublishFailureStatusText(result));
                     }
                 } catch (err) {
-                    setPublishStatus("晉安官網發布串接尚待完成最後驗證");
+                    setPublishStatus(PUBLISH_FAILURE_STATUS_TEXT.PUBLISH_FAILED);
                 } finally {
+                    publishRequestInFlightRef.current = false;
                     setIsPublishing(false);
                 }
             };

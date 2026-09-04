@@ -205,6 +205,39 @@ function loginHtml(action = JINAN_CMS_CONFIG.loginUrl, extra = '') {
     </form>`;
 }
 
+const LOGIN_SUCCESS_LANDING_URL = `${JINAN_CMS_CONFIG.origin}/admin/index.php`;
+const QUICK_UPLOAD_RESPONSE_URL = `${JINAN_CMS_CONFIG.quickUploadUrl}?command=QuickUpload&type=Images&CKEditor=note&CKEditorFuncNum=37&langCode=zh`;
+
+function loginSuccessLandingResponse(setCookie = 'sid=landed; Path=/admin; HttpOnly') {
+  const response = {
+    status: 200,
+    finalUrl: LOGIN_SUCCESS_LANDING_URL,
+    body: '<a href="/admin/index.php?op=time&amp;sub=set">門診時間</a>',
+  };
+  if (setCookie) response.setCookie = [setCookie];
+  return response;
+}
+
+function emptyLocationResponseCases(baseResponse) {
+  return [
+    { name: 'direct location empty', response: { ...baseResponse, location: '' } },
+    { name: 'headers.location empty', response: { ...baseResponse, headers: { location: '' } } },
+    { name: 'headers.Location empty', response: { ...baseResponse, headers: { Location: '' } } },
+    { name: 'headers.LoCaTiOn empty', response: { ...baseResponse, headers: { LoCaTiOn: '' } } },
+    {
+      name: 'headers.get location empty',
+      response: {
+        ...baseResponse,
+        headers: {
+          get(name) {
+            return String(name).toLowerCase() === 'location' ? '' : null;
+          },
+        },
+      },
+    },
+  ];
+}
+
 function makeTransport(responses) {
   const calls = [];
   const transport = async (request) => {
@@ -216,6 +249,7 @@ function makeTransport(responses) {
       bodyKind: request.body instanceof URLSearchParams ? 'URLSearchParams' : typeof request.body,
     });
     const next = responses.shift();
+    assert.notEqual(next, undefined, `missing fixture response for ${request.method} ${request.url}`);
     if (next instanceof Error) throw next;
     return next;
   };
@@ -264,8 +298,9 @@ async function seedSubmitAmbiguity({ env, finalImagePath = '/uploads/2026/saved.
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-    { status: 200, contentType: 'text/html', body: uploadSuccessBody(finalImagePath, 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody(finalImagePath, 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
     new Error('timeout after submit mutation'),
   ]);
@@ -330,8 +365,9 @@ test('M1. concurrent publish rejects second invocation before PNG, credentials, 
     new Promise((resolve) => { releaseFirst = () => resolve({ status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() }); }),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicHtml('/uploads/2026/jinan.png') },
@@ -381,8 +417,9 @@ test('M1. concurrent publish rejects second invocation before PNG, credentials, 
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/later.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/later.png', 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicHtml('/uploads/2026/later.png') },
@@ -1070,7 +1107,8 @@ test('G/H. offline preflight logs in read-only, parses protected editor, prepare
   const transport = makeTransport([
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login; Path=/admin; HttpOnly'] },
-    { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: publicCompositeHtml(), setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
   ]);
 
@@ -1096,6 +1134,7 @@ test('G/H. offline preflight logs in read-only, parses protected editor, prepare
     `GET ${JINAN_CMS_CONFIG.publicUrl}`,
     `GET ${JINAN_CMS_CONFIG.loginUrl}`,
     `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+    `GET ${LOGIN_SUCCESS_LANDING_URL}`,
     `GET ${JINAN_CMS_CONFIG.editorUrl}`,
   ]);
   assert.equal(transport.calls.filter((call) => call.method === 'POST').length, 1);
@@ -1111,7 +1150,8 @@ test('G2. preflight without finalImageUrl completes read-only checks and does no
   const transport = makeTransport([
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login; Path=/admin; HttpOnly'] },
-    { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: publicCompositeHtml(), setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
   ]);
 
@@ -1137,6 +1177,7 @@ test('G2. preflight without finalImageUrl completes read-only checks and does no
     `GET ${JINAN_CMS_CONFIG.publicUrl}`,
     `GET ${JINAN_CMS_CONFIG.loginUrl}`,
     `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+    `GET ${LOGIN_SUCCESS_LANDING_URL}`,
     `GET ${JINAN_CMS_CONFIG.editorUrl}`,
   ]);
   assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false);
@@ -1153,6 +1194,7 @@ test('G2b. preflight ingests manual login cookie and lets explicit editor GET pr
       location: '/admin/index.php',
       setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'],
     },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
   ]);
 
@@ -1168,11 +1210,181 @@ test('G2b. preflight ingests manual login cookie and lets explicit editor GET pr
     `GET ${JINAN_CMS_CONFIG.publicUrl}`,
     `GET ${JINAN_CMS_CONFIG.loginUrl}`,
     `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+    `GET ${LOGIN_SUCCESS_LANDING_URL}`,
     `GET ${JINAN_CMS_CONFIG.editorUrl}`,
   ]);
   assert.equal(transport.calls[3].cookie, 'sid=protected-cookie');
+  assert.equal(transport.calls[4].cookie, 'sid=landed');
   assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false);
   assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false);
+});
+
+test('G2b1. preflight follows exact login success landing before editor and carries rotated PHPSESSID', async () => {
+  const transport = makeTransport([
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['PHPSESSID=login; Path=/; HttpOnly'] },
+    {
+      status: 302,
+      finalUrl: JINAN_CMS_CONFIG.loginUrl,
+      body: '',
+      location: '/admin/index.php',
+      setCookie: ['PHPSESSID=submitted; Path=/; HttpOnly'],
+    },
+    {
+      status: 200,
+      finalUrl: `${JINAN_CMS_CONFIG.origin}/admin/index.php`,
+      body: '<a href="/admin/index.php?op=time&amp;sub=set">門診時間</a>',
+      setCookie: ['PHPSESSID=landed; Path=/; HttpOnly'],
+    },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
+  ]);
+
+  const result = await preflightJinanCmsPublish({
+    pngDataUrl: pngDataUrl(),
+    finalImageUrl: '/uploads/2026/jinan.png',
+    env: { JINAN_CMS_USERNAME: 'synthetic-user', JINAN_CMS_PASSWORD: 'synthetic-password' },
+    transport: async (request) => {
+      if (request.url === JINAN_CMS_CONFIG.editorUrl && request.headers?.cookie !== 'PHPSESSID=landed') {
+        return {
+          status: 302,
+          finalUrl: JINAN_CMS_CONFIG.editorUrl,
+          location: '/admin/login.php',
+          body: '',
+        };
+      }
+      return transport(request);
+    },
+  });
+
+  assert.equal(result.status, 'CMS_RESPONSE_CONTRACT_UNVERIFIED');
+  assert.deepEqual(transport.calls.map((call) => `${call.method} ${call.url}`), [
+    `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+    `GET ${JINAN_CMS_CONFIG.loginUrl}`,
+    `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+    `GET ${JINAN_CMS_CONFIG.origin}/admin/index.php`,
+    `GET ${JINAN_CMS_CONFIG.editorUrl}`,
+  ]);
+  assert.equal(transport.calls.filter((call) => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.loginUrl).length, 1);
+  assert.equal(transport.calls[3].cookie, 'PHPSESSID=submitted');
+  assert.equal(transport.calls[4].cookie, 'PHPSESSID=landed');
+  assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false);
+  assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false);
+});
+
+test('G2b1a. preflight fail-closes explicit login landing drift before editor or mutations', async () => {
+  const minimalLandingTransport = makeTransport([
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['PHPSESSID=login; Path=/; HttpOnly'] },
+    {
+      status: 302,
+      finalUrl: JINAN_CMS_CONFIG.loginUrl,
+      body: '',
+      location: '/admin/index.php',
+      setCookie: ['PHPSESSID=submitted; Path=/; HttpOnly'],
+    },
+    { status: 200, finalUrl: LOGIN_SUCCESS_LANDING_URL, body: '<main>synthetic landing</main>' },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
+  ]);
+
+  const minimalLandingResult = await preflightJinanCmsPublish({
+    pngDataUrl: pngDataUrl(),
+    finalImageUrl: '/uploads/2026/jinan.png',
+    env: { JINAN_CMS_USERNAME: 'synthetic-user', JINAN_CMS_PASSWORD: 'synthetic-password' },
+    transport: minimalLandingTransport,
+  });
+
+  assert.equal(minimalLandingResult.status, 'CMS_RESPONSE_CONTRACT_UNVERIFIED');
+  assert.deepEqual(minimalLandingTransport.calls.map((call) => `${call.method} ${call.url}`), [
+    `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+    `GET ${JINAN_CMS_CONFIG.loginUrl}`,
+    `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+    `GET ${LOGIN_SUCCESS_LANDING_URL}`,
+    `GET ${JINAN_CMS_CONFIG.editorUrl}`,
+  ]);
+  assert.equal(minimalLandingTransport.calls.filter((call) => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.loginUrl).length, 1);
+  assert.equal(minimalLandingTransport.calls.filter((call) => call.method === 'GET' && call.url === LOGIN_SUCCESS_LANDING_URL).length, 1);
+  assert.equal(minimalLandingTransport.calls.some((call) => call.url.includes('QuickUpload')), false);
+  assert.equal(minimalLandingTransport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false);
+
+  const cases = [
+    { status: 302, finalUrl: LOGIN_SUCCESS_LANDING_URL, body: '<main>synthetic landing</main>' },
+    { status: 200, finalUrl: `${LOGIN_SUCCESS_LANDING_URL}?next=1`, body: '<main>synthetic landing</main>' },
+    { status: 200, finalUrl: LOGIN_SUCCESS_LANDING_URL, location: '/admin/index.php', body: '<main>synthetic landing</main>' },
+  ];
+
+  for (const landingResponse of cases) {
+    const transport = makeTransport([
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['PHPSESSID=login; Path=/; HttpOnly'] },
+      {
+        status: 302,
+        finalUrl: JINAN_CMS_CONFIG.loginUrl,
+        body: '',
+        location: '/admin/index.php',
+        setCookie: ['PHPSESSID=submitted; Path=/; HttpOnly'],
+      },
+      landingResponse,
+    ]);
+
+    const result = await preflightJinanCmsPublish({
+      pngDataUrl: pngDataUrl(),
+      finalImageUrl: '/uploads/2026/jinan.png',
+      env: { JINAN_CMS_USERNAME: 'synthetic-user', JINAN_CMS_PASSWORD: 'synthetic-password' },
+      transport,
+    });
+
+    assert.equal(result.status, 'VERIFY_FAILED');
+    assert.deepEqual(transport.calls.map((call) => `${call.method} ${call.url}`), [
+      `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+      `GET ${JINAN_CMS_CONFIG.loginUrl}`,
+      `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+      `GET ${LOGIN_SUCCESS_LANDING_URL}`,
+    ]);
+    assert.equal(transport.calls.filter((call) => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.loginUrl).length, 1);
+    assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === LOGIN_SUCCESS_LANDING_URL).length, 1);
+    assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false);
+    assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false);
+  }
+});
+
+test('G2b1b. preflight fail-closes present empty login landing Location before editor or mutations', async () => {
+  for (const { name, response: landingResponse } of emptyLocationResponseCases({
+    status: 200,
+    finalUrl: LOGIN_SUCCESS_LANDING_URL,
+    body: '<main>synthetic landing</main>',
+  })) {
+    const transport = makeTransport([
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['PHPSESSID=login; Path=/; HttpOnly'] },
+      {
+        status: 302,
+        finalUrl: JINAN_CMS_CONFIG.loginUrl,
+        body: '',
+        location: '/admin/index.php',
+        setCookie: ['PHPSESSID=submitted; Path=/; HttpOnly'],
+      },
+      landingResponse,
+    ]);
+
+    const result = await preflightJinanCmsPublish({
+      pngDataUrl: pngDataUrl(),
+      finalImageUrl: '/uploads/2026/jinan.png',
+      env: { JINAN_CMS_USERNAME: 'synthetic-user', JINAN_CMS_PASSWORD: 'synthetic-password' },
+      transport,
+    });
+
+    assert.equal(result.status, 'VERIFY_FAILED', name);
+    assert.deepEqual(transport.calls.map((call) => `${call.method} ${call.url}`), [
+      `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+      `GET ${JINAN_CMS_CONFIG.loginUrl}`,
+      `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+      `GET ${LOGIN_SUCCESS_LANDING_URL}`,
+    ], name);
+    assert.equal(transport.calls.length, 4, name);
+    assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === JINAN_CMS_CONFIG.editorUrl).length, 0, name);
+    assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false, name);
+    assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false, name);
+  }
 });
 
 test('G2b2. preflight classifies manual editor redirect to login as auth failure', async () => {
@@ -1187,6 +1399,7 @@ test('G2b2. preflight classifies manual editor redirect to login as auth failure
         location: '/admin/index.php',
         setCookie: ['sid=login-attempt; Path=/admin; HttpOnly'],
       },
+      loginSuccessLandingResponse(),
       {
         status: 302,
         finalUrl: JINAN_CMS_CONFIG.editorUrl,
@@ -1207,6 +1420,7 @@ test('G2b2. preflight classifies manual editor redirect to login as auth failure
       `GET ${JINAN_CMS_CONFIG.publicUrl}`,
       `GET ${JINAN_CMS_CONFIG.loginUrl}`,
       `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+      `GET ${LOGIN_SUCCESS_LANDING_URL}`,
       `GET ${JINAN_CMS_CONFIG.editorUrl}`,
     ]);
     assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false);
@@ -1225,6 +1439,7 @@ test('G2b3. preflight accepts only exact editor 200 without redirect Location as
       location: '/admin/index.php',
       setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'],
     },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
   ]);
 
@@ -1236,7 +1451,7 @@ test('G2b3. preflight accepts only exact editor 200 without redirect Location as
   });
 
   assert.equal(result.status, 'CMS_RESPONSE_CONTRACT_UNVERIFIED');
-  assert.equal(transport.calls.length, 4);
+  assert.equal(transport.calls.length, 5);
 });
 
 test('G2b4. preflight fail-closes unsafe or ambiguous editor redirects', async () => {
@@ -1267,6 +1482,7 @@ test('G2b4. preflight fail-closes unsafe or ambiguous editor redirects', async (
         location: '/admin/index.php',
         setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'],
       },
+      loginSuccessLandingResponse(),
       editorResponse,
     ]);
 
@@ -1278,56 +1494,171 @@ test('G2b4. preflight fail-closes unsafe or ambiguous editor redirects', async (
     });
 
     assert.equal(result.status, 'VERIFY_FAILED');
-    assert.equal(transport.calls.length, 4);
+    assert.equal(transport.calls.length, 5);
     assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false);
     assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false);
   }
 });
 
-test('G2c. preflight rejects unsafe login POST Location before editor GET', async () => {
-  const transport = makeTransport([
-    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
-    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
-    {
-      status: 302,
-      finalUrl: JINAN_CMS_CONFIG.loginUrl,
-      body: publicCompositeHtml(),
-      location: 'https://attacker.example/admin/index.php',
-      setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'],
-    },
-  ]);
+test('G2c. preflight rejects unsafe login POST Location before landing, editor, or mutations', async () => {
+  const cases = [
+    { name: '200 with success Location', response: { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' } },
+    { name: '301', response: { status: 301, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' } },
+    { name: '303', response: { status: 303, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' } },
+    { name: '307', response: { status: 307, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' } },
+    { name: '308', response: { status: 308, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' } },
+    { name: 'finalUrl editor', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php' } },
+    { name: 'absolute Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: LOGIN_SUCCESS_LANDING_URL } },
+    { name: 'protocol-relative Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '//www.tainanrehab.com/admin/index.php' } },
+    { name: 'backslash Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '\\admin\\index.php' } },
+    { name: 'malformed scheme Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: 'https://[::1' } },
+    { name: 'dot-segment Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/../admin/index.php' } },
+    { name: 'percent-encoded dot-segment Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/%2e%2e/admin/index.php' } },
+    { name: 'query Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php?op=time' } },
+    { name: 'fragment Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php#top' } },
+    { name: 'credentials Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: 'https://user:pass@www.tainanrehab.com/admin/index.php' } },
+    { name: 'alternate host Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: 'https://attacker.example/admin/index.php' } },
+    { name: 'alternate scheme Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: 'http://www.tainanrehab.com/admin/index.php' } },
+    { name: 'leading whitespace Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: ' /admin/index.php' } },
+    { name: 'trailing whitespace Location', response: { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php ' } },
+  ];
 
-  const result = await preflightJinanCmsPublish({
-    pngDataUrl: pngDataUrl(),
-    finalImageUrl: '/uploads/2026/jinan.png',
-    env: { JINAN_CMS_USERNAME: 'synthetic-user', JINAN_CMS_PASSWORD: 'synthetic-password' },
-    transport,
-  });
+  for (const { name, response } of cases) {
+    const transport = makeTransport([
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      {
+        body: publicCompositeHtml(),
+        setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'],
+        ...response,
+      },
+    ]);
 
-  assert.equal(result.status, 'VERIFY_FAILED');
-  assert.deepEqual(transport.calls.map((call) => `${call.method} ${call.url}`), [
-    `GET ${JINAN_CMS_CONFIG.publicUrl}`,
-    `GET ${JINAN_CMS_CONFIG.loginUrl}`,
-    `POST ${JINAN_CMS_CONFIG.loginUrl}`,
-  ]);
+    const result = await preflightJinanCmsPublish({
+      pngDataUrl: pngDataUrl(),
+      finalImageUrl: '/uploads/2026/jinan.png',
+      env: { JINAN_CMS_USERNAME: 'synthetic-user', JINAN_CMS_PASSWORD: 'synthetic-password' },
+      transport,
+    });
+
+    assert.equal(result.status, 'VERIFY_FAILED', name);
+    assert.deepEqual(transport.calls.map((call) => `${call.method} ${call.url}`), [
+      `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+      `GET ${JINAN_CMS_CONFIG.loginUrl}`,
+      `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+    ], name);
+    assert.equal(transport.calls.filter((call) => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.loginUrl).length, 1, name);
+    assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === LOGIN_SUCCESS_LANDING_URL).length, 0, name);
+    assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === JINAN_CMS_CONFIG.editorUrl).length, 0, name);
+    assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false, name);
+    assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false, name);
+  }
 });
 
-test('G2d. login POST response validator allows only exact final URLs and safe admin Locations', () => {
+test('G2c1. preflight fail-closes login POST responses without explicit finalUrl before landing or mutations', async () => {
+  const cases = [
+    { name: 'missing finalUrl', response: { status: 302, location: '/admin/index.php' } },
+    { name: 'empty finalUrl', response: { status: 302, finalUrl: '', location: '/admin/index.php' } },
+    { name: 'response.url only', response: { status: 302, url: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' } },
+  ];
+
+  for (const { name, response } of cases) {
+    const transport = makeTransport([
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      response,
+    ]);
+
+    const result = await preflightJinanCmsPublish({
+      pngDataUrl: pngDataUrl(),
+      finalImageUrl: '/uploads/2026/jinan.png',
+      env: { JINAN_CMS_USERNAME: 'synthetic-user', JINAN_CMS_PASSWORD: 'synthetic-password' },
+      transport,
+    });
+
+    assert.equal(result.status, 'VERIFY_FAILED', name);
+    assert.deepEqual(transport.calls.map((call) => `${call.method} ${call.url}`), [
+      `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+      `GET ${JINAN_CMS_CONFIG.loginUrl}`,
+      `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+    ], name);
+    assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === LOGIN_SUCCESS_LANDING_URL).length, 0, name);
+    assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === JINAN_CMS_CONFIG.editorUrl).length, 0, name);
+    assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false, name);
+    assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false, name);
+  }
+});
+
+test('G2c2. preflight fail-closes login landing responses without explicit finalUrl before editor or mutations', async () => {
+  const cases = [
+    { name: 'missing finalUrl', response: { status: 200, body: '<a href="/admin/index.php?op=time&amp;sub=set">門診時間</a>' } },
+    { name: 'empty finalUrl', response: { status: 200, finalUrl: '', body: '<a href="/admin/index.php?op=time&amp;sub=set">門診時間</a>' } },
+    { name: 'response.url only', response: { status: 200, url: LOGIN_SUCCESS_LANDING_URL, body: '<a href="/admin/index.php?op=time&amp;sub=set">門診時間</a>' } },
+  ];
+
+  for (const { name, response } of cases) {
+    const transport = makeTransport([
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      response,
+    ]);
+
+    const result = await preflightJinanCmsPublish({
+      pngDataUrl: pngDataUrl(),
+      finalImageUrl: '/uploads/2026/jinan.png',
+      env: { JINAN_CMS_USERNAME: 'synthetic-user', JINAN_CMS_PASSWORD: 'synthetic-password' },
+      transport,
+    });
+
+    assert.equal(result.status, 'VERIFY_FAILED', name);
+    assert.deepEqual(transport.calls.map((call) => `${call.method} ${call.url}`), [
+      `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+      `GET ${JINAN_CMS_CONFIG.loginUrl}`,
+      `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+      `GET ${LOGIN_SUCCESS_LANDING_URL}`,
+    ], name);
+    assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === LOGIN_SUCCESS_LANDING_URL).length, 1, name);
+    assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === JINAN_CMS_CONFIG.editorUrl).length, 0, name);
+    assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false, name);
+    assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false, name);
+  }
+});
+
+test('G2d. login POST response validator allows only exact evidenced success contract', () => {
   for (const response of [
-    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' },
-    { status: 303, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: JINAN_CMS_CONFIG.editorUrl },
   ]) {
     assert.doesNotThrow(() => validateLoginPostResponse(response));
   }
 
   for (const response of [
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' },
     { status: 401, finalUrl: JINAN_CMS_CONFIG.loginUrl },
+    { status: 301, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' },
+    { status: 303, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' },
+    { status: 307, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' },
+    { status: 308, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' },
     { status: 302, finalUrl: `${JINAN_CMS_CONFIG.loginUrl}?next=1`, location: '/admin/index.php' },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php' },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: LOGIN_SUCCESS_LANDING_URL },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '//www.tainanrehab.com/admin/index.php' },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '\\admin\\index.php' },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: 'https://attacker.example/admin/index.php' },
-    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: 'ftp://www.tainanrehab.com/admin/index.php' },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: 'http://www.tainanrehab.com/admin/index.php' },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: 'https://user:pass@www.tainanrehab.com/admin/index.php' },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: 'http://[::1' },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/../admin/index.php' },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/%2e%2e/admin/index.php' },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php?op=time' },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php#top' },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/time.html' },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: ' /admin/index.php' },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php ' },
+    { status: 302, location: '/admin/index.php' },
+    { status: 302, finalUrl: '', location: '/admin/index.php' },
+    { status: 302, url: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' },
   ]) {
     assertCode(() => validateLoginPostResponse(response), 'VERIFY_FAILED');
   }
@@ -1343,8 +1674,7 @@ test('G. preflight fail-closes auth, verification, and form failures', async () 
   const authTransport = makeTransport([
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
-    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: publicCompositeHtml() },
-    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: '<form></form>' },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
   ]);
   assert.equal((await preflightJinanCmsPublish({
     pngDataUrl: pngDataUrl(),
@@ -1352,6 +1682,11 @@ test('G. preflight fail-closes auth, verification, and form failures', async () 
     env: { JINAN_CMS_USERNAME: 'u', JINAN_CMS_PASSWORD: 'p' },
     transport: authTransport,
   })).status, 'AUTH_FAILED');
+  assert.deepEqual(authTransport.calls.map((call) => `${call.method} ${call.url}`), [
+    `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+    `GET ${JINAN_CMS_CONFIG.loginUrl}`,
+    `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+  ]);
 
   const publicFailure = makeTransport([new Error('offline')]);
   assert.equal((await preflightJinanCmsPublish({
@@ -1364,7 +1699,8 @@ test('G. preflight fail-closes auth, verification, and form failures', async () 
   const formFailure = makeTransport([
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
-    { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: publicCompositeHtml(), setCookie: ['sid=x; Path=/admin'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: '<form name="addAdminFrm"></form>' },
   ]);
   assert.equal((await preflightJinanCmsPublish({
@@ -1373,6 +1709,74 @@ test('G. preflight fail-closes auth, verification, and form failures', async () 
     env: { JINAN_CMS_USERNAME: 'u', JINAN_CMS_PASSWORD: 'p' },
     transport: formFailure,
   })).status, 'FORM_CHANGED');
+});
+
+test('G6. preflight classifies only structurally exact login form credential rejection as AUTH_FAILED', async () => {
+  const cases = [
+    { name: 'blank 200 login body', response: { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: '' } },
+    { name: 'malformed 200 login body', response: { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: '<form></form>' } },
+    { name: 'WAF-like 200 login body', response: { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: '<html><title>Access denied</title></html>' } },
+    { name: '201 exact login form no location', response: { status: 201, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() } },
+  ];
+
+  for (const { name, response } of cases) {
+    const transport = makeTransport([
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      response,
+    ]);
+
+    const result = await preflightJinanCmsPublish({
+      pngDataUrl: pngDataUrl(),
+      finalImageUrl: '/upload/new.png',
+      env: { JINAN_CMS_USERNAME: 'u', JINAN_CMS_PASSWORD: 'p' },
+      transport,
+    });
+
+    assert.equal(result.status, 'VERIFY_FAILED', name);
+    assert.deepEqual(transport.calls.map((call) => `${call.method} ${call.url}`), [
+      `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+      `GET ${JINAN_CMS_CONFIG.loginUrl}`,
+      `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+    ], name);
+    assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === LOGIN_SUCCESS_LANDING_URL).length, 0, name);
+    assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === JINAN_CMS_CONFIG.editorUrl).length, 0, name);
+    assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false, name);
+    assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false, name);
+  }
+});
+
+test('G6a. preflight fail-closes exact login-form credential rejection with present empty Location', async () => {
+  for (const { name, response: loginPostResponse } of emptyLocationResponseCases({
+    status: 200,
+    finalUrl: JINAN_CMS_CONFIG.loginUrl,
+    body: loginHtml(),
+  })) {
+    const transport = makeTransport([
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      loginPostResponse,
+    ]);
+
+    const result = await preflightJinanCmsPublish({
+      pngDataUrl: pngDataUrl(),
+      finalImageUrl: '/upload/new.png',
+      env: { JINAN_CMS_USERNAME: 'u', JINAN_CMS_PASSWORD: 'p' },
+      transport,
+    });
+
+    assert.equal(result.status, 'VERIFY_FAILED', name);
+    assert.deepEqual(transport.calls.map((call) => `${call.method} ${call.url}`), [
+      `GET ${JINAN_CMS_CONFIG.publicUrl}`,
+      `GET ${JINAN_CMS_CONFIG.loginUrl}`,
+      `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+    ], name);
+    assert.equal(transport.calls.length, 3, name);
+    assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === LOGIN_SUCCESS_LANDING_URL).length, 0, name);
+    assert.equal(transport.calls.filter((call) => call.method === 'GET' && call.url === JINAN_CMS_CONFIG.editorUrl).length, 0, name);
+    assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false, name);
+    assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false, name);
+  }
 });
 
 test('G4. preflight validates login GET form before sending credentials', async () => {
@@ -1404,6 +1808,7 @@ test('G5. preflight rejects structurally anchored non-timetable staff gallery be
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml({ note: staffGallery }) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note: staffGallery }) },
   ]);
 
@@ -1438,9 +1843,10 @@ test('M2. publish pipeline succeeds only after verified upload, submit redirect,
   const transport = makeTransport([
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml({ note: realProductionCompositeNote() }) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login; Path=/admin; HttpOnly'] },
-    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note: realProductionCompositeNote() }).replace('fresh-token', 'before-upload') },
-    { status: 200, contentType: 'text/html; charset=utf-8', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html; charset=utf-8', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note: realProductionCompositeNote() }).replace('fresh-token', 'after-upload') },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml({ note: realProductionCompositeNote() }) },
@@ -1470,6 +1876,7 @@ test('M2. publish pipeline succeeds only after verified upload, submit redirect,
     `GET ${JINAN_CMS_CONFIG.publicUrl}`,
     `GET ${JINAN_CMS_CONFIG.loginUrl}`,
     `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+    `GET ${LOGIN_SUCCESS_LANDING_URL}`,
     `GET ${JINAN_CMS_CONFIG.editorUrl}`,
     `POST ${JINAN_CMS_CONFIG.quickUploadUrl}?command=QuickUpload&type=Images&CKEditor=note&CKEditorFuncNum=37&langCode=zh`,
     `GET ${JINAN_CMS_CONFIG.editorUrl}`,
@@ -1493,9 +1900,10 @@ test('M2a. publish pipeline preserves percent-encoded QuickUpload path through p
   const transport = makeTransport([
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login; Path=/admin; HttpOnly'] },
-    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=protected-cookie; Path=/admin; HttpOnly'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml().replace('fresh-token', 'before-upload') },
-    { status: 200, contentType: 'text/html; charset=utf-8', body: uploadSuccessBody(finalPath, 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html; charset=utf-8', body: uploadSuccessBody(finalPath, 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml().replace('fresh-token', 'after-upload') },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicHtml(finalPath) },
@@ -1527,9 +1935,10 @@ test('M2b. publish pipeline performs post-submit public verification anonymously
   const transport = makeTransport([
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login; Path=/admin; HttpOnly'] },
-    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=authenticated; Path=/; HttpOnly'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml().replace('fresh-token', 'before-upload') },
-    { status: 200, contentType: 'text/html; charset=utf-8', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html; charset=utf-8', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml().replace('fresh-token', 'after-upload') },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicHtml('/uploads/2026/jinan.png') },
@@ -1550,7 +1959,7 @@ test('M2b. publish pipeline performs post-submit public verification anonymously
 
   assert.equal(result.status, 'PUBLISHED');
   const postSubmitPublicCalls = transport.calls
-    .slice(7)
+    .slice(8)
     .filter((call) => call.method === 'GET' && call.url === JINAN_CMS_CONFIG.publicUrl);
   assert.equal(postSubmitPublicCalls.length, 1);
   assert.equal(postSubmitPublicCalls.every((call) => call.hasCookie === false && call.cookie === ''), true);
@@ -1561,9 +1970,10 @@ test('M2b2. post-submit final image GET does not inherit anonymous public page c
   const transport = makeTransport([
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login; Path=/admin; HttpOnly'] },
-    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=authenticated; Path=/; HttpOnly'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml().replace('fresh-token', 'before-upload') },
-    { status: 200, contentType: 'text/html; charset=utf-8', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html; charset=utf-8', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml().replace('fresh-token', 'after-upload') },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
     {
@@ -1606,8 +2016,9 @@ test('M2g. post-submit public verification rejects altered percent encodings and
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/a%20b.png', 37) },
+      { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/a%20b.png', 37) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body },
@@ -1645,6 +2056,7 @@ test('M2c. publish pipeline blocks mutation when editor drifts from initial publ
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note: driftedNote }) },
   ]);
 
@@ -1674,8 +2086,9 @@ test('M2d. publish pipeline blocks submit when fresh editor drifts after upload'
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/drift.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/drift.png', 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note: driftedNote }) },
   ]);
 
@@ -1709,6 +2122,7 @@ test('M2e. publish pipeline requires the complete editor note to occur exactly o
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicBody },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
     ]);
 
@@ -1742,8 +2156,9 @@ test('M2f. post-submit public verification rejects any extra content in the repl
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+      { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicHtmlWithTimetableReplacement(replacement) },
@@ -1790,8 +2205,9 @@ test('M2e. post-submit verification rejects public page drift, old residue, and 
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
+      { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body },
@@ -1834,8 +2250,9 @@ test('M2e2. post-submit verification rejects encoded legacy residue outside repl
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml({ note }) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note }) },
-    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note }) },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body },
@@ -1880,8 +2297,9 @@ test('M2e3. post-submit verification rejects entity and multi-encoded legacy res
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml({ note }) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note }) },
-      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
+      { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note }) },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body },
@@ -1932,8 +2350,9 @@ test('M2e4. post-submit verification rejects old image residue in all public sou
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml({ note: baseNote }) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note: baseNote }) },
-      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
+      { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note: baseNote }) },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body },
@@ -1979,8 +2398,9 @@ test('M2e5. post-submit verification rejects numeric slash entities and 1-8 laye
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml({ note: baseNote }) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note: baseNote }) },
-      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
+      { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshCompositeEditorHtml({ note: baseNote }) },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body },
@@ -2020,8 +2440,9 @@ test('M2f. post-submit verification rejects uploaded image resource contract fai
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
+      { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicHtml('/uploads/2026/final.png') },
@@ -2058,8 +2479,9 @@ test('M2f2. post-submit image resource verification accepts valid PNG up to publ
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/final.png', 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicHtml('/uploads/2026/final.png') },
@@ -2092,6 +2514,7 @@ test('M2f3. default transport post-submit image resource verification accepts va
     { status: 200, url: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml(), contentType: 'text/html' },
     { status: 200, url: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), contentType: 'text/html', setCookie: ['sid=login; Path=/admin; HttpOnly'] },
     { status: 302, url: JINAN_CMS_CONFIG.loginUrl, body: '', location: '/admin/index.php', setCookie: ['sid=x; Path=/admin; HttpOnly'] },
+    { status: 200, url: LOGIN_SUCCESS_LANDING_URL, body: '<a href="/admin/index.php?op=time&amp;sub=set">門診時間</a>', contentType: 'text/html' },
     { status: 200, url: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml(), contentType: 'text/html' },
     { status: 200, url: `${JINAN_CMS_CONFIG.quickUploadUrl}?command=QuickUpload&type=Images&CKEditor=note&CKEditorFuncNum=37&langCode=zh`, body: uploadSuccessBody('/uploads/2026/large.png', 37), contentType: 'text/html' },
     { status: 200, url: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml(), contentType: 'text/html' },
@@ -2177,12 +2600,14 @@ test('M3. publish pipeline stops at each failed phase and never retries mutation
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/login.php' },
     ], {}, 'AUTH_FAILED'],
     ['upload contract unknown', [
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
       { status: 200, contentType: 'text/html', body: 'ok' },
     ], {}, 'MANUAL_CHECK_REQUIRED'],
@@ -2190,6 +2615,7 @@ test('M3. publish pipeline stops at each failed phase and never retries mutation
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
       { status: 500, contentType: 'text/html', body: 'no' },
     ], {}, 'MANUAL_CHECK_REQUIRED'],
@@ -2197,16 +2623,18 @@ test('M3. publish pipeline stops at each failed phase and never retries mutation
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+      { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: '<form></form>' },
     ], {}, 'MANUAL_CHECK_REQUIRED'],
     ['submit ambiguity', [
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+      { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
       new Error('timeout after submit mutation'),
     ], {}, 'MANUAL_CHECK_REQUIRED'],
@@ -2236,8 +2664,9 @@ test('M4. publish pipeline exhausts bounded public verification GET retries safe
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/jinan.png', 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
@@ -2304,8 +2733,9 @@ test('M4b. post-submit public verification delay failures retain ambiguity and b
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/post-submit-delay.png', 37) },
+      { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/post-submit-delay.png', 37) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
@@ -2368,8 +2798,9 @@ test('M5. post-upload fresh editor failure records and reuses one final image pa
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/reuse.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/reuse.png', 37) },
     { status: 500, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: publicCompositeHtml() },
   ]);
 
@@ -2408,8 +2839,9 @@ test('M6. submit ambiguity and verification failure require manual check with or
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-      { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/ambiguous.png', 37) },
+      { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/ambiguous.png', 37) },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
       ...tailResponses,
     ]);
@@ -2595,6 +3027,7 @@ test('M8. unknown upload-response loss reports orphan risk and blocks runtime-lo
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
     new Error('timeout after upload mutation'),
   ]);
@@ -2647,6 +3080,7 @@ test('M8b. dispatched upload failure responses become ambiguous and block re-upl
       { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
       { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
       { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+      loginSuccessLandingResponse(),
       { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
       uploadResponse,
     ]);
@@ -2694,6 +3128,7 @@ test('M8c. pre-dispatch upload request validation fails closed without orphan st
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
     new Error('invalid callback must not dispatch upload'),
   ]);
@@ -2712,8 +3147,9 @@ test('M8c. pre-dispatch upload request validation fails closed without orphan st
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/valid-after-invalid.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/valid-after-invalid.png', 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
     { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicHtml('/uploads/2026/valid-after-invalid.png') },
@@ -2746,9 +3182,10 @@ test('M9. structured logs are allowlisted and logger failures are harmless', asy
   const transport = makeTransport([
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=protected-cookie; Path=/admin'] },
-    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=protected-cookie; Path=/admin'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/logged.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/logged.png', 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
     new Error('timeout after submit mutation'),
   ]);
@@ -2818,9 +3255,10 @@ test('M9b. async logger rejections are swallowed without changing publish flow',
   const transport = makeTransport([
     { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=protected-cookie; Path=/admin'] },
-    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=protected-cookie; Path=/admin'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=x; Path=/admin'] },
+    loginSuccessLandingResponse(),
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
-    { status: 200, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/logged.png', 37) },
+    { status: 200, finalUrl: QUICK_UPLOAD_RESPONSE_URL, contentType: 'text/html', body: uploadSuccessBody('/uploads/2026/logged.png', 37) },
     { status: 200, finalUrl: JINAN_CMS_CONFIG.editorUrl, body: freshEditorHtml() },
     new Error('timeout after submit mutation'),
   ]);
@@ -2845,7 +3283,7 @@ test('M9b. async logger rejections are swallowed without changing publish flow',
 
     assert.equal(result.status, 'MANUAL_CHECK_REQUIRED');
     assert.equal(logs.length > 0, true);
-    assert.equal(transport.calls.length, 7);
+    assert.equal(transport.calls.length, 8);
     assert.deepEqual(unhandledRejections, []);
     for (const event of logs) {
       assert.deepEqual(Object.keys(event).sort(), ['attemptId', 'errorCode', 'finalImagePath', 'orphanUploadRisk', 'stage', 'status'].sort());

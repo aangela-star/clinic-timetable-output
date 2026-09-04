@@ -85,18 +85,20 @@ function getValidIdatPayload() {
   return validIdatPayload;
 }
 
-function freshEditorHtml() {
-  return `
-    <form name="addAdminFrm" action="https://www.tainanrehab.com/admin/index.php?op=time&amp;sub=set" method="POST" enctype="multipart/form-data">
-      <input type="hidden" name="mode" value="edit">
-      <input type="hidden" name="csrf" value="fresh-token">
-      <input type="hidden" name="version" value="42">
-      <textarea name="note"><p><img src="/upload/115晉安門診表.png"></p></textarea>
-      <input type="text" name="wtitle" value="SEO title">
-      <input type="text" name="wkeyword" value="SEO keyword">
-      <textarea name="wdescription">SEO description</textarea>
-      <input type="submit" name="Submit" value="送出">
-    </form>`;
+function publicCompositeHtml() {
+  return '<main><section>門診異動請以現場公告為準</section>'
+    + '<div class="appointment"><a href="https://lin.ee/appointment">線上預約<img src="/img/icon-next.svg" alt=""></a></div>'
+    + '<p class="text-center" style="text-align: center;">\r\n'
+    + '\t<span style="font-size: 16px;"></span><strong><span style="font-size:16px;">----------------------------------------------------------</span></strong><br />\r\n'
+    + '\t<span style="color: rgb(0, 0, 255); font-size: 26px; caret-color: rgb(0, 0, 255); background-color: rgb(255, 255, 0);">１１５年９月醫師常規門診、門診異動及週六門診時間，詳情請往下參閱！</span><br />\r\n'
+    + '\t<img alt="" src="/upload/photo_2026-09-02 23_08_57(1).jpeg" /><br />\r\n'
+    + '\t<br />\r\n'
+    + '\t<img alt="" src="/upload/115毅安門診表.png" /><br />\r\n'
+    + '\t<br />\r\n'
+    + '\t<img alt="" src="/upload/115門診異動表(4).png" /><br />\r\n'
+    + '\t<br />\r\n'
+    + '\t<img alt="" src="/upload/115週六門診表.png" /></p>'
+    + '<p><img src="/images/unrelated-footer.png" alt="map"></p></main>';
 }
 
 function loginHtml() {
@@ -524,7 +526,7 @@ test('publish POST maps real pipeline concurrent admission lock through route wi
   let releaseFirst;
   const transportCalls = [];
   const firstPublicResponse = new Promise((resolve) => {
-    releaseFirst = () => resolve({ status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: '<main></main>' });
+    releaseFirst = () => resolve({ status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() });
   });
   const transport = async (request) => {
     transportCalls.push(request);

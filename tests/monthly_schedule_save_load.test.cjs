@@ -171,7 +171,10 @@ test('front end keeps load manual and preserves INITIAL_DATA fallback', () => {
   assert.match(html, /useState\(INITIAL_DATA\)/);
   assert.match(html, /getInitialMonthKey\(window, INITIAL_DATA\.title\)/);
   assert.match(html, /onClick=\{handleLoadSchedule\}/);
-  assert.doesNotMatch(html, /useEffect\([^]*handleLoadSchedule/);
+  assert.doesNotMatch(
+    html,
+    /useEffect\s*\(\s*\(\s*\)\s*=>\s*\{(?:(?!\n\s*\}\s*,\s*\[[^\]]*\]\s*\);)[^])*\bhandleLoadSchedule\s*\(/
+  );
   assert.doesNotMatch(html, /useState\([^]*handleLoadSchedule\(/);
   assert.match(html, /尚無已儲存資料，目前畫面未變更/);
 });
@@ -186,6 +189,6 @@ test('preview and PNG capture invariants remain present', () => {
   const html = read('index.html');
   assert.match(html, /width: '1080px', height: '1920px'/);
   assert.match(html, /scale: 2, useCORS: true, backgroundColor: "#f8fafc", width: 1080, height: 1920/);
-  assert.match(html, /<PosterContent ref=\{captureRef\} data=\{data\} isForCapture=\{true\} \/>/);
-  assert.match(html, /<PosterContent data=\{data\} isForCapture=\{false\} \/>/);
+  assert.match(html, /<PosterContent ref=\{captureRef\} data=\{renderData\} isForCapture=\{true\} \/>/);
+  assert.match(html, /<PosterContent data=\{renderData\} isForCapture=\{false\} \/>/);
 });

@@ -10,6 +10,8 @@
     <script src="auth-gate.js"></script>
     <script src="schedule-api-config.js"></script>
     <script src="schedule-save-load-core.js"></script>
+    <script src="clinic-order.js"></script>
+    <script src="publish-core.js"></script>
     <script src="https://unpkg.com/@babel/standalone@8.0.4/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -47,7 +49,7 @@
         };
 
         const INITIAL_DATA = {
-            title: "115/4月", 
+            title: "115/4月",
             note: "● 黑點表示當時段無醫師看診 ps. 如有需掛號請記得提早五分鐘到診所喔！",
             clinics: [
                 {
@@ -79,6 +81,26 @@
                     }
                 }
             ]
+        };
+
+        const PUBLISH_FAILURE_STATUS_TEXT = Object.freeze({
+            AUTH_FAILED: "AUTH_FAILED：授權失敗，請停止操作，不要重複點擊；請檢查伺服器設定或人工登入狀態。",
+            FORM_CHANGED: "FORM_CHANGED：表單已變更，請停止操作，不要重複點擊；請人工檢查 CMS 表單。",
+            UPLOAD_FAILED: "UPLOAD_FAILED：圖片上傳失敗，請停止操作，不要重複點擊；請人工檢查公開頁面與媒體庫。",
+            SUBMIT_FAILED: "SUBMIT_FAILED：送出失敗，請停止操作，不要重複點擊；請人工檢查公開頁面與編輯器。",
+            VERIFY_FAILED: "VERIFY_FAILED：驗證失敗，請停止操作，不要重複點擊；請人工檢查公開頁面與圖片。",
+            MANUAL_CHECK_REQUIRED: "MANUAL_CHECK_REQUIRED：需要人工確認，請停止操作，不要重複點擊；請人工檢查公開頁面與 CMS。",
+            PUBLISH_IN_PROGRESS: "PUBLISH_IN_PROGRESS：已有發布進行中，請停止操作，不要重複點擊；請等待原本操作結果。",
+            CMS_RESPONSE_CONTRACT_UNVERIFIED: "CMS_RESPONSE_CONTRACT_UNVERIFIED：CMS 回應契約未驗證，請停止操作，不要重複點擊；請檢查 gate、部署與設定。",
+            PUBLISH_FAILED: "PUBLISH_FAILED：發布失敗，請停止操作，不要重複點擊；請記錄安全代碼與 attemptId 後本機調查。",
+        });
+
+        const getPublishFailureStatusText = (result) => {
+            const code = result && typeof result.error === "string" ? result.error : "";
+            if (Object.prototype.hasOwnProperty.call(PUBLISH_FAILURE_STATUS_TEXT, code)) {
+                return PUBLISH_FAILURE_STATUS_TEXT[code];
+            }
+            return PUBLISH_FAILURE_STATUS_TEXT.PUBLISH_FAILED;
         };
 
         const PosterContent = forwardRef(({ data, isForCapture }, ref) => (
@@ -193,7 +215,18 @@
             const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
             const [isSavingSchedule, setIsSavingSchedule] = useState(false);
             const [scheduleStatus, setScheduleStatus] = useState("");
+            const [primaryClinicId, setPrimaryClinicId] = useState(() => INITIAL_DATA.clinics[0].id);
+            const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+            const [selectedPublishChannelIds, setSelectedPublishChannelIds] = useState([]);
+            const [publishStatus, setPublishStatus] = useState("");
+            const [isPublishing, setIsPublishing] = useState(false);
             const captureRef = useRef(null);
+            const publishButtonRef = useRef(null);
+            const publishDialogRef = useRef(null);
+            const publishRequestInFlightRef = useRef(false);
+            const renderData = { ...data, clinics: ClinicOrder.orderClinicsByPriority(data.clinics, primaryClinicId) };
+            const publishReadiness = PublishCore.evaluatePublishSelection(PublishCore.PUBLISH_CHANNELS, selectedPublishChannelIds, primaryClinicId);
+            const primaryClinicGuard = PublishCore.evaluatePublishSelection(PublishCore.PUBLISH_CHANNELS, PublishCore.PUBLISH_CHANNELS.map((channel) => channel.id), primaryClinicId);
 
             const updateClinicSchedule = (cIdx, day, slot, value) => {
                 const newData = JSON.parse(JSON.stringify(data));
@@ -317,9 +350,135 @@
                 }, 500);
             };
 
+            const generatePublishPngDataUrl = async () => {
+                if (!captureRef.current) return;
+                await document.fonts.ready;
+                const canvas = await html2canvas(captureRef.current, {
+                    scale: 2, useCORS: true, backgroundColor: "#f8fafc", width: 1080, height: 1920
+                });
+                return canvas.toDataURL("image/png", 1.0);
+            };
+
+            const handleOpenPublish = () => {
+                setSelectedPublishChannelIds([]);
+                setPublishStatus("");
+                setIsPublishDialogOpen(true);
+            };
+
+            const togglePublishChannel = (channelId) => {
+                setSelectedPublishChannelIds((currentIds) =>
+                    currentIds.includes(channelId)
+                        ? currentIds.filter((id) => id !== channelId)
+                        : [...currentIds, channelId]
+                );
+                setPublishStatus("");
+            };
+
+            const handleConfirmPublish = async () => {
+                if (!publishReadiness.canConfirm) return;
+                if (publishRequestInFlightRef.current) return;
+
+                publishRequestInFlightRef.current = true;
+                if (isPublishing) {
+                    publishRequestInFlightRef.current = false;
+                    return;
+                }
+                setIsPublishing(true);
+                try {
+                    const pngDataUrl = await generatePublishPngDataUrl();
+                    const response = await fetch("/api/publish", {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            action: "publish",
+                            channelIds: selectedPublishChannelIds,
+                            primaryClinicId,
+                            title: data.title,
+                            pngDataUrl,
+                        }),
+                    });
+
+                    let result = null;
+                    try {
+                        result = await response.json();
+                    } catch (err) {
+                        result = null;
+                    }
+
+                    if (response.ok && result && result.ok === true && result.status === "PUBLISHED") {
+                        setPublishStatus("晉安官網發布完成");
+                    } else if (result && result.error === "AUTH_REQUIRED") {
+                        setPublishStatus("AUTH_REQUIRED：請重新登入後再操作；請停止操作，不要重複點擊。");
+                    } else {
+                        setPublishStatus(getPublishFailureStatusText(result));
+                    }
+                } catch (err) {
+                    setPublishStatus(PUBLISH_FAILURE_STATUS_TEXT.PUBLISH_FAILED);
+                } finally {
+                    publishRequestInFlightRef.current = false;
+                    setIsPublishing(false);
+                }
+            };
+
+            useEffect(() => {
+                if (!isPublishDialogOpen) return;
+
+                const dialog = publishDialogRef.current;
+                if (!dialog) return;
+
+                const getFocusableElements = () => Array.from(
+                    dialog.querySelectorAll('button:not(:disabled), input:not(:disabled)')
+                );
+                const channelCheckbox = getFocusableElements().find((element) => element.type === "checkbox");
+                const firstFocusable = getFocusableElements()[0];
+                (channelCheckbox || firstFocusable || dialog).focus();
+
+                const handleKeyDown = (event) => {
+                    if (event.key === "Escape") {
+                        event.preventDefault();
+                        setIsPublishDialogOpen(false);
+                        return;
+                    }
+
+                    if (event.key !== "Tab") return;
+
+                    const focusableElements = getFocusableElements();
+                    if (!focusableElements.length) {
+                        event.preventDefault();
+                        dialog.focus();
+                        return;
+                    }
+
+                    const firstFocusable = focusableElements[0];
+                    const lastFocusable = focusableElements[focusableElements.length - 1];
+                    const isShiftTab = event.shiftKey;
+
+                    if (!dialog.contains(document.activeElement)) {
+                        event.preventDefault();
+                        (isShiftTab ? lastFocusable : firstFocusable).focus();
+                        return;
+                    }
+
+                    if (isShiftTab && document.activeElement === firstFocusable) {
+                        event.preventDefault();
+                        lastFocusable.focus();
+                    } else if (!isShiftTab && document.activeElement === lastFocusable) {
+                        event.preventDefault();
+                        firstFocusable.focus();
+                    }
+                };
+
+                document.addEventListener("keydown", handleKeyDown);
+                return () => {
+                    document.removeEventListener("keydown", handleKeyDown);
+                    publishButtonRef.current?.focus();
+                };
+            }, [isPublishDialogOpen]);
+
             return (
                 <div className="flex flex-col lg:flex-row min-h-screen bg-slate-100 text-slate-900">
-                    <PosterContent ref={captureRef} data={data} isForCapture={true} />
+                    <PosterContent ref={captureRef} data={renderData} isForCapture={true} />
                     
                     <div className="w-full lg:w-[450px] p-6 bg-white shadow-2xl overflow-y-auto max-h-screen border-r z-10 text-slate-800">
                         <header className="mb-6 pb-4 border-b flex items-center justify-between gap-4">
@@ -367,6 +526,14 @@
                             <section>
                                 <label className="block text-sm font-black text-slate-500 mb-1">年份月份</label>
                                 <input className="w-full p-2 border-2 border-slate-200 rounded-lg font-bold bg-slate-50 outline-none" value={data.title} onChange={(e) => setData({...data, title: e.target.value})} />
+                            </section>
+
+                            <section>
+                                <label className="block text-sm font-black text-slate-500 mb-1">主院所</label>
+                                <select className="w-full p-2 border-2 border-slate-200 rounded-lg font-bold bg-slate-50 outline-none" value={primaryClinicId} onChange={(e) => setPrimaryClinicId(e.target.value)}>
+                                    <option value="clinic-1">晉安優先</option>
+                                    <option value="clinic-2">毅安優先</option>
+                                </select>
                             </section>
 
                             {data.clinics.map((clinic, cIdx) => (
@@ -437,14 +604,77 @@
                             <button onClick={handleDownload} disabled={isCapturing} className={`w-full py-4 rounded-2xl font-black text-white flex items-center justify-center gap-2 shadow-lg transition-all ${isCapturing ? 'bg-slate-400' : 'bg-teal-600 active:scale-95'}`}>
                                 <i data-lucide="download"></i> {isCapturing ? '正在產生圖片...' : '下載高清 PNG 海報'}
                             </button>
+                            <button ref={publishButtonRef} onClick={handleOpenPublish} className="w-full py-4 rounded-2xl font-black text-white flex items-center justify-center gap-2 shadow-lg transition-all bg-slate-700 active:scale-95">
+                                <i data-lucide="send"></i> 發布
+                            </button>
                         </div>
                     </div>
 
                     <div className="flex-1 flex justify-center items-start p-6 overflow-auto bg-slate-300">
                         <div className="scale-[0.25] md:scale-[0.35] lg:scale-[0.3] xl:scale-[0.4] origin-top my-4 shadow-2xl">
-                            <PosterContent data={data} isForCapture={false} />
+                            <PosterContent data={renderData} isForCapture={false} />
                         </div>
                     </div>
+                    {isPublishDialogOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+                            <div ref={publishDialogRef} role="dialog" aria-modal="true" aria-labelledby="publish-dialog-title" tabIndex="-1" className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl border border-slate-200 space-y-4">
+                                <div className="flex items-start justify-between gap-3">
+                                    <h2 id="publish-dialog-title" className="text-lg font-black text-slate-800">發布確認</h2>
+                                    <button type="button" onClick={() => setIsPublishDialogOpen(false)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100" aria-label="關閉發布確認">
+                                        <span aria-hidden="true">×</span>
+                                    </button>
+                                </div>
+
+                                {primaryClinicGuard.warning && (
+                                    <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-black text-amber-800">
+                                        {primaryClinicGuard.warning}
+                                    </div>
+                                )}
+
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between gap-3">
+                                        <span className="font-black text-slate-500">主院所排序</span>
+                                        <span className="font-bold text-slate-800">{primaryClinicId === "clinic-1" ? "晉安優先" : "毅安優先"}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-3">
+                                        <span className="font-black text-slate-500">門診月份／標題</span>
+                                        <span className="font-bold text-slate-800">{data.title}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-3">
+                                        <span className="font-black text-slate-500">圖片來源</span>
+                                        <span className="font-bold text-slate-800">目前 Preview 對應的 PNG</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    {PublishCore.PUBLISH_CHANNELS.map((channel) => (
+                                        <label key={channel.id} className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm font-black text-slate-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedPublishChannelIds.includes(channel.id)}
+                                                onChange={() => togglePublishChannel(channel.id)}
+                                                className="h-4 w-4"
+                                            />
+                                            <span>{channel.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+
+                                {publishStatus && (
+                                    <div role="status" aria-live="polite" className="text-sm font-black text-slate-700">{publishStatus}</div>
+                                )}
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button type="button" onClick={() => setIsPublishDialogOpen(false)} className="py-2 px-3 rounded-lg border-2 border-slate-200 text-slate-600 text-sm font-black">
+                                        取消
+                                    </button>
+                                    <button type="button" onClick={handleConfirmPublish} disabled={!publishReadiness.canConfirm || isPublishing} className="py-2 px-3 rounded-lg bg-teal-600 text-white text-sm font-black disabled:opacity-50">
+                                        確認發布
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }

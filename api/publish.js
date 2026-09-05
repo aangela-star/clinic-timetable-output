@@ -3,6 +3,25 @@ const { parsePngDataUrl } = require('../lib/publish-contract');
 
 const REQUIRED_KEYS = ['action', 'channelIds', 'primaryClinicId', 'title', 'pngDataUrl'];
 const REQUIRED_KEY_SET = new Set(REQUIRED_KEYS);
+const DIAGNOSTIC_LOGIN_ONLY_BODY = Object.freeze({ diagnosticMode: 'loginOnly' });
+const DIAGNOSTIC_REASON_CODES = Object.freeze(new Set([
+  'NONE',
+  'LOGIN_POST_STATUS_MISMATCH',
+  'LOGIN_POST_FINAL_URL_MISMATCH',
+  'LOGIN_POST_LOCATION_MISMATCH',
+  'LOGIN_LANDING_STATUS_MISMATCH',
+  'LOGIN_LANDING_URL_MISMATCH',
+  'LOGIN_LANDING_REDIRECT_DRIFT',
+  'AUTH_FAILED',
+  'FORM_CHANGED',
+  'VERIFY_FAILED',
+]));
+const DIAGNOSTIC_STAGES = Object.freeze(new Set([
+  'CREDENTIALS',
+  'LOGIN_PAGE',
+  'LOGIN_POST',
+  'LOGIN_CONFIRMED',
+]));
 const TITLE_CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f]/;
 
 function json(res, status, payload) {
@@ -28,6 +47,11 @@ function hasSafeValidSession(req) {
 function defaultPreflightPublish(payload) {
   const { publishJinanCms } = require('../lib/jinan-cms');
   return publishJinanCms(payload);
+}
+
+function defaultLoginOnlyJinanCms() {
+  const { loginOnlyJinanCms } = require('../lib/jinan-cms');
+  return loginOnlyJinanCms();
 }
 
 function skipJsonString(source, start) {
@@ -109,6 +133,30 @@ function isPlainJsonObject(value) {
   return keys.length === REQUIRED_KEYS.length && REQUIRED_KEYS.every((key) => keys.includes(key));
 }
 
+function isExactDiagnosticLoginOnlyBody(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  if (Object.getPrototypeOf(value) !== Object.prototype) return false;
+  if (Object.getOwnPropertySymbols(value).length !== 0) return false;
+
+  const names = Object.getOwnPropertyNames(value);
+  if (names.length !== 1 || names[0] !== 'diagnosticMode') return false;
+  const descriptor = Object.getOwnPropertyDescriptor(value, 'diagnosticMode');
+  if (!descriptor || !descriptor.enumerable || !Object.prototype.hasOwnProperty.call(descriptor, 'value')) {
+    return false;
+  }
+  const keys = Object.keys(value);
+  return keys.length === 1 && value.diagnosticMode === DIAGNOSTIC_LOGIN_ONLY_BODY.diagnosticMode;
+}
+
+function hasDiagnosticModeKey(value) {
+  return Boolean(
+    value
+      && typeof value === 'object'
+      && !Array.isArray(value)
+      && Object.prototype.hasOwnProperty.call(value, 'diagnosticMode'),
+  );
+}
+
 function isExactChannelSelection(value) {
   if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) return false;
   if (Object.getOwnPropertySymbols(value).length !== 0) return false;
@@ -184,7 +232,34 @@ function respondToPublishResult(res, result) {
   }
 }
 
-function createHandler({ preflightPublish = defaultPreflightPublish } = {}) {
+function safeDiagnosticResult(result) {
+  try {
+    const snapshot = {
+      result: result?.result,
+      reasonCode: result?.reasonCode,
+      stage: result?.stage,
+    };
+    if (snapshot.result === 'PASS'
+        && snapshot.reasonCode === 'NONE'
+        && snapshot.stage === 'LOGIN_CONFIRMED') {
+      return { result: 'PASS', reasonCode: 'NONE', stage: 'LOGIN_CONFIRMED' };
+    }
+    if (snapshot.result === 'FAIL'
+        && DIAGNOSTIC_REASON_CODES.has(snapshot.reasonCode)
+        && snapshot.reasonCode !== 'NONE'
+        && DIAGNOSTIC_STAGES.has(snapshot.stage)) {
+      return { result: 'FAIL', reasonCode: snapshot.reasonCode, stage: snapshot.stage };
+    }
+  } catch (_) {
+    return { result: 'FAIL', reasonCode: 'VERIFY_FAILED', stage: 'CREDENTIALS' };
+  }
+  return { result: 'FAIL', reasonCode: 'VERIFY_FAILED', stage: 'CREDENTIALS' };
+}
+
+function createHandler({
+  preflightPublish = defaultPreflightPublish,
+  loginOnlyJinanCms = defaultLoginOnlyJinanCms,
+} = {}) {
   return async function handler(req, res) {
     if (!hasSafeValidSession(req)) {
       return json(res, 401, { ok: false, error: 'AUTH_REQUIRED', message: '請重新登入後再操作。' });
@@ -194,6 +269,17 @@ function createHandler({ preflightPublish = defaultPreflightPublish } = {}) {
     }
 
     const body = parseRequestBody(req.body);
+    if (hasDiagnosticModeKey(body)) {
+      if (!isExactDiagnosticLoginOnlyBody(body)) {
+        return json(res, 400, { ok: false, error: 'INVALID_REQUEST' });
+      }
+      try {
+        return json(res, 200, safeDiagnosticResult(await loginOnlyJinanCms()));
+      } catch (_) {
+        return json(res, 200, { result: 'FAIL', reasonCode: 'VERIFY_FAILED', stage: 'CREDENTIALS' });
+      }
+    }
+
     const validation = validatePublishBody(body);
     if (validation.error === 'CHANNEL_REQUIRED') {
       return json(res, 400, { ok: false, error: 'CHANNEL_REQUIRED' });

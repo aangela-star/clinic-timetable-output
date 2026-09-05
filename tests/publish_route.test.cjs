@@ -110,17 +110,28 @@ function loginHtml() {
     </form>`;
 }
 
-async function runPublish({ method = 'POST', body, headers = {}, preflightPublish = async () => ({ ok: true }) }) {
+async function runPublish({
+  method = 'POST',
+  body,
+  headers = {},
+  preflightPublish = async () => ({ ok: true }),
+  loginOnlyJinanCms = async () => ({ result: 'PASS', reasonCode: 'NONE', stage: 'LOGIN_CONFIRMED' }),
+} = {}) {
   let adapterCalls = 0;
+  let diagnosticCalls = 0;
   const handler = createHandler({
     preflightPublish: async (payload) => {
       adapterCalls += 1;
       return preflightPublish(payload);
     },
+    loginOnlyJinanCms: async () => {
+      diagnosticCalls += 1;
+      return loginOnlyJinanCms();
+    },
   });
   const res = responseRecorder();
   await handler({ method, headers, body }, res);
-  return { res, adapterCalls };
+  return { res, adapterCalls, diagnosticCalls };
 }
 
 test('publish POST requires an authenticated signed session before invoking adapter', async () => {
@@ -137,6 +148,20 @@ test('publish POST requires an authenticated signed session before invoking adap
   assert.equal(res.statusCode, 401);
   assert.equal(res.body.error, 'AUTH_REQUIRED');
   assert.equal(adapterCalls, 0);
+});
+
+test('diagnostic loginOnly requires authentication before invoking diagnostic adapter', async () => {
+  const { res, adapterCalls, diagnosticCalls } = await runPublish({
+    body: { diagnosticMode: 'loginOnly' },
+    loginOnlyJinanCms: async () => {
+      throw new Error('unauthorized diagnostic adapter must not run');
+    },
+  });
+
+  assert.equal(res.statusCode, 401);
+  assert.equal(res.body.error, 'AUTH_REQUIRED');
+  assert.equal(adapterCalls, 0);
+  assert.equal(diagnosticCalls, 0);
 });
 
 test('publish POST treats malformed session cookies as unauthenticated without invoking adapter', async () => {
@@ -176,6 +201,140 @@ test('publish requires auth before method and rejects authenticated non-POST wit
   assert.deepEqual(authenticated.res.body, { ok: false, error: 'METHOD_NOT_ALLOWED' });
   assertNoStoreJson(authenticated.res);
   assert.equal(authenticated.adapterCalls, 0);
+});
+
+test('diagnostic loginOnly accepts only the exact body and rejects request credentials before adapter', async () => {
+  const invalidBodies = [
+    {},
+    [],
+    null,
+    { diagnosticMode: 'LOGIN_ONLY' },
+    { diagnosticMode: 'loginOnly', username: 'browser-user' },
+    { diagnosticMode: 'loginOnly', password: 'browser-password' },
+    { diagnosticMode: 'loginOnly', credentials: { username: 'browser-user', password: 'browser-password' } },
+    '{"diagnosticMode":"loginOnly","diagnosticMode":"loginOnly"}',
+    '{"diagnosticMode":"loginOnly","extra":"blocked"}',
+    '{',
+  ];
+
+  for (const body of invalidBodies) {
+    const { res, adapterCalls, diagnosticCalls } = await runPublish({
+      headers: { cookie: signedCookie() },
+      body,
+    });
+    assert.equal(res.statusCode, 400, JSON.stringify(body));
+    assert.deepEqual(res.body, { ok: false, error: 'INVALID_REQUEST' }, JSON.stringify(body));
+    assertNoStoreJson(res);
+    assert.equal(adapterCalls, 0, JSON.stringify(body));
+    assert.equal(diagnosticCalls, 0, JSON.stringify(body));
+  }
+});
+
+test('diagnostic loginOnly invokes only diagnostic adapter while normal publish still invokes only normal adapter', async () => {
+  const diagnostic = await runPublish({
+    headers: { cookie: signedCookie() },
+    body: { diagnosticMode: 'loginOnly' },
+    preflightPublish: async () => {
+      throw new Error('normal adapter must not run for diagnostic mode');
+    },
+    loginOnlyJinanCms: async () => ({ result: 'PASS', reasonCode: 'NONE', stage: 'LOGIN_CONFIRMED', secret: 'drop-me' }),
+  });
+
+  assert.equal(diagnostic.res.statusCode, 200);
+  assert.deepEqual(diagnostic.res.body, { result: 'PASS', reasonCode: 'NONE', stage: 'LOGIN_CONFIRMED' });
+  assert.equal(diagnostic.adapterCalls, 0);
+  assert.equal(diagnostic.diagnosticCalls, 1);
+
+  const normalBody = {
+    action: 'publish',
+    channelIds: ['jinan-website'],
+    primaryClinicId: 'clinic-1',
+    title: '晉安門診表',
+    pngDataUrl: currentPreviewPngDataUrl(),
+  };
+  const normal = await runPublish({
+    headers: { cookie: signedCookie() },
+    body: normalBody,
+    preflightPublish: async () => ({ status: 'CMS_RESPONSE_CONTRACT_UNVERIFIED' }),
+    loginOnlyJinanCms: async () => {
+      throw new Error('diagnostic adapter must not run for normal publish');
+    },
+  });
+
+  assert.equal(normal.res.statusCode, 409);
+  assert.deepEqual(normal.res.body, {
+    ok: false,
+    error: 'CMS_RESPONSE_CONTRACT_UNVERIFIED',
+    message: '晉安官網發布串接尚待完成最後驗證',
+  });
+  assert.equal(normal.adapterCalls, 1);
+  assert.equal(normal.diagnosticCalls, 0);
+});
+
+test('diagnostic loginOnly route safely maps spoofed or throwing adapter results to VERIFY_FAILED', async () => {
+  const spoofed = await runPublish({
+    headers: { cookie: signedCookie() },
+    body: { diagnosticMode: 'loginOnly' },
+    loginOnlyJinanCms: async () => ({ result: 'FAIL', reasonCode: 'ATTACKER_CODE', stage: 'raw-url' }),
+  });
+  assert.equal(spoofed.res.statusCode, 200);
+  assert.deepEqual(spoofed.res.body, { result: 'FAIL', reasonCode: 'VERIFY_FAILED', stage: 'CREDENTIALS' });
+
+  const throwingGetter = {};
+  Object.defineProperty(throwingGetter, 'result', {
+    enumerable: true,
+    get() { throw new Error('getter secret'); },
+  });
+  const thrown = await runPublish({
+    headers: { cookie: signedCookie() },
+    body: { diagnosticMode: 'loginOnly' },
+    loginOnlyJinanCms: async () => throwingGetter,
+  });
+  assert.equal(thrown.res.statusCode, 200);
+  assert.deepEqual(thrown.res.body, { result: 'FAIL', reasonCode: 'VERIFY_FAILED', stage: 'CREDENTIALS' });
+});
+
+test('diagnostic loginOnly snapshots stateful result getters once without leaking second values', async () => {
+  let resultReads = 0;
+  let reasonReads = 0;
+  let stageReads = 0;
+  const stateful = {};
+  Object.defineProperties(stateful, {
+    result: {
+      enumerable: true,
+      get() {
+        resultReads += 1;
+        return 'FAIL';
+      },
+    },
+    reasonCode: {
+      enumerable: true,
+      get() {
+        reasonReads += 1;
+        return reasonReads === 1 ? 'VERIFY_FAILED' : 'UNSAFE_SECOND_VALUE';
+      },
+    },
+    stage: {
+      enumerable: true,
+      get() {
+        stageReads += 1;
+        return stageReads === 1 ? 'CREDENTIALS' : 'LOGIN_CONFIRMED';
+      },
+    },
+  });
+
+  const { res } = await runPublish({
+    headers: { cookie: signedCookie() },
+    body: { diagnosticMode: 'loginOnly' },
+    loginOnlyJinanCms: async () => stateful,
+  });
+
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.body, { result: 'FAIL', reasonCode: 'VERIFY_FAILED', stage: 'CREDENTIALS' });
+  assert.equal(resultReads, 1);
+  assert.equal(reasonReads, 1);
+  assert.equal(stageReads, 1);
+  assert.equal(JSON.stringify(res.body).includes('UNSAFE_SECOND_VALUE'), false);
 });
 
 test('publish POST rejects malformed JSON string body without throwing or logging request body', async () => {

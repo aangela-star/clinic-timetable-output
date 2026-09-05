@@ -22,6 +22,7 @@ const {
   planRollback,
   preflightPublish,
   preflightJinanCmsPublish,
+  loginOnlyJinanCms,
   validateLoginPostResponse,
 } = cmsModule;
 let { publishJinanCms } = cmsModule;
@@ -569,6 +570,195 @@ test('C2b. form parsers ignore fake forms and controls in excluded or attribute 
   ]) {
     assertCode(() => parseCmsEditorForm(html), 'FORM_CHANGED');
   }
+});
+
+test('C2c. loginOnly diagnostic succeeds after login landing only and never touches publish URLs', async () => {
+  const transport = makeTransport([
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login; Path=/admin; HttpOnly'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php', setCookie: ['sid=submitted; Path=/admin; HttpOnly'] },
+    loginSuccessLandingResponse(),
+    new Error('success must stop immediately after landing'),
+  ]);
+
+  const result = await loginOnlyJinanCms({
+    env: {
+      JINAN_CMS_USERNAME: 'synthetic-user',
+      JINAN_CMS_PASSWORD: 'synthetic-password',
+    },
+    transport,
+    logger: () => {},
+  });
+
+  assert.deepEqual(result, { result: 'PASS', reasonCode: 'NONE', stage: 'LOGIN_CONFIRMED' });
+  assert.deepEqual(transport.calls.map((call) => `${call.method} ${call.url}`), [
+    `GET ${JINAN_CMS_CONFIG.loginUrl}`,
+    `POST ${JINAN_CMS_CONFIG.loginUrl}`,
+    `GET ${LOGIN_SUCCESS_LANDING_URL}`,
+  ]);
+  assert.equal(transport.calls.filter((call) => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.loginUrl).length, 1);
+  assert.equal(transport.calls.filter((call) => call.url.includes('QuickUpload')).length, 0);
+  assert.equal(transport.calls.filter((call) => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl).length, 0);
+  assert.equal(transport.calls.some((call) => call.url === JINAN_CMS_CONFIG.publicUrl), false);
+  assert.equal(transport.calls.some((call) => call.url === JINAN_CMS_CONFIG.editorUrl), false);
+});
+
+test('C2d. loginOnly diagnostic reads credentials only from runtime env and sends one POST maximum', async () => {
+  let usernameReads = 0;
+  let passwordReads = 0;
+  const env = {
+    get JINAN_CMS_USERNAME() {
+      usernameReads += 1;
+      return 'runtime-user';
+    },
+    get JINAN_CMS_PASSWORD() {
+      passwordReads += 1;
+      return 'runtime-password';
+    },
+  };
+  const transport = makeTransport([
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+  ]);
+
+  const result = await loginOnlyJinanCms({
+    username: 'body-user-must-not-be-read',
+    password: 'body-password-must-not-be-read',
+    credentials: { username: 'nested-user', password: 'nested-password' },
+    env,
+    transport,
+  });
+
+  assert.deepEqual(result, { result: 'FAIL', reasonCode: 'AUTH_FAILED', stage: 'LOGIN_POST' });
+  assert.equal(usernameReads, 1);
+  assert.equal(passwordReads, 1);
+  assert.equal(transport.calls.length, 2);
+  assert.equal(transport.calls.filter((call) => call.method === 'POST').length, 1);
+  assert.equal(String(transport.calls[1].bodyKind), 'URLSearchParams');
+  assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false);
+  assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl), false);
+});
+
+test('C2d0. loginOnly diagnostic treats missing runtime credentials as VERIFY_FAILED without transport', async () => {
+  const transport = makeTransport([
+    new Error('missing credentials must stop before transport'),
+  ]);
+
+  const result = await loginOnlyJinanCms({
+    env: {
+      JINAN_CMS_USERNAME: '',
+      JINAN_CMS_PASSWORD: '',
+    },
+    transport,
+    logger: () => {},
+  });
+
+  assert.deepEqual(result, { result: 'FAIL', reasonCode: 'VERIFY_FAILED', stage: 'CREDENTIALS' });
+  assert.equal(transport.calls.length, 0);
+});
+
+test('C2e. loginOnly diagnostic failures keep safe reason provenance and perform no mutations', async () => {
+  const cases = [
+    ['login GET status mismatch', [
+      { status: 503, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+    ], { result: 'FAIL', reasonCode: 'VERIFY_FAILED', stage: 'LOGIN_PAGE' }],
+    ['login form changed', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: '<form></form>' },
+    ], { result: 'FAIL', reasonCode: 'FORM_CHANGED', stage: 'LOGIN_PAGE' }],
+    ['recognized credential rejection', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+    ], { result: 'FAIL', reasonCode: 'AUTH_FAILED', stage: 'LOGIN_POST' }],
+    ['login post status mismatch', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 303, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' },
+    ], { result: 'FAIL', reasonCode: 'LOGIN_POST_STATUS_MISMATCH', stage: 'LOGIN_POST' }],
+    ['login post final URL mismatch', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 302, finalUrl: LOGIN_SUCCESS_LANDING_URL, location: '/admin/index.php' },
+    ], { result: 'FAIL', reasonCode: 'LOGIN_POST_FINAL_URL_MISMATCH', stage: 'LOGIN_POST' }],
+    ['login post location mismatch', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: LOGIN_SUCCESS_LANDING_URL },
+    ], { result: 'FAIL', reasonCode: 'LOGIN_POST_LOCATION_MISMATCH', stage: 'LOGIN_POST' }],
+    ['landing status mismatch', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' },
+      { status: 503, finalUrl: LOGIN_SUCCESS_LANDING_URL, body: '' },
+    ], { result: 'FAIL', reasonCode: 'LOGIN_LANDING_STATUS_MISMATCH', stage: 'LOGIN_CONFIRMED' }],
+    ['landing URL mismatch', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' },
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: '' },
+    ], { result: 'FAIL', reasonCode: 'LOGIN_LANDING_URL_MISMATCH', stage: 'LOGIN_CONFIRMED' }],
+    ['landing redirect drift', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' },
+      { status: 200, finalUrl: LOGIN_SUCCESS_LANDING_URL, location: '', body: '' },
+    ], { result: 'FAIL', reasonCode: 'LOGIN_LANDING_REDIRECT_DRIFT', stage: 'LOGIN_CONFIRMED' }],
+    ['transport error', [
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml() },
+      new Error('network secret must not leak'),
+    ], { result: 'FAIL', reasonCode: 'VERIFY_FAILED', stage: 'LOGIN_POST' }],
+  ];
+
+  for (const [name, responses, expected] of cases) {
+    const transport = makeTransport(responses);
+    const result = await loginOnlyJinanCms({
+      env: {
+        JINAN_CMS_USERNAME: 'synthetic-user',
+        JINAN_CMS_PASSWORD: 'synthetic-password',
+      },
+      transport,
+      logger: () => {},
+    });
+    assert.deepEqual(result, expected, name);
+    assert.equal(transport.calls.filter((call) => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.loginUrl).length <= 1, true, name);
+    assert.equal(transport.calls.filter((call) => call.url.includes('QuickUpload')).length, 0, name);
+    assert.equal(transport.calls.filter((call) => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl).length, 0, name);
+    assert.equal(transport.calls.some((call) => call.url === JINAN_CMS_CONFIG.publicUrl), false, name);
+    assert.equal(transport.calls.some((call) => call.url === JINAN_CMS_CONFIG.editorUrl), false, name);
+  }
+});
+
+test('C2f. loginOnly diagnostic ignores adversarial transport code spoofing and throwing getters', async () => {
+  const spoof = new Error('transport secret');
+  spoof.code = 'FORM_CHANGED';
+  const transportSpoof = makeTransport([
+    spoof,
+  ]);
+  assert.deepEqual(await loginOnlyJinanCms({
+    env: {
+      JINAN_CMS_USERNAME: 'synthetic-user',
+      JINAN_CMS_PASSWORD: 'synthetic-password',
+    },
+    transport: transportSpoof,
+  }), { result: 'FAIL', reasonCode: 'VERIFY_FAILED', stage: 'LOGIN_PAGE' });
+
+  const bodyGetterResponse = {
+    status: 200,
+    finalUrl: JINAN_CMS_CONFIG.loginUrl,
+  };
+  Object.defineProperty(bodyGetterResponse, 'body', {
+    enumerable: true,
+    get() {
+      const error = new Error('getter secret');
+      error.code = 'FORM_CHANGED';
+      throw error;
+    },
+  });
+  const getterSpoof = makeTransport([
+    bodyGetterResponse,
+  ]);
+  assert.deepEqual(await loginOnlyJinanCms({
+    env: {
+      JINAN_CMS_USERNAME: 'synthetic-user',
+      JINAN_CMS_PASSWORD: 'synthetic-password',
+    },
+    transport: getterSpoof,
+  }), { result: 'FAIL', reasonCode: 'VERIFY_FAILED', stage: 'LOGIN_PAGE' });
+
+  assert.equal(transportSpoof.calls.some((call) => call.url.includes('QuickUpload')), false);
+  assert.equal(getterSpoof.calls.some((call) => call.url.includes('QuickUpload')), false);
 });
 
 test('C3. editor parser allows same endpoint absent, empty, relative, or absolute action only', () => {

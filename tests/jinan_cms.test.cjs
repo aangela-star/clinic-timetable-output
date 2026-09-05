@@ -603,6 +603,41 @@ test('C2c. loginOnly diagnostic succeeds after login landing only and never touc
   assert.equal(transport.calls.some((call) => call.url === JINAN_CMS_CONFIG.editorUrl), false);
 });
 
+test('C2c1. login POST matches same-origin form request contract', async () => {
+  const calls = [];
+  const responses = [
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login; Path=/admin; HttpOnly'] },
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: LOGIN_POST_SUCCESS_LOCATION, setCookie: ['sid=submitted; Path=/admin; HttpOnly'] },
+    loginSuccessLandingResponse(),
+  ];
+  const transport = async (request) => {
+    calls.push(request);
+    const next = responses.shift();
+    assert.notEqual(next, undefined, `missing fixture response for ${request.method} ${request.url}`);
+    return next;
+  };
+
+  const result = await loginOnlyJinanCms({
+    env: {
+      JINAN_CMS_USERNAME: 'synthetic-user',
+      JINAN_CMS_PASSWORD: 'synthetic-password',
+    },
+    transport,
+    logger: () => {},
+  });
+
+  assert.deepEqual(result, { result: 'PASS', reasonCode: 'NONE', stage: 'LOGIN_CONFIRMED' });
+  const loginPost = calls.find((call) => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.loginUrl);
+  assert.notEqual(loginPost, undefined);
+  assert.deepEqual(loginPost.headers, {
+    'content-type': 'application/x-www-form-urlencoded',
+    origin: JINAN_CMS_CONFIG.origin,
+    referer: JINAN_CMS_CONFIG.loginUrl,
+    cookie: 'sid=login',
+  });
+  assert.equal(String(loginPost.body), 'mode=login&username=synthetic-user&password=synthetic-password');
+});
+
 test('C2d. loginOnly diagnostic reads credentials only from runtime env and sends one POST maximum', async () => {
   let usernameReads = 0;
   let passwordReads = 0;

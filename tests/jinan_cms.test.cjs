@@ -1625,6 +1625,352 @@ test('G2c2. preflight fail-closes login landing responses without explicit final
   }
 });
 
+test('G2c2a. publish login-submit does not log unallowlisted transport errorCode text', async () => {
+  const logs = [];
+  const adversarialError = new Error('transport exploded');
+  adversarialError.errorCode = 'secret=query-secret header=Authorization cookie=sid-cookie-secret';
+  const transport = makeTransport([
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login-cookie-secret; Path=/admin; HttpOnly'] },
+    adversarialError,
+  ]);
+
+  const result = await publishJinanCms({
+    pngDataUrl: pngDataUrl(),
+    callbackNumber: 37,
+    env: {
+      JINAN_CMS_PUBLISH_ENABLED: 'true',
+      JINAN_CMS_USERNAME: 'synthetic-user-secret',
+      JINAN_CMS_PASSWORD: 'synthetic-password-secret',
+    },
+    transport,
+    logger: (event) => logs.push(event),
+  });
+
+  assert.equal(result.status, 'VERIFY_FAILED');
+  assert.equal(transport.calls.length, 3);
+  assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false);
+  assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false);
+
+  const loginSubmitLog = logs.find((event) => event.stage === 'login-submit');
+  assert.ok(loginSubmitLog);
+  assert.equal(loginSubmitLog.status, 'VERIFY_FAILED');
+  assert.equal(loginSubmitLog.errorCode, 'VERIFY_FAILED');
+
+  const serialized = JSON.stringify(logs);
+  for (const forbidden of [
+    'synthetic-user-secret',
+    'synthetic-password-secret',
+    'query-secret',
+    'Authorization',
+    'sid-cookie-secret',
+    'login-cookie-secret',
+    'transport exploded',
+  ]) {
+    assert.equal(serialized.includes(forbidden), false, `leaked ${forbidden}`);
+  }
+});
+
+test('G2c2b. publish login-submit does not trust allowlisted transport errorCode spoofing', async () => {
+  const logs = [];
+  const adversarialError = new Error('transport exploded');
+  adversarialError.errorCode = 'LOGIN_POST_STATUS_MISMATCH';
+  const transport = makeTransport([
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login-cookie-secret; Path=/admin; HttpOnly'] },
+    adversarialError,
+  ]);
+
+  const result = await publishJinanCms({
+    pngDataUrl: pngDataUrl(),
+    callbackNumber: 37,
+    env: {
+      JINAN_CMS_PUBLISH_ENABLED: 'true',
+      JINAN_CMS_USERNAME: 'synthetic-user-secret',
+      JINAN_CMS_PASSWORD: 'synthetic-password-secret',
+    },
+    transport,
+    logger: (event) => logs.push(event),
+  });
+
+  assert.equal(result.status, 'VERIFY_FAILED');
+  assert.equal(transport.calls.length, 3);
+  assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false);
+  assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false);
+
+  const loginSubmitLog = logs.find((event) => event.stage === 'login-submit');
+  assert.ok(loginSubmitLog);
+  assert.equal(loginSubmitLog.status, 'VERIFY_FAILED');
+  assert.equal(loginSubmitLog.errorCode, 'VERIFY_FAILED');
+
+  const serialized = JSON.stringify(logs);
+  for (const forbidden of [
+    'synthetic-user-secret',
+    'synthetic-password-secret',
+    'login-cookie-secret',
+    'transport exploded',
+    'stack',
+    'Error:',
+  ]) {
+    assert.equal(serialized.includes(forbidden), false, `leaked ${forbidden}`);
+  }
+});
+
+test('G2c2c. publish login-submit handles transport errorCode getter that throws', async () => {
+  const logs = [];
+  const adversarialError = new Error('transport exploded');
+  Object.defineProperty(adversarialError, 'errorCode', {
+    enumerable: true,
+    get() {
+      throw new Error('getter leaked query-secret header-secret cookie-secret');
+    },
+  });
+  const transport = makeTransport([
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login-cookie-secret; Path=/admin; HttpOnly'] },
+    adversarialError,
+  ]);
+
+  const result = await publishJinanCms({
+    pngDataUrl: pngDataUrl(),
+    callbackNumber: 37,
+    env: {
+      JINAN_CMS_PUBLISH_ENABLED: 'true',
+      JINAN_CMS_USERNAME: 'synthetic-user-secret',
+      JINAN_CMS_PASSWORD: 'synthetic-password-secret',
+    },
+    transport,
+    logger: (event) => logs.push(event),
+  });
+
+  assert.equal(result.status, 'VERIFY_FAILED');
+  assert.equal(transport.calls.length, 3);
+  assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false);
+  assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false);
+
+  const loginSubmitLog = logs.find((event) => event.stage === 'login-submit');
+  assert.ok(loginSubmitLog);
+  assert.equal(loginSubmitLog.status, 'VERIFY_FAILED');
+  assert.equal(loginSubmitLog.errorCode, 'VERIFY_FAILED');
+
+  const serialized = JSON.stringify(logs);
+  for (const forbidden of [
+    'synthetic-user-secret',
+    'synthetic-password-secret',
+    'login-cookie-secret',
+    'transport exploded',
+    'getter leaked',
+    'query-secret',
+    'header-secret',
+    'cookie-secret',
+    'stack',
+    'Error:',
+  ]) {
+    assert.equal(serialized.includes(forbidden), false, `leaked ${forbidden}`);
+  }
+});
+
+test('G2c2d. publish login-submit handles thrown object errorCode getter that throws', async () => {
+  const logs = [];
+  const calls = [];
+  const adversarialError = {};
+  Object.defineProperty(adversarialError, 'errorCode', {
+    enumerable: true,
+    get() {
+      throw new Error('getter leaked query-secret header-secret cookie-secret');
+    },
+  });
+  const responses = [
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login-cookie-secret; Path=/admin; HttpOnly'] },
+    adversarialError,
+  ];
+  const transport = async (request) => {
+    calls.push({ method: request.method, url: request.url });
+    const next = responses.shift();
+    assert.notEqual(next, undefined, `missing fixture response for ${request.method} ${request.url}`);
+    if (next === adversarialError) throw adversarialError;
+    return next;
+  };
+
+  const result = await publishJinanCms({
+    pngDataUrl: pngDataUrl(),
+    callbackNumber: 37,
+    env: {
+      JINAN_CMS_PUBLISH_ENABLED: 'true',
+      JINAN_CMS_USERNAME: 'synthetic-user-secret',
+      JINAN_CMS_PASSWORD: 'synthetic-password-secret',
+    },
+    transport,
+    logger: (event) => logs.push(event),
+  });
+
+  assert.equal(result.status, 'VERIFY_FAILED');
+  assert.equal(calls.length, 3);
+  assert.equal(calls.some((call) => call.url.includes('QuickUpload')), false);
+  assert.equal(calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false);
+
+  const loginSubmitLog = logs.find((event) => event.stage === 'login-submit');
+  assert.ok(loginSubmitLog);
+  assert.equal(loginSubmitLog.status, 'VERIFY_FAILED');
+  assert.equal(loginSubmitLog.errorCode, 'VERIFY_FAILED');
+
+  const serialized = JSON.stringify(logs);
+  for (const forbidden of [
+    'synthetic-user-secret',
+    'synthetic-password-secret',
+    'login-cookie-secret',
+    'getter leaked',
+    'query-secret',
+    'header-secret',
+    'cookie-secret',
+    'stack',
+    'Error:',
+  ]) {
+    assert.equal(serialized.includes(forbidden), false, `leaked ${forbidden}`);
+  }
+});
+
+async function assertPublishLoginDiagnostic({ name, loginPostResponse, landingResponse, expectedErrorCode, expectedCalls = 3 }) {
+  const logs = [];
+  const transportResponses = [
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicCompositeHtml() },
+    { status: 200, finalUrl: JINAN_CMS_CONFIG.loginUrl, body: loginHtml(), setCookie: ['sid=login-cookie-secret; Path=/admin; HttpOnly'] },
+    {
+      body: '<main>login-post-body-secret</main>',
+      setCookie: ['sid=post-cookie-secret; Path=/admin; HttpOnly'],
+      ...loginPostResponse,
+    },
+  ];
+  if (landingResponse) {
+    transportResponses.push({
+      body: '<main>landing-body-secret</main>',
+      setCookie: ['sid=landing-cookie-secret; Path=/admin; HttpOnly'],
+      ...landingResponse,
+    });
+  }
+  const transport = makeTransport(transportResponses);
+
+  const result = await publishJinanCms({
+    pngDataUrl: pngDataUrl(),
+    callbackNumber: 37,
+    env: {
+      JINAN_CMS_PUBLISH_ENABLED: 'true',
+      JINAN_CMS_USERNAME: 'synthetic-user-secret',
+      JINAN_CMS_PASSWORD: 'synthetic-password-secret',
+    },
+    transport,
+    logger: (event) => logs.push(event),
+  });
+
+  assert.equal(result.status, 'VERIFY_FAILED', name);
+  assert.equal(transport.calls.length, expectedCalls, name);
+  assert.equal(transport.calls.some((call) => call.url.includes('QuickUpload')), false, name);
+  assert.equal(transport.calls.some((call) => call.method === 'POST' && call.url.includes('op=time&sub=set')), false, name);
+
+  const loginSubmitLog = logs.find((event) => event.stage === 'login-submit');
+  assert.ok(loginSubmitLog, name);
+  assert.equal(loginSubmitLog.status, 'VERIFY_FAILED', name);
+  assert.equal(loginSubmitLog.errorCode, expectedErrorCode, name);
+
+  const serialized = JSON.stringify(logs);
+  for (const forbidden of [
+    'synthetic-user-secret',
+    'synthetic-password-secret',
+    'login-cookie-secret',
+    'post-cookie-secret',
+    'landing-cookie-secret',
+    'login-post-body-secret',
+    'landing-body-secret',
+    'csrf-token-secret',
+    'query-secret',
+    'header-secret',
+    'raw-location-secret',
+    'user:pass',
+    'attacker.example',
+    'stack',
+    'Error:',
+  ]) {
+    assert.equal(serialized.includes(forbidden), false, `${name} leaked ${forbidden}`);
+  }
+}
+
+test('G2c3. publish login POST diagnostics use exact safe reason codes and deterministic precedence', async () => {
+  await assertPublishLoginDiagnostic({
+    name: 'post status has precedence',
+    loginPostResponse: {
+      status: 500,
+      finalUrl: `${JINAN_CMS_CONFIG.loginUrl}?token=query-secret`,
+      headers: { Location: '/admin/index.php?raw-location-secret=1', 'X-Debug': 'header-secret' },
+    },
+    expectedErrorCode: 'LOGIN_POST_STATUS_MISMATCH',
+  });
+
+  await assertPublishLoginDiagnostic({
+    name: 'post final URL precedes Location',
+    loginPostResponse: {
+      status: 302,
+      finalUrl: `${JINAN_CMS_CONFIG.loginUrl}?token=query-secret`,
+      location: '/admin/index.php?raw-location-secret=1',
+    },
+    expectedErrorCode: 'LOGIN_POST_FINAL_URL_MISMATCH',
+  });
+
+  await assertPublishLoginDiagnostic({
+    name: 'post Location mismatch',
+    loginPostResponse: {
+      status: 302,
+      finalUrl: JINAN_CMS_CONFIG.loginUrl,
+      location: '/admin/index.php?raw-location-secret=1',
+    },
+    expectedErrorCode: 'LOGIN_POST_LOCATION_MISMATCH',
+  });
+});
+
+test('G2c4. publish login landing diagnostics use exact safe reason codes and deterministic precedence', async () => {
+  const successfulPost = {
+    status: 302,
+    finalUrl: JINAN_CMS_CONFIG.loginUrl,
+    location: '/admin/index.php',
+  };
+
+  await assertPublishLoginDiagnostic({
+    name: 'landing status has precedence',
+    loginPostResponse: successfulPost,
+    landingResponse: {
+      status: 302,
+      finalUrl: `${LOGIN_SUCCESS_LANDING_URL}?token=query-secret`,
+      headers: { location: '/admin/index.php?raw-location-secret=1', 'X-Debug': 'header-secret' },
+    },
+    expectedErrorCode: 'LOGIN_LANDING_STATUS_MISMATCH',
+    expectedCalls: 4,
+  });
+
+  await assertPublishLoginDiagnostic({
+    name: 'landing URL precedes redirect drift',
+    loginPostResponse: successfulPost,
+    landingResponse: {
+      status: 200,
+      finalUrl: `${LOGIN_SUCCESS_LANDING_URL}?token=query-secret`,
+      location: '/admin/index.php?raw-location-secret=1',
+    },
+    expectedErrorCode: 'LOGIN_LANDING_URL_MISMATCH',
+    expectedCalls: 4,
+  });
+
+  await assertPublishLoginDiagnostic({
+    name: 'landing redirect drift',
+    loginPostResponse: successfulPost,
+    landingResponse: {
+      status: 200,
+      finalUrl: LOGIN_SUCCESS_LANDING_URL,
+      location: '/admin/index.php?raw-location-secret=1',
+    },
+    expectedErrorCode: 'LOGIN_LANDING_REDIRECT_DRIFT',
+    expectedCalls: 4,
+  });
+});
+
 test('G2d. login POST response validator allows only exact evidenced success contract', () => {
   for (const response of [
     { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: '/admin/index.php' },

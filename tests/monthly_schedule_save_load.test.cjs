@@ -117,19 +117,26 @@ test('Apps Script save uses ScriptLock and releases it', () => {
 
 test('Apps Script schema stays minimal and keyed by month_key', () => {
   const code = read('apps-script/Code.gs');
-  assert.match(code, /\['month_key', 'data_json', 'schema_version', 'updated_at'\]/);
+  assert.match(code, /LEGACY_HEADERS\s*=\s*\['month_key', 'data_json', 'schema_version', 'updated_at'\]/);
+  assert.match(code, /FINAL_HEADERS\s*=\s*\[[^]*'version_id'[^]*'month_key'[^]*'version_date'[^]*'version_seq'[^]*'parent_version_id'[^]*'expected_latest_version_id'[^]*'save_request_id'[^]*'data_json'[^]*'schema_version'[^]*'saved_at'[^]*\]/);
   assert.match(code, /findMonthRows_\(sheet, monthKey\)/);
 });
 
 test('Apps Script normalizes legacy date month cells and forces new month keys to text', () => {
   const code = read('apps-script/Code.gs');
   assert.match(code, /function monthCellToKey_\(value\)/);
-  assert.match(code, /value instanceof Date/);
+  assert.match(code, /function isDate_\(value\)/);
   assert.match(code, /Utilities\.formatDate\(/);
   assert.match(code, /function findMonthRows_\(sheet, monthKey\)/);
   assert.match(code, /setNumberFormat\('@'\)/);
   assert.match(code, /deleteRow\(rows\[i\]\)/);
-  assert.doesNotMatch(code, /appendRow\(values\)/);
+  assert.match(code, /sheet\.getRange\(appendRow, 1, 1, FINAL_HEADERS\.length\)\.setValues\(\[values\]\)/);
+});
+
+test('Apps Script version backend does not include publish side effects', () => {
+  const code = read('apps-script/Code.gs');
+  assert.doesNotMatch(code, /publish/i);
+  assert.doesNotMatch(code, /UrlFetchApp/);
 });
 
 test('Apps Script rejects direct GET access and requires server secret for POST', () => {

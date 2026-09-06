@@ -12,7 +12,7 @@ function schedule(title, note) {
   return { title, note, clinics: [{ schedule: {}, changes: [] }] };
 }
 
-function createHarness(initialRows, { lockAvailable = true } = {}) {
+function createHarness(initialRows, { lockAvailable = true, displayMonths = {} } = {}) {
   const rows = initialRows.map((row) => row.slice());
   const numberFormats = [];
   const lockState = { tryCalls: [], releaseCalls: 0, locked: false };
@@ -24,6 +24,14 @@ function createHarness(initialRows, { lockAvailable = true } = {}) {
     },
     getRange(row, column, rowCount = 1, columnCount = 1) {
       return {
+        getDisplayValues() {
+          return rows.slice(row - 1, row - 1 + rowCount).map((source, offset) =>
+            source.slice(column - 1, column - 1 + columnCount).map((value, c) =>
+              column + c === 1 && Object.hasOwn(displayMonths, row + offset)
+                ? displayMonths[row + offset] : String(value),
+            ),
+          );
+        },
         getValues() {
           return rows.slice(row - 1, row - 1 + rowCount).map(
             (source) => source.slice(column - 1, column - 1 + columnCount),
@@ -123,6 +131,52 @@ test('load finds a Google Sheets Date month cell', () => {
   assert.equal(result.found, true);
   assert.deepEqual(result.data, data);
   assert.deepEqual(harness.lockState.tryCalls, []);
+});
+
+for (const [kind, rawMonth] of [
+  ['text', '2026-09'],
+  ['Date', new Date('2026-09-01T00:00:00Z')],
+  ['numeric serial', 46266],
+]) {
+  test(`load matches ${kind} month with YYYY-MM display without writing`, () => {
+    const data = schedule('115/九月', kind);
+    const original = [headers, [rawMonth, JSON.stringify(data), 1, '2026-09-06T10:40:08.000Z']];
+    const harness = createHarness(original, { displayMonths: { 2: '2026-09' } });
+    const result = harness.post({ secret, action: 'load', month: '2026-09' });
+    assert.equal(result.ok, true);
+    assert.equal(result.found, true);
+    assert.equal(result.month, '2026-09');
+    assert.deepEqual(result.data, data);
+    assert.equal(result.updatedAt, '2026-09-06T10:40:08.000Z');
+    assert.deepEqual(harness.rows, original);
+    assert.equal(harness.flushCalls, 0);
+    assert.deepEqual(harness.numberFormats, []);
+    assert.deepEqual(harness.lockState.tryCalls, []);
+  });
+}
+
+test('load chooses the last matching displayed month and never another month', () => {
+  const latest = schedule('115/九月', 'latest');
+  const original = [headers,
+    ['2026-09', JSON.stringify(schedule('115/九月', 'old')), 1, 'old'],
+    [46266, JSON.stringify(latest), 1, 'latest'],
+    [46296, JSON.stringify(schedule('115/10月', 'other month')), 1, 'other'],
+  ];
+  const harness = createHarness(original, { displayMonths: { 3: '2026-09', 4: '2026-10' } });
+  const result = harness.post({ secret, action: 'load', month: '2026-09' });
+  assert.equal(result.found, true);
+  assert.deepEqual(result.data, latest);
+  assert.equal(result.updatedAt, 'latest');
+  assert.deepEqual(harness.post({ secret, action: 'load', month: '2026-08' }),
+    { ok: true, found: false, month: '2026-08' });
+  assert.deepEqual(harness.rows, original);
+});
+
+test('valid displayed month takes precedence over a conflicting raw month', () => {
+  const harness = createHarness([headers, ['2026-08', JSON.stringify(schedule('115/九月', 'display')), 1, 'stamp']],
+    { displayMonths: { 2: '2026-09' } });
+  assert.equal(harness.post({ secret, action: 'load', month: '2026-09' }).found, true);
+  assert.equal(harness.post({ secret, action: 'load', month: '2026-08' }).found, false);
 });
 
 test('save overwrites the newest same-month row, removes legacy duplicates, and writes a text month key under ScriptLock', () => {

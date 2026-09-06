@@ -136,8 +136,8 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
     missingContracts.push('primary-clinic warning must render only once via primaryClinicGuard');
   }
 
-  if (!/<button[\s\S]*onClick=\{handleConfirmPublish\}[\s\S]*disabled=\{!publishReadiness\.canConfirm\s*\|\|\s*isPublishing\}[\s\S]*確認發布[\s\S]*<\/button>/.test(indexHtml)) {
-    missingContracts.push('確認發布 is disabled when !publishReadiness.canConfirm || isPublishing');
+  if (!/<button[\s\S]*onClick=\{handleConfirmPublish\}[\s\S]*disabled=\{!publishReadiness\.canConfirm\s*\|\|\s*isPublishing\}[\s\S]*確認建立工作包[\s\S]*<\/button>/.test(indexHtml)) {
+    missingContracts.push('確認建立工作包 is disabled when !publishReadiness.canConfirm || isPublishing');
   }
 
   const handleConfirmPublishSource = getFunctionSource(indexHtml, 'handleConfirmPublish');
@@ -153,12 +153,6 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
     missingContracts.push('handleConfirmPublish awaits generatePublishPngDataUrl()');
   }
 
-  if (
-    !handleConfirmPublishBody ||
-    !/fetch\s*\(\s*["']\/api\/publish["']\s*,\s*\{[\s\S]*method\s*:\s*["']POST["'][\s\S]*credentials\s*:\s*["']same-origin["'][\s\S]*headers\s*:\s*\{[\s\S]*["']Content-Type["']\s*:\s*["']application\/json["'][\s\S]*\}[\s\S]*body\s*:\s*JSON\.stringify\s*\(\s*\{[\s\S]*action\s*:\s*["']publish["'][\s\S]*channelIds\s*:\s*selectedPublishChannelIds[\s\S]*primaryClinicId[\s\S]*title\s*:\s*data\.title[\s\S]*pngDataUrl[\s\S]*\}\s*\)[\s\S]*\}\s*\)/.test(handleConfirmPublishBody)
-  ) {
-    missingContracts.push('handleConfirmPublish POSTs only to same-origin /api/publish with selected channel ids, primaryClinicId, title, and pngDataUrl');
-  }
 
   if (!handleConfirmPublishBody || !/setIsPublishing\s*\(\s*true\s*\)/.test(handleConfirmPublishBody) || !/setIsPublishing\s*\(\s*false\s*\)/.test(handleConfirmPublishBody)) {
     missingContracts.push('handleConfirmPublish sets and clears isPublishing');
@@ -172,26 +166,23 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
     missingContracts.push('handleConfirmPublish has a catch path for publish errors');
   }
 
-  if (!handleConfirmPublishBody || !/AUTH_REQUIRED/.test(handleConfirmPublishBody)) {
-    missingContracts.push('handleConfirmPublish may handle AUTH_REQUIRED with re-login text');
-  }
 
   if (handleConfirmPublishBody && /晉安官網串接尚未啟用/.test(handleConfirmPublishBody)) {
     missingContracts.push('handleConfirmPublish no longer displays the old Step 2 placeholder 晉安官網串接尚未啟用');
   }
 
-  if (!handleConfirmPublishBody || !/response\.ok\s*&&\s*result\s*&&\s*result\.ok\s*===\s*true\s*&&\s*result\.status\s*===\s*["']PUBLISHED["']/.test(handleConfirmPublishBody)) {
-    missingContracts.push('handleConfirmPublish shows success only for HTTP ok plus exact ok:true/status:"PUBLISHED"');
-  }
 
-  if (!handleConfirmPublishBody || !/晉安官網發布完成/.test(handleConfirmPublishBody)) {
-    missingContracts.push('handleConfirmPublish has explicit success wording for verified PUBLISHED only');
-  }
 
   if (handleConfirmPublishBody && /\b(Production CMS|login|editor|upload|CMS_|VITE_|XMLHttpRequest|sendBeacon|axios|password|cookie)\b/i.test(handleConfirmPublishBody)) {
     missingContracts.push('handleConfirmPublish contains no CMS origins, login/editor/upload URLs, CMS env names, alternate transports, or credential fields');
   }
 
+  assert.match(handleConfirmPublishBody, /await PublishCore.createPublishJob/);
+  assert.match(handleConfirmPublishBody, /PublishCore.downloadPublishJob\(job\)/);
+  assert.match(handleConfirmPublishBody, /humanConfirmed: true/);
+  assert.doesNotMatch(handleConfirmPublishBody, /fetch|PUBLISHED|晉安官網發布完成/);
+  assert.match(handleConfirmPublishBody, /晉安官網發布工作包已建立，尚未發布。/);
+  assert.match(handleConfirmPublishBody, /工作包建立失敗，尚未發布；請重新確認後再試。/);
   assert.deepEqual(missingContracts, []);
 });
 
@@ -221,7 +212,7 @@ test('publish confirmation has synchronous duplicate-submission ref guard before
   const isPublishingCheckIndex = handleConfirmPublishBody.indexOf('if (isPublishing)');
   const setPublishingIndex = handleConfirmPublishBody.indexOf('setIsPublishing(true);');
   const pngIndex = handleConfirmPublishBody.indexOf('generatePublishPngDataUrl');
-  const fetchIndex = handleConfirmPublishBody.indexOf('fetch("/api/publish"');
+  const fetchIndex = handleConfirmPublishBody.indexOf('PublishCore.createPublishJob');
   const finallyIndex = handleConfirmPublishBody.indexOf('finally');
   const refClearIndex = handleConfirmPublishBody.lastIndexOf('publishRequestInFlightRef.current = false;');
 
@@ -284,13 +275,7 @@ test('publish failure status mapping is fixed allowlist and never renders arbitr
     missingContracts.push('getPublishFailureStatusText defaults to fixed PUBLISH_FAILED');
   }
 
-  if (!handleConfirmPublishBody || !/setPublishStatus\s*\(\s*getPublishFailureStatusText\s*\(\s*result\s*\)\s*\)/.test(handleConfirmPublishBody)) {
-    missingContracts.push('handleConfirmPublish displays only getPublishFailureStatusText(result) for server failures');
-  }
 
-  if (!handleConfirmPublishBody || !/catch\s*\(\s*err\s*\)\s*\{\s*setPublishStatus\s*\(\s*PUBLISH_FAILURE_STATUS_TEXT\.PUBLISH_FAILED\s*\)/.test(handleConfirmPublishBody)) {
-    missingContracts.push('network/exception catch displays only fixed PUBLISH_FAILED');
-  }
 
   if (handleConfirmPublishBody && /\b(result|err|error)\s*\.\s*(message|body|path|stack|adapter|details|url|credential|credentials|password|token|secret)\b/.test(handleConfirmPublishBody)) {
     missingContracts.push('handleConfirmPublish does not render arbitrary result.message/err.message/raw sensitive fields');

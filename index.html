@@ -400,35 +400,18 @@
                 setIsPublishing(true);
                 try {
                     const pngDataUrl = await generatePublishPngDataUrl();
-                    const response = await fetch("/api/publish", {
-                        method: "POST",
-                        credentials: "same-origin",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            action: "publish",
-                            channelIds: selectedPublishChannelIds,
-                            primaryClinicId,
-                            title: data.title,
-                            pngDataUrl,
-                        }),
+                    const job = await PublishCore.createPublishJob({
+                        channelIds: selectedPublishChannelIds,
+                        primaryClinicId,
+                        title: data.title,
+                        monthKey,
+                        pngDataUrl,
+                        humanConfirmed: true,
                     });
-
-                    let result = null;
-                    try {
-                        result = await response.json();
-                    } catch (err) {
-                        result = null;
-                    }
-
-                    if (response.ok && result && result.ok === true && result.status === "PUBLISHED") {
-                        setPublishStatus("晉安官網發布完成");
-                    } else if (result && result.error === "AUTH_REQUIRED") {
-                        setPublishStatus("AUTH_REQUIRED：請重新登入後再操作；請停止操作，不要重複點擊。");
-                    } else {
-                        setPublishStatus(getPublishFailureStatusText(result));
-                    }
+                    PublishCore.downloadPublishJob(job);
+                    setPublishStatus("晉安官網發布工作包已建立，尚未發布。");
                 } catch (err) {
-                    setPublishStatus(PUBLISH_FAILURE_STATUS_TEXT.PUBLISH_FAILED);
+                    setPublishStatus("工作包建立失敗，尚未發布；請重新確認後再試。");
                 } finally {
                     publishRequestInFlightRef.current = false;
                     setIsPublishing(false);
@@ -685,7 +668,7 @@
                                         取消
                                     </button>
                                     <button type="button" onClick={handleConfirmPublish} disabled={!publishReadiness.canConfirm || isPublishing} className="py-2 px-3 rounded-lg bg-teal-600 text-white text-sm font-black disabled:opacity-50">
-                                        確認發布
+                                        確認建立工作包
                                     </button>
                                 </div>
                             </div>

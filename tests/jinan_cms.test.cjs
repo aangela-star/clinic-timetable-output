@@ -4710,3 +4710,68 @@ for (const body of [`<!--${liveNote}-->`, `<main hidden>${liveNote}</main>`, `<m
     assert.equal(f.calls.some(call => call.url.includes('QuickUpload')), false);
   });
 }
+
+test('durable store integrates with page transport and records VERIFIED after byte readback', async () => {
+  const { pilotHarness } = require('./helpers/pilot-state-harness.cjs');
+  const { createPilotStore } = require('../lib/jinan-pilot-store');
+  const f = pageIntegrationFixture();
+  const backend = pilotHarness();
+  f.options.pilotStore = createPilotStore({ request: backend.request, secret: 'mock-secret' });
+  assert.equal((await publishJinanCms(f.options)).status, 'PUBLISHED');
+  assert.equal((await f.options.pilotStore.read()).phase, 'VERIFIED');
+  const state = await f.options.pilotStore.read();
+  const backup = await f.options.pilotStore.recover(state.attemptId);
+  assert.equal(backup.originalImageHtml, liveOriginalImg);
+  assert.equal(backup.originalStyle, 'width: 1280px; height: 720px;');
+});
+test('restart with durable SUBMIT_DISPATCHED never repeats a CMS request', async () => {
+  const { pilotHarness } = require('./helpers/pilot-state-harness.cjs');
+  const { createPilotStore } = require('../lib/jinan-pilot-store');
+  const f = pageIntegrationFixture({ 10: new Error('timeout') });
+  f.responses[11].body = liveNote;
+  const backend = pilotHarness();
+  f.options.pilotStore = createPilotStore({ request: backend.request, secret: 'mock-secret' });
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  assert.equal((await f.options.pilotStore.read()).phase, 'SUBMIT_DISPATCHED');
+  reloadJinanCmsModule();
+  const count = f.calls.length;
+  f.options.pilotStore = createPilotStore({ request: backend.request, secret: 'mock-secret' });
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  assert.equal(f.calls.length, count);
+});
+test('durable store unavailable fails before CMS login or mutation', async () => {
+  const f = pageIntegrationFixture();
+  f.options.pilotStore = { read: async () => { throw new Error('store down'); } };
+  assert.equal((await publishJinanCms(f.options)).status, 'VERIFY_FAILED');
+  assert.equal(f.calls.length, 0);
+});
+test('durable dispatch acknowledgement failure blocks actual CMS submit', async () => {
+  const { pilotHarness } = require('./helpers/pilot-state-harness.cjs');
+  const { createPilotStore } = require('../lib/jinan-pilot-store');
+  const f = pageIntegrationFixture(); const backend = pilotHarness();
+  f.options.pilotStore = createPilotStore({ secret: 'mock-secret', request: async body => {
+    const result = await backend.request(body);
+    if (body.next === 'SUBMIT_DISPATCHED') throw new Error('lost durable ack');
+    return result;
+  } });
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  assert.equal(f.calls.some(call => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl), false);
+  assert.equal((await f.options.pilotStore.read()).phase, 'SUBMIT_DISPATCHED');
+});
+
+test('lost VERIFIED acknowledgement is not reported as success and cannot retry after restart', async () => {
+  const { pilotHarness } = require('./helpers/pilot-state-harness.cjs');
+  const { createPilotStore } = require('../lib/jinan-pilot-store');
+  const f = pageIntegrationFixture(); const backend = pilotHarness();
+  f.options.pilotStore = createPilotStore({ secret: 'mock-secret', request: async body => {
+    const result = await backend.request(body);
+    if (body.next === 'VERIFIED') throw new Error('lost verified acknowledgement');
+    return result;
+  } });
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  assert.equal((await f.options.pilotStore.read()).phase, 'VERIFIED');
+  reloadJinanCmsModule();
+  const count = f.calls.length;
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  assert.equal(f.calls.length, count);
+});

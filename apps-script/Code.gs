@@ -14,6 +14,7 @@ function doPost(e) {
     assertServerSecret_(body.secret);
 
     const action = String(body.action || '');
+    if (action === 'jinanPilotState') return json_(pilotState_(body));
     const monthKey = String(body.month || '');
     validateMonthKey_(monthKey);
 

@@ -56,3 +56,8 @@ planPageSrcRestore 僅在新鮮 note 完全等於本次 afterNote 時產生還�
 5. 若需要 restore，提交單一額外批准決策（除非先前明確批准同一故障情境的 restore）。fresh note 必須等於本次 afterNote，再用 planPageSrcRestore 恢復原 note + 原尺寸；fresh SEO/token 保留。若其他人已改動則停止。公開頁/原圖 hash 比對成功才回報 restore 完成。
 
 本階段完成 mock implementation/review/測試/feature push，不啟用正式 button 的 page-src transport。完成 live wiring、安全狀態與耐久備份準備後，第一次正式寫入前才提交填妥 manifest 的 exact runbook 給 Angela 批准。
+
+
+## 後續耐久安全準備
+
+見 `JINAN_DURABLE_PILOT_RUNBOOK.md`。已新增既有 Apps Script/Sheet 的 bounded durable store 與 mock integration；尚未部署/啟用。2026-09-06 公開基線已變更，舊 JPEG/1280×720 僅為歷史人工實證，不再是可直接執行的 restore 預設。

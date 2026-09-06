@@ -132,10 +132,15 @@ function findMonthRows_(sheet, monthKey) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
 
-  const values = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  const range = sheet.getRange(2, 1, lastRow - 1, 1);
+  const values = range.getValues();
+  const displayValues = range.getDisplayValues();
   const rows = [];
   for (let i = 0; i < values.length; i += 1) {
-    if (monthCellToKey_(values[i][0]) === monthKey) rows.push(i + 2);
+    const displayedMonth = displayValues[i][0];
+    const rowMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(displayedMonth)
+      ? displayedMonth : monthCellToKey_(values[i][0]);
+    if (rowMonth === monthKey) rows.push(i + 2);
   }
   return rows;
 }

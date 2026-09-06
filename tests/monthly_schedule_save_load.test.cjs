@@ -39,32 +39,24 @@ test('validates the minimal existing schedule data shape', () => {
   assert.equal(core.isValidScheduleData({ title: '115/8月', note: '', clinics: [] }), false);
 });
 
-test('initial month comes from the displayed title even when a later month was remembered', () => {
-  const runtime = {
-    localStorage: {
-      getItem: (key) => {
-        assert.equal(key, 'clinic-timetable.last-schedule-month');
-        return '2026-08';
-      },
-    },
-  };
+function septemberRuntime() {
+  return { Date: class extends Date { constructor() { super(2026, 8, 6, 12); } } };
+}
 
-  assert.equal(core.getInitialMonthKey(runtime, '115/4月'), '2026-04');
+test('initial month uses browser local September date, never April title or remembered month', () => {
+  const runtime = septemberRuntime();
+  runtime.localStorage = { getItem: () => '2026-04' };
+  assert.equal(core.getInitialMonthKey(runtime, '115/4月'), '2026-09');
 });
-
-test('missing or invalid stored month falls back to the title', () => {
-  assert.equal(core.getInitialMonthKey({ localStorage: { getItem: () => null } }, '115/4月'), '2026-04');
-  assert.equal(core.getInitialMonthKey({ localStorage: { getItem: () => '2026-99' } }, '115/4月'), '2026-04');
+test('local calendar getters determine the month, not UTC date', () => {
+  const runtime = { Date: class { getFullYear() { return 2026; } getMonth() { return 8; }
+    toISOString() { return '2026-08-31T16:30:00.000Z'; } } };
+  assert.equal(core.getInitialMonthKey(runtime), '2026-09');
 });
-
-test('localStorage read failure safely falls back to the title', () => {
-  const runtime = {};
-  Object.defineProperty(runtime, 'localStorage', {
-    get() { throw new Error('storage blocked'); },
-  });
-
-  assert.doesNotThrow(() => core.getInitialMonthKey(runtime, '115/4月'));
-  assert.equal(core.getInitialMonthKey(runtime, '115/4月'), '2026-04');
+test('initial month does not access localStorage or parse the initial title', () => {
+  const runtime = septemberRuntime();
+  Object.defineProperty(runtime, 'localStorage', { get() { throw new Error('storage blocked'); } });
+  assert.equal(core.getInitialMonthKey(runtime, '115/4月'), '2026-09');
 });
 
 test('localStorage write failure does not crash', () => {
@@ -159,17 +151,14 @@ test('shared-password login establishes a server session before marking browser 
   assert.match(authGate, /storage\.setItem\(SESSION_KEY, "1"\)/);
 });
 
-test('front end keeps load manual and preserves INITIAL_DATA fallback', () => {
+test('front end auto-loads on authenticated App mount and retains manual controls', () => {
   const html = read('index.html');
-  assert.match(html, /useState\(INITIAL_DATA\)/);
-  assert.match(html, /getInitialMonthKey\(window, INITIAL_DATA\.title\)/);
+  assert.match(html, /getInitialMonthKey\(window\)/);
+  assert.doesNotMatch(html, /getInitialMonthKey\(window, INITIAL_DATA\.title\)/);
   assert.match(html, /onClick=\{handleLoadSchedule\}/);
-  assert.doesNotMatch(
-    html,
-    /useEffect\s*\(\s*\(\s*\)\s*=>\s*\{(?:(?!\n\s*\}\s*,\s*\[[^\]]*\]\s*\);)[^])*\bhandleLoadSchedule\s*\(/
-  );
-  assert.doesNotMatch(html, /useState\([^]*handleLoadSchedule\(/);
-  assert.match(html, /尚無已儲存資料，目前畫面未變更/);
+  assert.match(html, /onClick=\{handleSaveSchedule\}/);
+  assert.match(html, /useEffect\(\(\) => \{\s*handleLoadSchedule\(\);/);
+  assert.match(html, /尚無已儲存資料，目前未載入正式門診資料/);
 });
 
 test('front end remembers month only after successful load or save responses', () => {
@@ -184,4 +173,119 @@ test('preview and PNG capture invariants remain present', () => {
   assert.match(html, /scale: 2, useCORS: true, backgroundColor: "#f8fafc", width: 1080, height: 1920/);
   assert.match(html, /<PosterContent ref=\{captureRef\} data=\{renderData\} isForCapture=\{true\} \/>/);
   assert.match(html, /<PosterContent data=\{renderData\} isForCapture=\{false\} \/>/);
+});
+
+// Execute the actual non-JSX App load code with minimal hook/transport mocks.
+function loadHarness(responses) {
+  const vm = require('node:vm');
+  const html = read('index.html');
+  const body = html.slice(html.indexOf('function App({ onLogout }) {') + 'function App({ onLogout }) {'.length,
+    html.indexOf('            const handleSaveSchedule ='));
+  const monthInput = html.slice(html.indexOf('type="month"'));
+  const monthChange = monthInput.match(/onChange=\{\(e\) => \{([\s\S]*?)\}\}/)[1];
+  const states = [], refs = [], effects = [], calls = [];
+  let stateIndex = 0, refIndex = 0;
+  const seed = { title: '115/4月', note: 'old note', clinics: [{ id: 'clinic-1', name: '晉安', theme: 'teal', changes: ['4/5'], schedule: { '週一': { '早診': '舊醫師' } } }] };
+  const context = vm.createContext({
+    INITIAL_DATA: seed, ScheduleSaveLoadCore: core,
+    window: { ...septemberRuntime(), SCHEDULE_SAVE_LOAD_CONFIG: { webAppUrl: 'https://local.test/api/schedule' } },
+    ClinicOrder: { orderClinicsByPriority: clinics => clinics },
+    PublishCore: { evaluatePublishSelection: () => ({}), PUBLISH_CHANNELS: [] },
+    useState(initial) { const i = stateIndex++; if (!(i in states)) states[i] = typeof initial === 'function' ? initial() : initial; return [states[i], value => { states[i] = value; }]; },
+    useRef(initial) { const i = refIndex++; return refs[i] || (refs[i] = { current: initial }); },
+    useEffect(fn) { effects.push(fn); },
+    fetch: async url => { calls.push(String(url)); const next = responses.shift(); return await next; },
+    URL, setTimeout: () => {}, lucide: { createIcons() {} }, console: { error() {} },
+  });
+  function render() { stateIndex = 0; refIndex = 0; return vm.runInContext(`(function(){${body}; return {handleLoadSchedule, changeMonth: (e) => {${monthChange}}};})()`, context); }
+  return { states, effects, calls, seed, render };
+}
+const savedSeptember = { title: '115/九月', note: '正式存檔備註', clinics: [{ id: 'clinic-1', changes: ['九月已確認異動'], schedule: {} }] };
+const responseFor = payload => ({ ok: true, json: async () => payload });
+test('mount load applies the saved current-month data instead of April initial data', async () => {
+  const h = loadHarness([responseFor({ ok: true, found: true, data: savedSeptember })]);
+  h.render();
+  assert.equal(h.states[2], '2026-09');
+  assert.notEqual(h.states[0].title, '115/4月');
+  h.effects[0]();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(h.states[0], savedSeptember);
+  assert.equal(new URL(h.calls[0]).searchParams.get('month'), '2026-09');
+  assert.equal(h.calls.length, 1);
+});
+test('missing current month leaves no April facts and never requests April', async () => {
+  const h = loadHarness([responseFor({ ok: true, found: false })]); h.render(); h.effects[0]();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.states[0].title, '');
+  assert.equal(h.states[0].clinics[0].schedule['週一']['早診'], '');
+  assert.equal(h.states[0].clinics[0].changes.length, 0);
+  assert.match(h.states[5], /2026-09.*尚無已儲存資料，目前未載入正式門診資料/);
+  assert.equal(h.calls.length, 1);
+  assert.equal(new URL(h.calls[0]).searchParams.get('month'), '2026-09');
+  assert.equal(h.seed.title, '115/4月'); // no mutation of the template
+});
+test('manual Load still uses the selected month and preserves data on missing response', async () => {
+  const h = loadHarness([responseFor({ ok: true, found: true, data: savedSeptember }), responseFor({ ok: true, found: false })]);
+  await h.render().handleLoadSchedule();
+  h.states[2] = '2026-10'; await h.render().handleLoadSchedule();
+  assert.equal(h.states[0], savedSeptember);
+  assert.equal(new URL(h.calls[1]).searchParams.get('month'), '2026-10');
+  assert.match(h.states[5], /目前畫面未變更/);
+});
+test('401 remains a failure without fallback or applying a response body', async () => {
+  const h = loadHarness([{ ok: false, status: 401, json: async () => { throw new Error('must not apply'); } }]);
+  await h.render().handleLoadSchedule();
+  assert.match(h.states[5], /HTTP 401/);
+  assert.equal(h.states[0].title, '');
+  assert.equal(h.calls.length, 1);
+});
+
+test('a late initial response cannot overwrite data from a newer manual load', async () => {
+  let release;
+  const pending = new Promise(resolve => { release = resolve; });
+  const h = loadHarness([pending, responseFor({ ok: true, found: true, data: savedSeptember })]);
+  const app = h.render();
+  const oldLoad = app.handleLoadSchedule();
+  await app.handleLoadSchedule();
+  release(responseFor({ ok: true, found: true, data: { ...savedSeptember, note: 'stale' } }));
+  await oldLoad;
+  assert.equal(h.states[0], savedSeptember);
+});
+test('logout/unmount invalidates the pending automatic load', async () => {
+  let release;
+  const h = loadHarness([new Promise(resolve => { release = resolve; })]);
+  h.render();
+  const cleanup = h.effects[0]();
+  cleanup();
+  release(responseFor({ ok: true, found: true, data: savedSeptember }));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.states[0].title, '');
+});
+test('logging in again mounts a new current-month load rather than restoring April', async () => {
+  for (let login = 0; login < 2; login += 1) {
+    const h = loadHarness([responseFor({ ok: true, found: true, data: savedSeptember })]);
+    h.render(); h.effects[0](); await new Promise(resolve => setImmediate(resolve));
+    assert.equal(h.states[2], '2026-09');
+    assert.equal(h.states[0].title, '115/九月');
+    assert.equal(h.calls.length, 1);
+  }
+});
+test('an April payload returned for the current month is rejected', async () => {
+  const h = loadHarness([responseFor({ ok: true, found: true, data: { ...savedSeptember, title: '115/4月' } })]);
+  await h.render().handleLoadSchedule();
+  assert.equal(h.states[0].title, '');
+  assert.match(h.states[5], /不一致/);
+});
+
+test('manual month selection cancels the pending automatic response without auto-loading another month', async () => {
+  let release;
+  const h = loadHarness([new Promise(resolve => { release = resolve; })]);
+  const app = h.render(); h.effects[0]();
+  app.changeMonth({ target: { value: '2026-10' } });
+  release(responseFor({ ok: true, found: true, data: savedSeptember }));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.states[2], '2026-10');
+  assert.equal(h.states[0].title, '');
+  assert.equal(h.states[3], false);
+  assert.equal(h.calls.length, 1);
 });

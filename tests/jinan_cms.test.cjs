@@ -4446,3 +4446,59 @@ test('J. rollback plan is explicitly unsupported and non-mutating', () => {
     submits: false,
   });
 });
+
+// 2026-09-06 Angela's manual change + restore evidence. Offline fixtures only.
+const liveOriginalImg = '<img alt="" src="/upload/photo_2026-09-02 23_08_57(1).jpeg" style="width: 1280px; height: 720px;" />';
+const liveNote = `<img src="/img/icon-next.svg" width="25" /><p class="text-center"><a href="/upload/other.png">${liveOriginalImg}</a><br /><img src="/upload/other.png" /></p>`;
+function pageEditor(note = liveNote) {
+  return freshEditorHtml().replace(compositeTimetableNote(), note);
+}
+function pagePlan(overrides = {}) {
+  return cmsModule.planPageSrcReplacement({ editorHtml: pageEditor(), originalImageHtml: liveOriginalImg,
+    finalImageUrl: '/upload/confirmed.png', pngDataUrl: pngDataUrl(), ...overrides });
+}
+test('page src plan preserves hyperlink, other images, fields and removes fixed dimensions', () => {
+  const plan = pagePlan();
+  assert.equal(plan.afterNote, liveNote.replace(liveOriginalImg,
+    '<img alt="" src="/upload/confirmed.png" style="width: auto; max-width: 100%; height: auto;" />'));
+  assert.deepEqual(plan.request.multipartFields, { ...parseCmsEditorForm(pageEditor()).fields, note: plan.afterNote });
+  assert.equal(plan.request.url, JINAN_CMS_CONFIG.editorUrl);
+  assert.equal(plan.request.method, 'POST');
+  assert.ok(Object.isFrozen(plan.request.multipartFields));
+});
+for (const [name, note] of [
+  ['missing image', '<p>missing</p>'],
+  ['duplicate target', liveNote + liveOriginalImg],
+  ['absolute URL duplicate target', liveNote + liveOriginalImg.replace('src="/upload/', 'src="https://www.tainanrehab.com/upload/')],
+  ['attribute drift', liveNote.replace('1280px', '640px')],
+  ['hidden target', `<div hidden>${liveNote}</div>`],
+]) test(`page src plan rejects ${name}`, () => {
+  assert.throws(() => pagePlan({ editorHtml: pageEditor(note) }), { code: 'FORM_CHANGED' });
+});
+for (const url of ['https://evil.example/a.png', '/upload/a.jpeg', '/upload/a.png" onload="x']) {
+  test(`page src rejects unsafe new URL ${url}`, () => assert.throws(() => pagePlan({ finalImageUrl: url })));
+}
+test('page src rejects invalid source PNG', () => assert.throws(() => pagePlan({ pngDataUrl: 'data:image/png;base64,AAAA' })));
+test('page restore recovers exact original note including dimensions and preserves fresh hidden fields', () => {
+  const plan = pagePlan();
+  const restore = cmsModule.planPageSrcRestore(plan, pageEditor(plan.afterNote).replace('fresh-token', 'new-token'));
+  assert.equal(restore.multipartFields.note, liveNote);
+  assert.equal(restore.multipartFields.csrf, 'new-token');
+  assert.throws(() => cmsModule.planPageSrcRestore(plan, pageEditor(plan.afterNote + '<p>concurrent edit</p>')), { code: 'FORM_CHANGED' });
+});
+test('page readback verifies HTML plus PNG hash; href-only, dimensions, response errors fail closed', () => {
+  const plan = pagePlan();
+  const page = { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: `<main>${plan.afterNote}</main>` };
+  const image = { status: 200, finalUrl: plan.imageUrl, contentType: 'image/png', bytes: Buffer.from(pngDataUrl().split(',')[1], 'base64') };
+  assert.equal(cmsModule.verifyPageSrcReadback(plan, page, image).status, 'VERIFIED_READBACK');
+  for (const badPage of [ { ...page, body: liveNote.replace('/upload/other.png', '/upload/confirmed.png') },
+    { ...page, body: plan.afterNote.replace('height: auto', 'height: 720px') },
+    { ...page, body: plan.afterNote + plan.afterNote }, { ...page, body: `<div hidden>${plan.afterNote}</div>` }, { ...page, body: `<!--${plan.afterNote}-->` }, { ...page, status: 500 }, { ...page, location: '/login' } ]) {
+    assert.equal(cmsModule.verifyPageSrcReadback(plan, badPage, image).status, 'MANUAL_CHECK_REQUIRED');
+  }
+  for (const badImage of [{ ...image, contentType: 'image/jpeg' }, { ...image, status: 404 },
+    { ...image, bytes: Buffer.from('bad') }, { ...image, finalUrl: 'https://evil.example/a.png' }]) {
+    assert.equal(cmsModule.verifyPageSrcReadback(plan, page, badImage).status, 'MANUAL_CHECK_REQUIRED');
+  }
+  assert.equal(cmsModule.verifyPageSrcReadback({ ...plan, expectedSha256: '0'.repeat(64) }, page, image).status, 'MANUAL_CHECK_REQUIRED');
+});

@@ -209,9 +209,9 @@
         ));
 
         function App({ onLogout }) {
-            const [data, setData] = useState(INITIAL_DATA);
+            const [data, setData] = useState(() => ScheduleSaveLoadCore.createUnloadedScheduleData(INITIAL_DATA));
             const [isCapturing, setIsCapturing] = useState(false);
-            const [monthKey, setMonthKey] = useState(() => ScheduleSaveLoadCore.getInitialMonthKey(window, INITIAL_DATA.title));
+            const [monthKey, setMonthKey] = useState(() => ScheduleSaveLoadCore.getInitialMonthKey(window));
             const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
             const [isSavingSchedule, setIsSavingSchedule] = useState(false);
             const [scheduleStatus, setScheduleStatus] = useState("");
@@ -220,6 +220,8 @@
             const [selectedPublishChannelIds, setSelectedPublishChannelIds] = useState([]);
             const [publishStatus, setPublishStatus] = useState("");
             const [isPublishing, setIsPublishing] = useState(false);
+            const loadRequestIdRef = useRef(0);
+            const hasLoadedScheduleRef = useRef(false);
             const captureRef = useRef(null);
             const publishButtonRef = useRef(null);
             const publishDialogRef = useRef(null);
@@ -237,6 +239,7 @@
             const getScheduleApiUrl = () => String(window.SCHEDULE_SAVE_LOAD_CONFIG?.webAppUrl || "").trim();
 
             const handleLoadSchedule = async () => {
+                const requestId = ++loadRequestIdRef.current;
                 if (!ScheduleSaveLoadCore.isValidMonthKey(monthKey)) {
                     setScheduleStatus("請先選擇正確月份（YYYY-MM）。");
                     return;
@@ -255,12 +258,16 @@
                     url.searchParams.set("action", "load");
                     url.searchParams.set("month", monthKey);
                     const response = await fetch(url.toString(), { method: "GET", redirect: "follow" });
+                    if (requestId !== loadRequestIdRef.current) return;
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                     const payload = await response.json();
+                    if (requestId !== loadRequestIdRef.current) return;
                     if (!payload.ok) throw new Error(payload.message || payload.error || "載入失敗");
                     if (!payload.found) {
-                        setScheduleStatus(`「${monthKey}」尚無已儲存資料，目前畫面未變更。`);
+                        setScheduleStatus(hasLoadedScheduleRef.current
+                            ? `「${monthKey}」尚無已儲存資料，目前畫面未變更。`
+                            : `「${monthKey}」尚無已儲存資料，目前未載入正式門診資料。`);
                         return;
                     }
                     if (!ScheduleSaveLoadCore.isValidScheduleData(payload.data)) {
@@ -270,16 +277,23 @@
                     if (mismatch) throw new Error(mismatch.message);
 
                     setData(payload.data);
+                    hasLoadedScheduleRef.current = true;
                     ScheduleSaveLoadCore.rememberLoadedMonth(window, monthKey, payload);
                     setScheduleStatus(`已載入 ${monthKey} 門診資料。`);
                     setTimeout(() => lucide.createIcons(), 0);
                 } catch (err) {
+                    if (requestId !== loadRequestIdRef.current) return;
                     console.error("載入門診失敗:", err);
                     setScheduleStatus(`載入失敗，目前畫面未變更：${err.message || err}`);
                 } finally {
-                    setIsLoadingSchedule(false);
+                    if (requestId === loadRequestIdRef.current) setIsLoadingSchedule(false);
                 }
             };
+
+            useEffect(() => {
+                handleLoadSchedule();
+                return () => { loadRequestIdRef.current += 1; };
+            }, []);
 
             const handleSaveSchedule = async () => {
                 if (!ScheduleSaveLoadCore.isValidScheduleData(data)) {
@@ -498,6 +512,8 @@
                                     className="w-full p-2 border-2 border-slate-200 rounded-lg font-bold bg-slate-50 outline-none"
                                     value={monthKey}
                                     onChange={(e) => {
+                                        loadRequestIdRef.current += 1;
+                                        setIsLoadingSchedule(false);
                                         setMonthKey(e.target.value);
                                         setScheduleStatus("");
                                     }}

@@ -45,8 +45,23 @@
     );
   }
 
-  function getInitialMonthKey(runtime, title) {
-    return inferMonthKeyFromTitle(title) || "";
+  function getInitialMonthKey(runtime) {
+    const LocalDate = (runtime && runtime.Date) || Date;
+    const now = new LocalDate();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  function createUnloadedScheduleData(template) {
+    const data = JSON.parse(JSON.stringify(template));
+    data.title = "";
+    data.note = "";
+    data.clinics.forEach((clinic) => {
+      clinic.changes = [];
+      Object.values(clinic.schedule).forEach((slots) => {
+        Object.keys(slots).forEach((slot) => { slots[slot] = ""; });
+      });
+    });
+    return data;
   }
 
   function rememberLastScheduleMonth(runtime, monthKey) {
@@ -74,6 +89,7 @@
   const api = Object.freeze({
     LAST_SCHEDULE_MONTH_STORAGE_KEY,
     getInitialMonthKey,
+    createUnloadedScheduleData,
     isValidMonthKey,
     inferMonthKeyFromTitle,
     getMonthTitleMismatch,

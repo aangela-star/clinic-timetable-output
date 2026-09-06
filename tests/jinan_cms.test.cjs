@@ -4502,3 +4502,211 @@ test('page readback verifies HTML plus PNG hash; href-only, dimensions, response
   }
   assert.equal(cmsModule.verifyPageSrcReadback({ ...plan, expectedSha256: '0'.repeat(64) }, page, image).status, 'MANUAL_CHECK_REQUIRED');
 });
+
+function pageIntegrationFixture(overrides = {}) {
+  reloadJinanCmsModule();
+  const plan = pagePlan();
+  const bytes = pngBuffer();
+  const oldBytes = Buffer.from([0xff, 0xd8, 0xff, 0xd9]);
+  const oldUrl = new URL('/upload/photo_2026-09-02 23_08_57(1).jpeg', JINAN_CMS_CONFIG.origin).href;
+  const response = (url, body, extra = {}) => ({ status: 200, finalUrl: url, body, ...extra });
+  const responses = [
+    response(JINAN_CMS_CONFIG.publicUrl, `<main>${liveNote}</main>`),
+    response(JINAN_CMS_CONFIG.loginUrl, loginHtml(), { setCookie: ['sid=mock; Path=/'] }),
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.loginUrl, location: LOGIN_POST_SUCCESS_LOCATION },
+    loginSuccessLandingResponse(),
+    response(JINAN_CMS_CONFIG.editorUrl, pageEditor()),
+    response(oldUrl, oldBytes, { contentType: 'image/jpeg' }),
+    response(QUICK_UPLOAD_RESPONSE_URL, uploadSuccessBody('/upload/confirmed.png', 37), { contentType: 'text/html' }),
+    response(plan.imageUrl, bytes, { contentType: 'image/png' }),
+    response(JINAN_CMS_CONFIG.publicUrl, `<main>${liveNote}</main>`),
+    response(JINAN_CMS_CONFIG.editorUrl, pageEditor().replace('fresh-token', 'new-token').replace('SEO title', 'fresh SEO title')),
+    { status: 302, finalUrl: JINAN_CMS_CONFIG.editorUrl, location: '/admin/index.php?op=time&sub=set&mesCode=1' },
+    response(JINAN_CMS_CONFIG.publicUrl, `<main>${plan.afterNote}</main>`),
+    response(plan.imageUrl, bytes, { contentType: 'image/png' }),
+  ];
+  for (const [index, value] of Object.entries(overrides)) responses[Number(index)] = value;
+  const calls = [];
+  const backups = [];
+  const options = {
+    mode: 'mock', pageSrc: { originalImageHtml: liveOriginalImg }, pngDataUrl: pngDataUrl(), callbackNumber: 37,
+    env: { JINAN_CMS_PUBLISH_ENABLED: 'true', JINAN_CMS_USERNAME: 'mock-user', JINAN_CMS_PASSWORD: 'mock-password' },
+    logger: () => {},
+    preserveBackup: async backup => { backups.push(backup); return { imageSha256: backup.imageSha256, noteSha256: backup.noteSha256 }; },
+    transport: async request => {
+      calls.push(request);
+      const next = responses.shift();
+      if (next instanceof Error) throw next;
+      assert.ok(next, 'unexpected transport call');
+      return next;
+    },
+  };
+  return { plan, calls, backups, options, responses, response };
+}
+
+test('page integration uses existing publish adapter, preserves fields and verifies anonymous HTML + bytes', async () => {
+  const f = pageIntegrationFixture();
+  const result = await publishJinanCms(f.options);
+  assert.equal(result.status, 'PUBLISHED');
+  assert.equal(f.responses.length, 0);
+  const post = f.calls.find(call => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl);
+  assert.equal(post.multipartFields.note, f.plan.afterNote);
+  assert.equal(post.multipartFields.csrf, 'new-token');
+  assert.equal(post.multipartFields.wtitle, 'fresh SEO title');
+  const upload = f.calls.find(call => call.url.includes('QuickUpload'));
+  assert.deepEqual(upload.file.content, pngBuffer());
+  assert.equal(f.backups.length, 2);
+  assert.equal(f.backups[0].note, liveNote);
+  assert.equal(cmsModule.planPageSrcRestore(f.backups[1].pagePlan, pageEditor(f.plan.afterNote)).multipartFields.note, liveNote);
+  for (const request of f.calls.filter(call => call.method === 'GET' && !call.url.includes('/admin/'))) {
+    assert.equal(request.headers.cookie, undefined);
+    assert.equal(request.headers['cache-control'], 'no-cache, no-store');
+  }
+});
+
+for (const mode of [undefined, 'production']) test(`page integration refuses non-mock mode ${mode}`, async () => {
+  const f = pageIntegrationFixture();
+  assert.equal((await publishJinanCms({ ...f.options, mode })).status, 'CMS_RESPONSE_CONTRACT_UNVERIFIED');
+  assert.equal(f.calls.length, 0);
+});
+test('page integration requires injected transport and backup sink', async () => {
+  for (const key of ['transport', 'preserveBackup']) {
+    const f = pageIntegrationFixture();
+    assert.equal((await publishJinanCms({ ...f.options, [key]: undefined })).status, 'CMS_RESPONSE_CONTRACT_UNVERIFIED');
+    assert.equal(f.calls.length, 0);
+  }
+});
+test('page integration rejects unverified backup before upload', async () => {
+  const f = pageIntegrationFixture();
+  assert.equal((await publishJinanCms({ ...f.options, preserveBackup: async () => ({}) })).status, 'VERIFY_FAILED');
+  assert.equal(f.calls.some(call => call.url.includes('QuickUpload')), false);
+});
+for (const [name, index, change] of [
+  ['editor drift', 9, body => body.replace('其他', 'changed') + '<!--drift-->'],
+  ['public drift', 8, body => body + '<p>another edit</p>'],
+]) test(`page integration ${name} blocks submit after upload`, async () => {
+  const f = pageIntegrationFixture();
+  f.responses[index].body = name === 'editor drift' ? pageEditor(liveNote + '<p>other editor</p>') : change(f.responses[index].body);
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  assert.equal(f.calls.some(call => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl), false);
+});
+test('page integration rejects image re-encoding before form submit', async () => {
+  const f = pageIntegrationFixture();
+  // Another valid PNG, same pixels but extra ancillary data: bytes differ.
+  const modified = largePngBuffer();
+  assert.doesNotThrow(() => require('../lib/publish-contract').parsePngDataUrl(`data:image/png;base64,${modified.toString('base64')}`));
+  f.responses[7].body = modified;
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  assert.equal(f.calls.some(call => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl), false);
+});
+test('page integration timeout after accepted submit succeeds only on public hash verification', async () => {
+  const f = pageIntegrationFixture({ 10: new Error('submit timeout') });
+  assert.equal((await publishJinanCms(f.options)).status, 'PUBLISHED');
+  assert.equal(f.calls.filter(call => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl).length, 1);
+});
+test('page integration ambiguous submit never retries; subsequent request reads only and remains latched', async () => {
+  const f = pageIntegrationFixture({ 10: new Error('timeout') });
+  f.responses[11].body = `<main>${liveNote}</main>`;
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  const before = f.calls.length;
+  f.responses.push(f.response(JINAN_CMS_CONFIG.publicUrl, `<main>${liveNote}</main>`),
+    f.response(f.plan.imageUrl, pngBuffer(), { contentType: 'image/png' }));
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  assert.deepEqual(f.calls.slice(before).map(call => call.method), ['GET', 'GET']);
+  f.responses.push(f.response(JINAN_CMS_CONFIG.publicUrl, `<main>${f.plan.afterNote}</main>`),
+    f.response(f.plan.imageUrl, pngBuffer(), { contentType: 'image/png' }));
+  assert.equal((await publishJinanCms(f.options)).status, 'PUBLISHED');
+  assert.equal(f.calls.filter(call => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl).length, 1);
+});
+for (const [name, change] of [
+  ['href only', f => { f.responses[11].body = liveNote.replace('/upload/other.png', '/upload/confirmed.png'); }],
+  ['fixed dimensions', f => { f.responses[11].body = f.plan.afterNote.replace('height: auto', 'height: 720px'); }],
+  ['wrong image MIME', f => { f.responses[12].contentType = 'image/jpeg'; }],
+  ['image redirect', f => { f.responses[12].location = 'https://evil.example/img'; }],
+]) test(`page integration public verification rejects ${name}`, async () => {
+  const f = pageIntegrationFixture(); change(f);
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  assert.equal(f.calls.filter(call => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl).length, 1);
+});
+test('page integration upload timeout latches before dispatch and subsequent calls cannot upload', async () => {
+  const f = pageIntegrationFixture({ 6: new Error('upload timeout') });
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  const count = f.calls.length;
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  assert.equal(f.calls.length, count);
+});
+
+test('page integration rejects valid but different published PNG bytes', async () => {
+  const f = pageIntegrationFixture();
+  f.responses[12].body = largePngBuffer();
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+});
+test('page integration baseline mismatch blocks upload and sends no form', async () => {
+  const f = pageIntegrationFixture();
+  f.responses[0].body = '<main>different public note</main>';
+  assert.equal((await publishJinanCms(f.options)).status, 'FORM_CHANGED');
+  assert.equal(f.calls.some(call => call.url.includes('QuickUpload')), false);
+});
+test('page integration backup plan receipt failure blocks submit', async () => {
+  const f = pageIntegrationFixture();
+  const preserve = f.options.preserveBackup;
+  f.options.preserveBackup = async backup => backup.pagePlan ? {} : preserve(backup);
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  assert.equal(f.calls.some(call => call.method === 'POST' && call.url === JINAN_CMS_CONFIG.editorUrl), false);
+});
+test('page integration ambiguous state cannot report a different PNG as published', async () => {
+  const f = pageIntegrationFixture({ 10: new Error('timeout') });
+  f.responses[11].body = liveNote;
+  assert.equal((await publishJinanCms(f.options)).status, 'MANUAL_CHECK_REQUIRED');
+  const count = f.calls.length;
+  assert.equal((await publishJinanCms({ ...f.options, pngDataUrl: `data:image/png;base64,${largePngBuffer().toString('base64')}` })).status, 'MANUAL_CHECK_REQUIRED');
+  assert.equal(f.calls.length, count);
+});
+test('existing publish API payload reaches page adapter through server-side mock injection', async () => {
+  const f = pageIntegrationFixture();
+  const previousSecret = process.env.CLINIC_SERVER_SECRET;
+  process.env.CLINIC_SERVER_SECRET = 'local-integration-test-only-secret-over-32-chars';
+  try {
+    const { createSessionToken } = require('../lib/server-session');
+    const { createHandler } = require('../api/publish');
+    const handler = createHandler({ preflightPublish: payload => publishJinanCms({ ...f.options, ...payload }) });
+    const res = { headers: {}, setHeader(k, v) { this.headers[k] = v; }, end(body) { this.body = JSON.parse(body); } };
+    await handler({ method: 'POST', headers: { cookie: `clinic_timetable_session=${encodeURIComponent(createSessionToken())}` },
+      body: { action: 'publish', channelIds: ['jinan-website'], primaryClinicId: 'clinic-1', title: '人工確認門診表', pngDataUrl: pngDataUrl() } }, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.ok, true);
+    assert.equal(f.responses.length, 0);
+    assert.equal(JSON.stringify(res.body).includes('new-token'), false);
+    assert.equal(JSON.stringify(res.body).includes('mock-password'), false);
+  } finally {
+    if (previousSecret === undefined) delete process.env.CLINIC_SERVER_SECRET;
+    else process.env.CLINIC_SERVER_SECRET = previousSecret;
+  }
+});
+
+test('page integration uses existing in-flight lock and releases it after completion', async () => {
+  const f = pageIntegrationFixture();
+  let release;
+  let entered;
+  const waiting = new Promise(resolve => { entered = resolve; });
+  const pending = new Promise(resolve => { release = resolve; });
+  const save = f.options.preserveBackup;
+  f.options.preserveBackup = async backup => { if (!backup.pagePlan) { entered(); await pending; } return save(backup); };
+  const first = publishJinanCms(f.options);
+  await waiting;
+  const count = f.calls.length;
+  assert.equal((await publishJinanCms(f.options)).status, 'PUBLISH_IN_PROGRESS');
+  assert.equal(f.calls.length, count);
+  release();
+  assert.equal((await first).status, 'PUBLISHED');
+  assert.equal((await publishJinanCms({ ...f.options, mode: 'production' })).status, 'CMS_RESPONSE_CONTRACT_UNVERIFIED');
+});
+
+for (const body of [`<!--${liveNote}-->`, `<main hidden>${liveNote}</main>`, `<main>${liveNote}${liveOriginalImg}</main>`]) {
+  test('page integration requires a unique visible public target before upload', async () => {
+    const f = pageIntegrationFixture();
+    f.responses[0].body = body;
+    assert.equal((await publishJinanCms(f.options)).status, 'FORM_CHANGED');
+    assert.equal(f.calls.some(call => call.url.includes('QuickUpload')), false);
+  });
+}

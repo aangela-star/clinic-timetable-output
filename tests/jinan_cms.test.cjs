@@ -76,6 +76,14 @@ function pngBuffer() {
   return Buffer.from(pngDataUrl().slice('data:image/png;base64,'.length), 'base64');
 }
 
+function differentPixelPngBuffer() {
+  const png = pngBuffer();
+  const pixels = Buffer.alloc((2160 * 4 + 1) * 3840);
+  pixels[1] = 255;
+  pixels[4] = 255;
+  return Buffer.concat([png.subarray(0, 33), chunk('IDAT', zlib.deflateSync(pixels)), chunk('IEND')]);
+}
+
 function largePngBuffer() {
   const png = pngBuffer();
   const iend = png.length - 12;
@@ -3007,6 +3015,8 @@ test('M2e5. post-submit verification rejects numeric slash entities and 1-8 laye
 
 test('M2f. post-submit verification rejects uploaded image resource contract failures', async () => {
   const imageResponses = [
+    ['valid PNG with different pixels', { status: 200, finalUrl: `${JINAN_CMS_CONFIG.origin}/uploads/2026/final.png`, contentType: 'image/png', body: differentPixelPngBuffer() }],
+    ['valid PNG with different bytes', { status: 200, finalUrl: `${JINAN_CMS_CONFIG.origin}/uploads/2026/final.png`, contentType: 'image/png', body: largePngBuffer() }],
     ['status', { status: 404, finalUrl: `${JINAN_CMS_CONFIG.origin}/uploads/2026/final.png`, contentType: 'image/png', body: pngBuffer() }],
     ['redirect', { status: 200, finalUrl: `${JINAN_CMS_CONFIG.origin}/uploads/2026/final.png`, location: '/other.png', contentType: 'image/png', body: pngBuffer() }],
     ['final url', { status: 200, finalUrl: `${JINAN_CMS_CONFIG.origin}/uploads/2026/other.png`, contentType: 'image/png', body: pngBuffer() }],
@@ -3070,7 +3080,7 @@ test('M2f2. post-submit image resource verification accepts valid PNG up to publ
   ]);
 
   const result = await publishJinanCms({
-    pngDataUrl: pngDataUrl(),
+    pngDataUrl: `data:image/png;base64,${largePng.toString('base64')}`,
     callbackNumber: 37,
     env: {
       JINAN_CMS_PUBLISH_ENABLED: 'true',
@@ -3137,7 +3147,7 @@ test('M2f3. default transport post-submit image resource verification accepts va
     };
 
     const result = await publishJinanCms({
-      pngDataUrl: pngDataUrl(),
+      pngDataUrl: `data:image/png;base64,${largePng.toString('base64')}`,
       callbackNumber: 37,
       env: {
         JINAN_CMS_PUBLISH_ENABLED: 'true',
@@ -4445,4 +4455,36 @@ test('J. rollback plan is explicitly unsupported and non-mutating', () => {
     deletes: false,
     submits: false,
   });
+});
+
+
+test('PNG mismatch recovery verifies retained original bytes, never retries writes or leaks hashes', async () => {
+  reloadJinanCmsModule();
+  let credentialsRead = 0;
+  const logs = [];
+  const env = {
+    JINAN_CMS_PUBLISH_ENABLED: 'true',
+    get JINAN_CMS_USERNAME() { credentialsRead += 1; return 'synthetic-user'; },
+    get JINAN_CMS_PASSWORD() { credentialsRead += 1; return 'synthetic-password'; },
+  };
+  await seedSubmitAmbiguity({ env, finalImagePath: '/uploads/2026/saved.png' });
+  credentialsRead = 0;
+  const wrong = differentPixelPngBuffer();
+  for (const [bytes, status] of [[wrong, 'MANUAL_CHECK_REQUIRED'], [pngBuffer(), 'PUBLISHED']]) {
+    const transport = makeTransport([
+      { status: 200, finalUrl: JINAN_CMS_CONFIG.publicUrl, body: publicHtml('/uploads/2026/saved.png') },
+      { status: 200, finalUrl: `${JINAN_CMS_CONFIG.origin}/uploads/2026/saved.png`, contentType: 'image/png', body: bytes },
+    ]);
+    const result = await publishJinanCms({
+      // A later request cannot replace the original attempt's expected hash.
+      pngDataUrl: `data:image/png;base64,${wrong.toString('base64')}`,
+      env, transport, logger: (event) => logs.push(event),
+    });
+    assert.equal(result.status, status);
+    assert.equal(credentialsRead, 0);
+    assert.equal(transport.calls.length, 2);
+    assert.equal(transport.calls.every((call) => call.method === 'GET' && !call.cookie), true);
+    assert.equal(JSON.stringify(result).includes('expectedSha256'), false);
+  }
+  assert.equal(JSON.stringify(logs).includes('expectedSha256'), false);
 });

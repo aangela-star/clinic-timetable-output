@@ -97,3 +97,11 @@
 本次僅證明晉安單站 CMS 瀏覽器換圖可完成，未執行毅安官網、其他平台、Sheet、Apps Script、Vercel 或其他頁面變更。未修改門診編輯器、Preview、PNG 產生／下載／列印流程。
 
 發布按鈕與 server-side transport 的整合、部署、正式啟用及其耐久狀態保護，仍須各自驗證與核准；不得把本次瀏覽器 Pilot 結果當成已完成整合或已核准部署。
+
+## 發布工作包 MVP（本機實作，尚未部署）
+
+現有發布對話框選「晉安官網」後，「確認建立工作包」會擷取目前 Preview PNG，下載單一 `jinan-publish-YYYY-MM-<jobId>.json`。本步不呼叫 `/api/publish`、不登入 CMS、不上傳、不送出；狀態文字固定為「晉安官網發布工作包已建立，尚未發布。」瀏覽器開始下載不代表使用者已成功保留檔案，交接時須確認 JSON 實際存在且可讀。
+
+schemaVersion 1 包含 UUID jobId、createdAt、`READY_FOR_BROWSER_EXECUTION`、`jinan-website`、primaryClinicId、title、monthKey、humanConfirmed，以及 `png`（dataUrl、sha256、dimensions、bytes）、`baseline`（pageUrl、imagePath、imageDimensions、imageBytes、imageSha256、verifiedAt、requiresRevalidation）。PNG hash 計算對象為解碼後原始 PNG bytes，不是 data URL 字串。
+
+工作包是建立當時的獨立 snapshot，不隨後續畫面變更；不是可變工作佇列或執行紀錄。JSON 可被人工修改，`humanConfirmed` 也不是數位簽章或 CMS 執行授權。執行端仍須核對檔案、來源內容與操作授權；記錄的公開基線必須重新唯讀驗證，不可直接視為當下官網狀態。本次 MVP 不實作執行端、背景執行、Codex bridge 或自動發布。

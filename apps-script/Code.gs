@@ -11,6 +11,7 @@ function doPost(e) {
   let lock;
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (typeof body.action === 'string' && body.action.startsWith('publishJob.')) return handlePublishJob_(body);
     assertServerSecret_(body.secret);
 
     const action = String(body.action || '');

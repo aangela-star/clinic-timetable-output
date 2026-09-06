@@ -55,11 +55,11 @@
   // Recorded Pilot baseline, not a live CMS lookup or permission to publish.
   const JINAN_BASELINE = freezeTree({
     pageUrl: 'https://www.tainanrehab.com/time.html',
-    imagePath: '/upload/115-九月_醫師門診表 (1).png',
+    imagePath: '/upload/source.png',
     imageDimensions: { width: 675, height: 1200 },
     imageBytes: 294076,
     imageSha256: '503cbde3c21bd37f0562154df3fa4029d08e65ce0c1f90b59d7af4980d17dc65',
-    verifiedAt: '2026-09-06T14:48:40.842Z',
+    verifiedAt: '2026-09-06T15:22:48.642Z',
     requiresRevalidation: true,
   });
 
@@ -94,8 +94,26 @@
       channelId: 'jinan-website', primaryClinicId: snapshot.primaryClinicId,
       title: snapshot.title, monthKey: snapshot.monthKey, humanConfirmed: true,
       png: { dataUrl: encoded, sha256, dimensions, bytes: bytes.length },
-      baseline: JSON.parse(JSON.stringify(JINAN_BASELINE)),
+      baseline: JSON.parse(JSON.stringify(snapshot.baseline || JINAN_BASELINE)),
     });
+  }
+
+  async function getHandoffBaseline() {
+    const response = await fetch('/api/publish-jobs', { credentials: 'same-origin' });
+    const result = await response.json();
+    if (!response.ok || result.ok !== true || !result.baseline) throw new Error('HANDOFF_UNAVAILABLE');
+    return result.baseline;
+  }
+
+  async function enqueuePublishJob(job) {
+    const response = await fetch('/api/publish-jobs', {
+      method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(job),
+    });
+    const result = await response.json();
+    if (!response.ok || result.ok !== true || result.jobId !== job.jobId
+        || !['ready', 'claimed', 'published', 'manual-check'].includes(result.status)) throw new Error('HANDOFF_REQUIRES_CHECK');
+    return result;
   }
 
   function publishJobFilename(job) {
@@ -125,6 +143,8 @@
     PUBLISH_CHANNELS,
     evaluatePublishSelection,
     createPublishJob,
+    getHandoffBaseline,
+    enqueuePublishJob,
     publishJobFilename,
     downloadPublishJob,
   };

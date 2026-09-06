@@ -178,11 +178,11 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
   }
 
   assert.match(handleConfirmPublishBody, /await PublishCore.createPublishJob/);
-  assert.match(handleConfirmPublishBody, /PublishCore.downloadPublishJob\(job\)/);
+  assert.match(handleConfirmPublishBody, /PublishCore.enqueuePublishJob\(job\)/);
   assert.match(handleConfirmPublishBody, /humanConfirmed: true/);
   assert.doesNotMatch(handleConfirmPublishBody, /fetch|PUBLISHED|晉安官網發布完成/);
-  assert.match(handleConfirmPublishBody, /晉安官網發布工作包已建立，尚未發布。/);
-  assert.match(handleConfirmPublishBody, /工作包建立失敗，尚未發布；請重新確認後再試。/);
+  assert.match(handleConfirmPublishBody, /晉安官網工作已交接，等待 Mac 執行，尚未確認發布。/);
+  assert.match(handleConfirmPublishBody, /工作交接未確認，請停止並查核，勿重新建立或重送。/);
   assert.deepEqual(missingContracts, []);
 });
 

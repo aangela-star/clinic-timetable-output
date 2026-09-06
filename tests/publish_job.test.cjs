@@ -26,7 +26,7 @@ test('job IDs unique, immutable snapshot, source SHA and complete baseline', asy
   assert.deepEqual(job.png.dimensions, { width: 2160, height: 3840 });
   assert.equal(job.png.dataUrl, pngDataUrl);
   assert.equal(job.baseline.pageUrl, 'https://www.tainanrehab.com/time.html');
-  assert.equal(job.baseline.imagePath, '/upload/115-九月_醫師門診表 (1).png');
+  assert.equal(job.baseline.imagePath, '/upload/source.png');
   assert.deepEqual(job.baseline.imageDimensions, { width: 675, height: 1200 });
   assert.equal(job.baseline.imageBytes, 294076);
   assert.equal(job.baseline.imageSha256, '503cbde3c21bd37f0562154df3fa4029d08e65ce0c1f90b59d7af4980d17dc65');
@@ -46,20 +46,21 @@ test('actual confirm handler downloads JSON without fetch and reports only not-p
   const html = fs.readFileSync(require.resolve('../index.html'), 'utf8');
   const handler = html.slice(html.indexOf('const handleConfirmPublish ='), html.indexOf('            useEffect(() => {', html.indexOf('const handleConfirmPublish =')));
   const statuses = [], downloads = [];
-  const context = { publishReadiness:{canConfirm:true}, publishRequestInFlightRef:{current:false}, isPublishing:false,
+  const context = { publishReadiness:{canConfirm:true}, publishRequestInFlightRef:{current:false}, pendingHandoffRef:{current:null}, isPublishing:false,
     setIsPublishing(){}, setPublishStatus:s=>statuses.push(s), generatePublishPngDataUrl:async()=>pngDataUrl,
     selectedPublishChannelIds:['jinan-website'], primaryClinicId:'clinic-1', data:{title:'115/九月'}, monthKey:'2026-09',
-    PublishCore:{...core, createPublishJob: x=>core.createPublishJob(x,webcrypto), downloadPublishJob:job=>downloads.push(job)},
+    PublishCore:{...core, createPublishJob: x=>core.createPublishJob(x,webcrypto), getHandoffBaseline:async()=>undefined, enqueuePublishJob:async job=>downloads.push(job)},
     fetch(){throw Error('network forbidden');} };
   vm.runInNewContext(handler + ';globalThis.run = handleConfirmPublish;', context);
   await context.run();
   assert.equal(downloads.length,1);
-  assert.equal(statuses.at(-1),'晉安官網發布工作包已建立，尚未發布。');
+  assert.equal(statuses.at(-1),'晉安官網工作已交接，等待 Mac 執行，尚未確認發布。');
   assert.doesNotMatch(handler,/\/api\/publish|PUBLISHED/);
+  context.pendingHandoffRef.current=null;
   context.generatePublishPngDataUrl=async()=>{throw Error('private error');};
   await context.run();
   assert.equal(downloads.length,1);
-  assert.equal(statuses.at(-1),'工作包建立失敗，尚未發布；請重新確認後再試。');
+  assert.equal(statuses.at(-1),'工作交接未確認，請停止並查核，勿重新建立或重送。');
   assert.equal(context.publishRequestInFlightRef.current,false);
 });
 

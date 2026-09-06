@@ -226,6 +226,7 @@
             const publishButtonRef = useRef(null);
             const publishDialogRef = useRef(null);
             const publishRequestInFlightRef = useRef(false);
+            const pendingHandoffRef = useRef(null);
             const renderData = { ...data, clinics: ClinicOrder.orderClinicsByPriority(data.clinics, primaryClinicId) };
             const publishReadiness = PublishCore.evaluatePublishSelection(PublishCore.PUBLISH_CHANNELS, selectedPublishChannelIds, primaryClinicId);
             const primaryClinicGuard = PublishCore.evaluatePublishSelection(PublishCore.PUBLISH_CHANNELS, PublishCore.PUBLISH_CHANNELS.map((channel) => channel.id), primaryClinicId);
@@ -399,6 +400,11 @@
                 }
                 setIsPublishing(true);
                 try {
+                    if (pendingHandoffRef.current) {
+                        setPublishStatus("交接結果待確認，請勿重新建立或重送工作。");
+                        return;
+                    }
+                    const baseline = await PublishCore.getHandoffBaseline();
                     const pngDataUrl = await generatePublishPngDataUrl();
                     const job = await PublishCore.createPublishJob({
                         channelIds: selectedPublishChannelIds,
@@ -407,11 +413,13 @@
                         monthKey,
                         pngDataUrl,
                         humanConfirmed: true,
+                        baseline,
                     });
-                    PublishCore.downloadPublishJob(job);
-                    setPublishStatus("晉安官網發布工作包已建立，尚未發布。");
+                    pendingHandoffRef.current = job;
+                    await PublishCore.enqueuePublishJob(job);
+                    setPublishStatus("晉安官網工作已交接，等待 Mac 執行，尚未確認發布。");
                 } catch (err) {
-                    setPublishStatus("工作包建立失敗，尚未發布；請重新確認後再試。");
+                    setPublishStatus("工作交接未確認，請停止並查核，勿重新建立或重送。");
                 } finally {
                     publishRequestInFlightRef.current = false;
                     setIsPublishing(false);

@@ -1166,3 +1166,54 @@ test('save lock timeout leaves all sheet rows unchanged', () => {
   assert.equal(harness.flushCalls, 0);
   assert.equal(harness.lockState.releaseCalls, 0);
 });
+
+for (const saveRequestId of ['constructor', 'toString', '__proto__']) {
+  test(`prototype-key save request ${saveRequestId} saves, replays, and reads history safely`, () => {
+    const harness = createHarness([finalHeaders]);
+    const request = { secret, action: 'saveVersion', monthKey: '2026-09',
+      saveRequestId, expectedLatestVersionId: null, data: schedule('115/9月', 'prototype key') };
+    const saved = harness.post(request);
+    assert.equal(saved.ok, true);
+    assert.equal(saved.created, true);
+    const replay = harness.post(request);
+    assert.equal(replay.ok, true);
+    assert.equal(replay.idempotentReplay, true);
+    assert.equal(harness.rows.length, 2);
+    const history = harness.post({ secret, action: 'listVersions', monthKey: '2026-09' });
+    assert.equal(history.ok, true);
+    assert.equal(history.versions.length, 1);
+    assert.equal(history.versions[0].saveRequestId, saveRequestId);
+    const loaded = harness.post({ secret, action: 'loadVersion', versionId: saved.version.versionId });
+    assert.equal(loaded.ok, true);
+    assert.equal(loaded.version.data.note, 'prototype key');
+  });
+}
+
+for (const migrationState of ['in_progress', 'rollback_in_progress', 'unknown', '{invalid']) {
+  for (const action of ['saveVersion', 'setCurrentVersion']) {
+    test(`${action} rejects migration state ${migrationState} without mutations`, () => {
+      const harness = createHarness([
+        finalHeaders,
+        finalVersionRow({ versionId: 'sv_one', monthKey: '2026-09', saveRequestId: 'one' }),
+      ]);
+      harness.properties.SCHEDULE_VERSION_MIGRATION_STATE = migrationState === '{invalid'
+        ? migrationState : JSON.stringify({ status: migrationState });
+      const rowsBefore = harness.rows.map((row) => row.slice());
+      const propertiesBefore = { ...harness.properties };
+      const request = action === 'saveVersion'
+        ? { secret, action, monthKey: '2026-09', saveRequestId: 'blocked',
+            expectedLatestVersionId: 'sv_one', data: schedule('115/9月', 'blocked') }
+        : { secret, action, versionId: 'sv_one', expectedCurrentVersionId: null };
+      const result = harness.post(request);
+      assert.equal(result.ok, false);
+      assert.equal(result.error, 'MIGRATION_INCOMPLETE');
+      assert.deepEqual(harness.rows, rowsBefore);
+      assert.deepEqual(harness.properties, propertiesBefore);
+      assert.equal(harness.flushCalls, 0);
+      assert.deepEqual(harness.lockState.tryCalls, [10000]);
+      assert.equal(harness.lockState.releaseCalls, 1);
+      const read = harness.post({ secret, action: 'loadVersion', versionId: 'sv_one' });
+      assert.equal(read.ok, true);
+    });
+  }
+}

@@ -132,6 +132,7 @@ function saveVersion_(body) {
     lock = LockService.getScriptLock();
     if (!lock.tryLock(10000)) throw codedError_('SAVE_LOCK_TIMEOUT', '目前有另一筆門診資料正在儲存，請稍後再試。');
 
+    assertNoMigrationState_();
     const sheet = getFinalScheduleSheet_();
     const rows = readFinalRows_(sheet);
     const existingReplay = findSaveRequest_(rows, request.saveRequestId);
@@ -236,6 +237,7 @@ function loadVersion_(body) {
 }
 
 function setCurrentVersionInsideLock_(request) {
+  assertNoMigrationState_();
   const sheet = getFinalScheduleSheet_();
   const rows = readFinalRows_(sheet);
   const target = findVersionById_(rows, request.versionId);
@@ -408,20 +410,20 @@ function readFinalRows_(sheet) {
   const rows = [];
   const seenIds = {};
   const seenMonthDateSeq = {};
-  const seenSaveRequests = {};
+  const seenSaveRequests = new Set();
   const latestByMonth = {};
   for (let i = 0; i < values.length; i += 1) {
     const row = parseFinalRow_(values[i], i + 2);
     if (seenIds[row.versionId]) throw codedError_('MALFORMED_VERSION_HISTORY', '版本資料含有重複 version_id。');
     const seqKey = row.monthKey + '|' + row.versionDate + '|' + row.versionSeq;
     if (seenMonthDateSeq[seqKey]) throw codedError_('MALFORMED_VERSION_HISTORY', '版本資料含有重複序號。');
-    if (seenSaveRequests[row.saveRequestId]) throw codedError_('MALFORMED_VERSION_HISTORY', '版本資料含有重複 save_request_id。');
+    if (seenSaveRequests.has(row.saveRequestId)) throw codedError_('MALFORMED_VERSION_HISTORY', '版本資料含有重複 save_request_id。');
     if (row.parentVersionId && !seenIds[row.parentVersionId]) throw codedError_('MALFORMED_VERSION_HISTORY', '版本資料 parent_version_id 指向不存在或較新的版本。');
     const priorLatestId = latestByMonth[row.monthKey] || null;
     if (row.expectedLatestVersionId !== priorLatestId) throw codedError_('MALFORMED_VERSION_HISTORY', '版本資料 expected_latest_version_id 與月份歷史不一致。');
     seenIds[row.versionId] = true;
     seenMonthDateSeq[seqKey] = true;
-    seenSaveRequests[row.saveRequestId] = row;
+    seenSaveRequests.add(row.saveRequestId);
     rows.push(row);
     latestByMonth[row.monthKey] = row.versionId;
   }

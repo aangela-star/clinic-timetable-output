@@ -264,6 +264,10 @@ function createHandler({
     if (!hasSafeValidSession(req)) {
       return json(res, 401, { ok: false, error: 'AUTH_REQUIRED', message: '請重新登入後再操作。' });
     }
+    if ((req.method === 'GET' && req.query?.pointer === 'jinan-website')
+        || (req.method === 'POST' && parseRequestBody(req.body)?.op)) {
+      return require('../lib/publish-api').createPublishApi({adapter:require('../lib/publish-provider').createProvider().adapter})(req, res);
+    }
     if (req.method !== 'POST') {
       return methodNotAllowed(res);
     }

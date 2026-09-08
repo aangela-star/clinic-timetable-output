@@ -804,3 +804,25 @@ test('browser-served source files do not expose Jinan CMS credential boundaries'
     assert.equal(/JINAN_CMS_[A-Z_]*PASSWORD|CMS_[A-Z_]*PASSWORD|PASSWORD_[A-Z_]*CMS/.test(source), false, `${file} exposes a CMS password boundary`);
   }
 });
+
+test('public handler delegates pointer and op to inert provider and preserves legacy validation', async () => {
+  let legacyCalls = 0;
+  const handler = createHandler({preflightPublish: async () => { legacyCalls++; return {status:'CMS_RESPONSE_CONTRACT_UNVERIFIED'}; }});
+  const headers = {cookie:signedCookie(), host:'localhost', 'content-type':'application/json'};
+  for (const req of [
+    {method:'GET', query:{pointer:'jinan-website'}, body:''},
+    {method:'POST', body:{op:'prepare', input:{}}},
+  ]) {
+    const res=responseRecorder(); await handler({...req,headers},res);
+    assert.equal(res.statusCode,409); assert.equal(res.body.error,'CMS_RESPONSE_CONTRACT_UNVERIFIED');
+  }
+  assert.equal(legacyCalls,0);
+  const legacy=responseRecorder();
+  await handler({method:'POST',headers,body:{action:'publish',channelIds:['jinan-website'],primaryClinicId:'clinic-1',title:'晉安門診表',pngDataUrl:currentPreviewPngDataUrl()}},legacy);
+  assert.equal(legacyCalls,1);
+  for (const body of ['{"op":"prepare","op":"confirm","input":{}}','{"op":']) {
+    const res=responseRecorder();await handler({method:'POST',headers,body},res);
+    assert.equal(res.statusCode,400);assert.equal(res.body.error,'INVALID_REQUEST');
+  }
+  assert.equal(legacyCalls,1);
+});

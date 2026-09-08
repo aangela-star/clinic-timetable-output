@@ -79,7 +79,7 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
   if (
     !handleOpenPublishBody ||
     !/setSelectedPublishChannelIds\s*\(\s*\[\s*\]\s*\)/.test(handleOpenPublishBody) ||
-    !/setPublishStatus\s*\(\s*["']{2}\s*\)/.test(handleOpenPublishBody) ||
+    !/setPublishStatus\s*\(\s*["']正在準備發布圖片…["']\s*\)/.test(handleOpenPublishBody) ||
     !/setIsPublishDialogOpen\s*\(\s*true\s*\)/.test(handleOpenPublishBody)
   ) {
     missingContracts.push('handleOpenPublish resets channel selection/status and opens dialog');
@@ -136,8 +136,8 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
     missingContracts.push('primary-clinic warning must render only once via primaryClinicGuard');
   }
 
-  if (!/<button[\s\S]*onClick=\{handleConfirmPublish\}[\s\S]*disabled=\{!publishReadiness\.canConfirm\s*\|\|\s*isPublishing\}[\s\S]*確認建立工作包[\s\S]*<\/button>/.test(indexHtml)) {
-    missingContracts.push('確認建立工作包 is disabled when !publishReadiness.canConfirm || isPublishing');
+  if (!/<button[\s\S]*onClick=\{handleConfirmPublish\}[\s\S]*disabled=\{!publishReadiness\.canConfirm\s*\|\|\s*isPublishing\s*\|\|\s*!preparedPublish\}[\s\S]*確認發布[\s\S]*<\/button>/.test(indexHtml)) {
+    missingContracts.push('確認發布 is disabled when !publishReadiness.canConfirm || isPublishing');
   }
 
   const handleConfirmPublishSource = getFunctionSource(indexHtml, 'handleConfirmPublish');
@@ -149,9 +149,7 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
     missingContracts.push('handleConfirmPublish is async and starts with if (!publishReadiness.canConfirm) return;');
   }
 
-  if (!handleConfirmPublishBody || !/const\s+pngDataUrl\s*=\s*await\s+generatePublishPngDataUrl\s*\(\s*\)/.test(handleConfirmPublishBody)) {
-    missingContracts.push('handleConfirmPublish awaits generatePublishPngDataUrl()');
-  }
+  assert.match(indexHtml, /const pngDataUrl = await generatePublishPngDataUrl/);
 
 
   if (!handleConfirmPublishBody || !/setIsPublishing\s*\(\s*true\s*\)/.test(handleConfirmPublishBody) || !/setIsPublishing\s*\(\s*false\s*\)/.test(handleConfirmPublishBody)) {
@@ -177,12 +175,9 @@ test('publish confirmation UI source contracts are wired end-to-end', () => {
     missingContracts.push('handleConfirmPublish contains no CMS origins, login/editor/upload URLs, CMS env names, alternate transports, or credential fields');
   }
 
-  assert.match(handleConfirmPublishBody, /await PublishCore.createPublishJob/);
-  assert.match(handleConfirmPublishBody, /PublishCore.downloadPublishJob\(job\)/);
-  assert.match(handleConfirmPublishBody, /humanConfirmed: true/);
-  assert.doesNotMatch(handleConfirmPublishBody, /fetch|PUBLISHED|晉安官網發布完成/);
-  assert.match(handleConfirmPublishBody, /晉安官網發布工作包已建立，尚未發布。/);
-  assert.match(handleConfirmPublishBody, /工作包建立失敗，尚未發布；請重新確認後再試。/);
+  assert.match(handleConfirmPublishBody, /fetch\('\/api\/publish'/);
+  assert.match(handleConfirmPublishBody, /op:'confirm'/);
+  assert.doesNotMatch(handleConfirmPublishBody, /downloadPublishJob/);
   assert.deepEqual(missingContracts, []);
 });
 
@@ -211,8 +206,8 @@ test('publish confirmation has synchronous duplicate-submission ref guard before
   const refSetIndex = handleConfirmPublishBody.indexOf('publishRequestInFlightRef.current = true;');
   const isPublishingCheckIndex = handleConfirmPublishBody.indexOf('if (isPublishing)');
   const setPublishingIndex = handleConfirmPublishBody.indexOf('setIsPublishing(true);');
-  const pngIndex = handleConfirmPublishBody.indexOf('generatePublishPngDataUrl');
-  const fetchIndex = handleConfirmPublishBody.indexOf('PublishCore.createPublishJob');
+  const pngIndex = handleConfirmPublishBody.indexOf('const binding');
+  const fetchIndex = handleConfirmPublishBody.indexOf('fetch');
   const finallyIndex = handleConfirmPublishBody.indexOf('finally');
   const refClearIndex = handleConfirmPublishBody.lastIndexOf('publishRequestInFlightRef.current = false;');
 
@@ -420,4 +415,41 @@ test('publish dialog has visible close control and modal keyboard focus lifecycl
   }
 
   assert.deepEqual(missingContracts, []);
+});
+
+test('real publish failure mapper accepts string codes and safe object fallback', () => {
+  const vm = require('node:vm');
+  const context = {};
+  vm.runInNewContext(indexHtml.slice(indexHtml.indexOf('const PUBLISH_FAILURE_STATUS_TEXT'), indexHtml.indexOf('const PosterContent')) + ';globalThis.mapFailure=getPublishFailureStatusText;', context);
+  const expected = {
+    STALE_BASELINE: '版本已變更；請關閉後重新預覽確認。',
+    EXPIRED_APPROVAL: '確認已逾時；請關閉後重新預覽確認。',
+    BODY_TOO_LARGE: '圖片超過 2.5 MB 發布上限；請保留原始 PNG 下載，聯絡管理員處理，不要重複發布。',
+  };
+  for (const [code, text] of Object.entries(expected)) {
+    assert.equal(context.mapFailure(code), text);
+    assert.equal(context.mapFailure({error: code}), text);
+  }
+  assert.match(context.mapFailure('__proto__'), /^PUBLISH_FAILED/);
+  assert.match(context.mapFailure(null), /^PUBLISH_FAILED/);
+});
+
+test('actual confirm handler clears pre-mutation INVALID_PNG but retains ambiguous pending binding', async () => {
+  const vm = require('node:vm');
+  for (const error of ['INVALID_PNG', 'MANUAL_CHECK_REQUIRED', 'dropped']) {
+    const pending = new Map();
+    const context = {
+      publishReadiness: {canConfirm:true}, publishRequestInFlightRef:{current:false}, isPublishing:false,
+      preparedPublish:{monthKey:'2099-01',primaryClinicId:'jinan',approvalId:'synthetic',nonce:'synthetic'},
+      monthKey:'2099-01',primaryClinicId:'jinan',data:{},publishSnapshotRef:{current:{}},
+      PublishCore:{savedScheduleEqual:()=>true},setIsPublishing(){},setPreparedPublish(){},setPublishStatus(){},
+      getPublishFailureStatusText:code=>code,
+      sessionStorage:{setItem:(k,v)=>pending.set(k,v),removeItem:k=>pending.delete(k)},
+      fetch:async()=>{if(error==='dropped')throw Error('synthetic');return {json:async()=>({ok:false,error})};},
+    };
+    vm.runInNewContext('globalThis.confirm=async()=>{'+getFunctionBody(indexHtml,'handleConfirmPublish')+'}',context);
+    await context.confirm();
+    assert.equal(pending.has('publishPending'),error!=='INVALID_PNG');
+    assert.equal(context.publishRequestInFlightRef.current,false);
+  }
 });

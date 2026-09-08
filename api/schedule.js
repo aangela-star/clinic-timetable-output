@@ -80,3 +80,6 @@ module.exports = async function handler(req, res) {
     });
   }
 };
+
+// Shared server-only destination; no change to the existing save/load boundary.
+module.exports.APPS_SCRIPT_WEB_APP_URL = APPS_SCRIPT_WEB_APP_URL;

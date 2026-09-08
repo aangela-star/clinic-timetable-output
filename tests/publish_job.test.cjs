@@ -42,37 +42,32 @@ test('reject wrong/multiple channels, clinic, missing confirmation and invalid P
   }
 });
 
-test('actual confirm handler downloads JSON without fetch and reports only not-published status', async () => {
+test('actual confirm sends prepared approval through same-origin API, no JSON download', async () => {
   const html = fs.readFileSync(require.resolve('../index.html'), 'utf8');
   const handler = html.slice(html.indexOf('const handleConfirmPublish ='), html.indexOf('            useEffect(() => {', html.indexOf('const handleConfirmPublish =')));
-  const statuses = [], downloads = [];
-  const context = { publishReadiness:{canConfirm:true}, publishRequestInFlightRef:{current:false}, isPublishing:false,
-    setIsPublishing(){}, setPublishStatus:s=>statuses.push(s), generatePublishPngDataUrl:async()=>pngDataUrl,
-    selectedPublishChannelIds:['jinan-website'], primaryClinicId:'clinic-1', data:{title:'115/九月'}, monthKey:'2026-09',
-    PublishCore:{...core, createPublishJob: x=>core.createPublishJob(x,webcrypto), downloadPublishJob:job=>downloads.push(job)},
-    fetch(){throw Error('network forbidden');} };
-  vm.runInNewContext(handler + ';globalThis.run = handleConfirmPublish;', context);
+  const statuses = [], calls = [];
+  const data={title:'115/九月'};
+  const context = {publishReadiness:{canConfirm:true},publishRequestInFlightRef:{current:false},isPublishing:false,
+    setIsPublishing(){},setPreparedPublish(){},setPublishStatus:s=>statuses.push(s),data,
+    publishSnapshotRef:{current:data},monthKey:'2026-09',primaryClinicId:'clinic-1',preparedPublish:{approvalId:'server-id',nonce:'server-nonce',monthKey:'2026-09',primaryClinicId:'clinic-1'},
+    PublishCore:core,sessionStorage:{setItem(){},removeItem(){}},getPublishFailureStatusText:()=> 'SAFE_FAILURE',
+    fetch:async(url,options)=>{calls.push([url,JSON.parse(options.body)]);return{json:async()=>({status:'PUBLISHED',mock:true})};}};
+  vm.runInNewContext(handler+';globalThis.run=handleConfirmPublish;',context);
   await context.run();
-  assert.equal(downloads.length,1);
-  assert.equal(statuses.at(-1),'晉安官網發布工作包已建立，尚未發布。');
-  assert.doesNotMatch(handler,/\/api\/publish|PUBLISHED/);
-  context.generatePublishPngDataUrl=async()=>{throw Error('private error');};
-  await context.run();
-  assert.equal(downloads.length,1);
-  assert.equal(statuses.at(-1),'工作包建立失敗，尚未發布；請重新確認後再試。');
+  assert.equal(calls.length,1);assert.equal(calls[0][0],'/api/publish');assert.equal(calls[0][1].op,'confirm');
+  assert.match(statuses.at(-1),/MOCK/);assert.doesNotMatch(handler,/downloadPublishJob/);
+  context.fetch=async()=>{throw Error('private');};await context.run();assert.equal(statuses.at(-1),'SAFE_FAILURE');
   assert.equal(context.publishRequestInFlightRef.current,false);
 });
-
-test('browser download is one JSON snapshot with safe filename and object URL cleanup', async () => {
-  const job = await core.createPublishJob(input(), webcrypto);
-  let blob, link, clicked = 0, removed = 0, revoked;
-  const sandbox = {module:{exports:{}}, Blob, setTimeout:fn=>fn(),
-    URL:{createObjectURL:value=>{blob=value;return 'blob:job';},revokeObjectURL:value=>{revoked=value;}},
-    document:{body:{appendChild:value=>{link=value;}},createElement:()=>({click(){clicked++;},remove(){removed++;}})}};
-  vm.runInNewContext(fs.readFileSync(require.resolve('../publish-core'), 'utf8'),sandbox);
-  sandbox.module.exports.downloadPublishJob(job);
-  assert.equal(clicked,1); assert.equal(removed,1); assert.equal(revoked,'blob:job');
-  assert.equal(link.download,core.publishJobFilename(job));
-  assert.equal(blob.type,'application/json');
-  assert.deepEqual(JSON.parse(await blob.text()),job);
+test('actual preparation handler stages automatically, blocks unsaved facts, and does not confirm',async()=>{
+ const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
+ const source=html.slice(html.indexOf('const handleOpenPublish ='),html.indexOf('            const togglePublishChannel ='));
+ const data={title:'115/九月',note:'',clinics:[]};const calls=[],statuses=[],prepared=[];
+ const context={data,monthKey:'2026-09',primaryClinicId:'clinic-1',publishGenerationRef:{current:0},publishSnapshotRef:{current:null},latestPublishEditorRef:{current:{data,monthKey:'2026-09',primaryClinicId:'clinic-1'}},
+ setSelectedPublishChannelIds(){},setPreparedPublish:p=>prepared.push(p),setPublishStatus:s=>statuses.push(s),setIsPublishDialogOpen(){},sessionStorage:{getItem:()=>null},
+ generatePublishPngDataUrl:async()=>pngDataUrl,PublishCore:{...core,createPublishJob:x=>core.createPublishJob(x,webcrypto)},getPublishFailureStatusText:()=> 'SAFE_FAILURE',
+ fetch:async(url,options)=>{calls.push([url,options]);return{json:async()=>url.startsWith('/api/schedule')?{found:true,data}:url.includes('?')?{ok:true,mock:true,baseline:{pointerVersion:0,pointerEtag:'empty'}}:{ok:true,approvalId:'server',nonce:'nonce'}};}};
+ vm.runInNewContext(source+';globalThis.run=handleOpenPublish;',context);await context.run();
+ assert.equal(calls.length,3);assert.equal(JSON.parse(calls[2][1].body).op,'prepare');assert.equal(prepared.at(-1).approvalId,'server');assert.match(statuses.at(-1),/MOCK/);
+ context.fetch=async()=>({json:async()=>({found:false})});await context.run();assert.equal(statuses.at(-1),'請先儲存本月門診');assert.equal(prepared.at(-1),null);
 });

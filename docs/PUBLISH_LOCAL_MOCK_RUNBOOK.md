@@ -1,6 +1,12 @@
-> Current work: Stage2, uncommitted, independent Claude review pending.
-> Freeze: `fd3faf335eb5c22bd1f21039cca72f6b7c2799b2`. Earlier PASS records below
-> describe the freeze only. See PUBLISH_STAGE2_VALIDATION_ACTIONS.md for current gates.
+> Independent ledger isolation snapshot; baseline
+> `000b228fab215dd3324cbcce02af8fcaabdb214b`. Independent Claude code/test review PASS;
+> At snapshot generation, B1 correction awaits final read-only documentation verification.
+> Local commit is already authorized after that recheck; ACTION1 gates push only.
+> Snapshot generation is distinct from the containing commit; resolve it with
+> `git log --follow -- docs/PUBLISH_LOCAL_MOCK_RUNBOOK.md`, not an embedded self-referential commit hash.
+> Freeze `fd3faf335eb5c22bd1f21039cca72f6b7c2799b2` and scope guard
+> `255f449154c89d1cd9e760d1b8eca0c35e8065f1` are immutable historical identities.
+> See PUBLISH_STAGE2_VALIDATION_ACTIONS.md for exact parent discovery and ACTION1–7.
 
 # LOCAL MOCK publishing — no production success claimed
 
@@ -10,9 +16,15 @@ No production service, credentials, environment flags, CMS, or deployment are ne
 
 ## Run
 
+The filtered regression command below does not run the localhost HTTP test.
+Standalone harness/browser commands are a separate host handoff, not executed in
+this correction round. The historical regression attempted a bind and self-skipped
+EPERM; no socket bound. No standalone harness/browser or sandbox bypass occurred
+in the ledger increment. See checkpoint for distinct original and rerun logs.
+
 ```sh
 cd /private/tmp/inspection-repo-publish-worktree
-node --test tests/*.test.cjs
+node --test --test-skip-pattern='^localhost HTTP auth, save, prepare, confirm, public image, limits$' tests/*.test.cjs
 python3 -m unittest discover -s tests
 node tools/mock-publish-store-server.js /private/tmp/<fresh-stage2-directory> <unused-port>
 ```
@@ -117,9 +129,9 @@ server loaded with that final code.
 
 The review's then-pending independent correction re-run is now satisfied by these
 final execution records. The review artifact is retained unchanged. Historical
-sandbox outcomes remain below; they are not the current acceptance result.
+sandbox outcomes remain below; they describe historical acceptance only, not this increment.
 Production approvals and all real-service unknowns/gates remain outstanding.
-No tests or servers were run during this documentation-only evidence closeout.
+That historical documentation-only closeout ran no tests or servers. Current local test evidence is in the checkpoint.
 
 ## Historical execution evidence and future runs
 
@@ -219,7 +231,44 @@ for the production transport's unchanged 25,000 ms deadline. Existing UI tests
 prove ambiguous status/lost responses retain publishPending. No production clock,
 HTTP helper or request behavior was changed. No fault is a retry authorization.
 
-Stage2 author browser attempt: fresh `/private/tmp/clinic-stage2-browser-store-20260908`,
+Historical Stage2 author browser attempt: fresh `/private/tmp/clinic-stage2-browser-store-20260908`,
 port 4187. Server failed EPERM; installed Chromium failed MachPort permission.
 No browser PASS claimed. See `/private/tmp/clinic-stage2-browser*.txt` and the
 current checkpoint for Node/Python evidence. Port 4174 was never contacted.
+
+## Current independent ledger increment
+
+Publish sheets belong only to an independent workbook selected by required
+`PUBLISH_SPREADSHEET_ID`; identity checks precede all sheet access and fail closed.
+The bound schedule workbook is consulted only for its ID during publish calls.
+ACTION4 separately requires approval for an independent PRIVATE test ledger AND
+private test Drive folder and all three publish properties; no resources created.
+`openById` requires spreadsheets scope; folder `createFile` needs full Drive scope,
+not readonly or an assumed `drive.file` grant. Current OAuth grants are UNKNOWN.
+Deployment/reconsent can affect the existing service; VM Save/Load isolation is
+not proof of live availability.
+
+Stage2 forbids all formal schedule workbook writes, including Save regressions.
+Save regression is allowed only in local VM/mocks or a separately approved isolated
+schedule copy, never the formal resource. Live continuity uses only existing
+permitted read-only Load/health observations before/after; it grants no implicit
+Save authorization. ACTION3 deployment, scope verification and reconsent remain
+separately approval bound. No live observations or scope changes were run here.
+
+Parent-only host browser handoff (not executed by this writer): existing evidence
+records port 4187 and the installed runtime below. For a fresh host harness use
+this new data path; its creation happens only when the parent runs the command.
+Port availability has not been probed. Keep owner-managed port 4174 untouched.
+
+```sh
+node tools/mock-publish-store-server.js /private/tmp/clinic-ledger-host-store-20260908 4187
+node tests/e2e/publish_local.mjs --port 4187 --playwright-module /Users/iaiangela/.hermes/hermes-agent/node_modules/playwright/index.mjs
+```
+
+Recorded Chromium runtime from `/private/tmp/clinic-stage2-browser.txt`:
+`/Users/iaiangela/Library/Caches/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell`.
+Historical listener EPERM/MachPort is not an approval blocker for the parent's
+already-authorized host execution. Codex must not bypass the sandbox or attempt
+browser/server execution. Current browser/HTTP results remain pending parent evidence.
+Successful writer Node command excludes the listener test by exact name:
+`node --test --test-skip-pattern='^localhost HTTP auth, save, prepare, confirm, public image, limits$' tests/*.test.cjs`.

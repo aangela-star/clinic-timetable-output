@@ -1,6 +1,12 @@
-> Current work: Stage2, uncommitted, independent Claude review pending.
-> Freeze: `fd3faf335eb5c22bd1f21039cca72f6b7c2799b2`. Earlier PASS records below
-> describe the freeze only. See PUBLISH_STAGE2_VALIDATION_ACTIONS.md for current gates.
+> Independent ledger isolation snapshot; baseline
+> `000b228fab215dd3324cbcce02af8fcaabdb214b`. Independent Claude code/test review PASS;
+> At snapshot generation, B1 correction awaits final read-only documentation verification.
+> Local commit is already authorized after that recheck; ACTION1 gates push only.
+> Snapshot generation is distinct from the containing commit; resolve it with
+> `git log --follow -- docs/JINAN_ONE_TIME_REPOINT_RUNBOOK.md`, not an embedded self-referential commit hash.
+> Freeze `fd3faf335eb5c22bd1f21039cca72f6b7c2799b2` and scope guard
+> `255f449154c89d1cd9e760d1b8eca0c35e8065f1` are immutable historical identities.
+> See PUBLISH_STAGE2_VALIDATION_ACTIONS.md for exact parent discovery and ACTION1–7.
 
 # Separate production gate — NOT authorized or executed
 
@@ -19,6 +25,7 @@ The legacy CMS integration and its separate gates remain unchanged.
 | Vercel | `PUBLISH_PUBLIC_IMAGE_URL` | Exactly `https://clinic-timetable-output.vercel.app/api/publish-image` |
 | Vercel | `PUBLISH_PUBLIC_TARGET_SHA256` | Lowercase SHA-256 of the approved static target/context canonical record (Stage3 only; UNKNOWN) |
 | Apps Script properties | `PUBLISH_STORE_ENABLED` | Exactly `true`; requires separate deployment/scope approval |
+| Apps Script properties | `PUBLISH_SPREADSHEET_ID` | Required independent PRIVATE ledger workbook ID; trimmed, distinct from active schedule ID; no fallback |
 | Apps Script properties | `PUBLISH_FOLDER_ID` | Approved private Drive folder, accessible to deployment identity |
 | Apps Script properties | `CLINIC_SERVER_SECRET` | Existing matching server secret; no new auth service |
 
@@ -104,8 +111,10 @@ Ledger/staged-blob retention and Drive quotas need a reviewed policy. No pruning
 new database, queue, hosted service or automatic monitoring was introduced.
 A compromised authenticated bearer session remains outside the protection of
 session binding. Cache convergence and changes made directly on the real CMS
-remain unverified. The current acceptance status is FINAL NONPRODUCTION VERIFIED AND REVIEWED;
-production enablement remains gated.
+remain unverified. The historical freeze acceptance was FINAL NONPRODUCTION
+VERIFIED AND REVIEWED. Independent Claude code/test review of this increment is
+PASS; B1 documentation correction awaits final read-only verification. Production
+enablement remains gated.
 
 ## Acceptance status for this generation
 
@@ -131,9 +140,9 @@ server loaded with that final code.
 The review's then-pending independent correction re-run is now satisfied by these
 final execution records. The review artifact is retained unchanged. Historical
 sandbox outcomes remain in PUBLISH_IMPLEMENTATION_CHECKPOINT.md and
-PUBLISH_LOCAL_MOCK_RUNBOOK.md; they are not the current acceptance result.
+PUBLISH_LOCAL_MOCK_RUNBOOK.md; they describe historical acceptance only, not this increment.
 Production approvals and all real-service unknowns/gates remain outstanding.
-No tests or servers were run during this documentation-only evidence closeout.
+That historical documentation-only closeout ran no tests or servers. Current local test evidence is in the checkpoint.
 
 Historical preceding-generation Node 237/237, Python 8/8 and desktop/mobile
 Chromium evidence remains in PUBLISH_LOCAL_MOCK_RUNBOOK.md. Final local acceptance
@@ -283,16 +292,19 @@ endpoint or an automatic startup action. No bootstrap call was run here.
 
 Use PUBLISH_STAGE2_VALIDATION_ACTIONS.md as the current action/acceptance contract.
 All CMS steps elsewhere in this runbook are FUTURE STAGE3, excluded from Stage2.
-Real PNG, Google IDs and actual Vercel targets/budgets remain UNKNOWN. Synthetic
-local PNGs are not approved real sources. No actual setting has been read or changed.
+Exact approved PNG bytes/hash/provenance and safe Vercel project/team metadata are
+recorded in PUBLISH_STAGE2_VALIDATION_ACTIONS.md from parent read-only discovery.
+Actual Script PROJECT ID/version, schedule/independent ledger/folder IDs, OAuth
+grants and Vercel runtime/budgets remain UNKNOWN. No settings changed.
 
 Stage2 image GET uses two inbound Apps Script executions, not Script UrlFetch:
 pointer then Drive blob. `no-store` prevents intentional edge/browser caching and
 every cold/warm hit pays both calls. It does not prove intermediary compliance or
 freshness: repeated anonymous exact-byte/hash acceptance is still required.
 There is no stale fallback. Concurrent GETs multiply executions and lock pressure;
-measure schedule Save/Load isolation, contention and quota headroom on approved
-resources before declaring the path usable.
+measure isolation and contention in local VM/mocks or a separately approved isolated
+schedule copy. Observe formal service continuity only through existing permitted
+read-only Load/health checks; no formal Save regression is authorized in Stage2.
 
 The two sequential 25s deadlines imply ~50s plus overhead for one image function.
 Future Stage3 verification has five Script executions + two anonymous GETs per
@@ -303,10 +315,29 @@ sequential call deadlines, NOT measured Vercel durations or service guarantees.
 Actual usable budget and latency are UNKNOWN. Per-call aborts neither cap the whole
 function nor guarantee downstream cancellation. No duration setting changed.
 
-Parent to fill before acceptance: real approved PNG size/hash/dimensions; peak RPS,
+Parent to bind before acceptance: the recorded approved PNG size/hash/dimensions; peak RPS,
 sustained RPD and burst duration; actual Vercel plan/runtime/maxDuration/concurrency;
 Apps Script execution/lock quotas and remaining schedule-workload capacity;
 image GET and confirm/reconcile p50/p95/p99/max; cold/warm repeated byte consistency;
 cache headers, error/timeout behavior and recovery evidence. HTML stability window,
 real browser review and approved PUBLISH_PUBLIC_TARGET_SHA256 belong to Stage3,
 remain UNKNOWN, and must not be synthesized from a local mock page.
+
+## Current independent ledger increment
+
+Publish sheets belong only to an independent workbook selected by required
+`PUBLISH_SPREADSHEET_ID`; identity checks precede all sheet access and fail closed.
+The bound schedule workbook is consulted only for its ID during publish calls.
+ACTION4 separately requires approval for an independent PRIVATE test ledger AND
+private test Drive folder and all three publish properties; no resources created.
+`openById` requires spreadsheets scope; folder `createFile` needs full Drive scope,
+not readonly or an assumed `drive.file` grant. Current OAuth grants are UNKNOWN.
+Deployment/reconsent can affect the existing service; VM Save/Load isolation is
+not proof of live availability.
+
+Stage2 forbids all formal schedule workbook writes, including Save regressions.
+Save regression is allowed only in local VM/mocks or a separately approved isolated
+schedule copy, never the formal resource. Live continuity uses only existing
+permitted read-only Load/health observations before/after; it grants no implicit
+Save authorization. ACTION3 deployment, scope verification and reconsent remain
+separately approval bound. No live observations or scope changes were run here.

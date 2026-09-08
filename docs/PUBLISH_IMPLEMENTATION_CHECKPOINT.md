@@ -1,3 +1,202 @@
+# Independent publish ledger increment — B2 correction snapshot
+
+- Initial implementation start recorded a clean branch: `feature/official-publish-flow`.
+- Snapshot baseline (also HEAD at artifact generation): `000b228fab215dd3324cbcce02af8fcaabdb214b`.
+- Initial immutable freeze: `fd3faf335eb5c22bd1f21039cca72f6b7c2799b2`.
+- Immutable reviewed scope guard: `255f449154c89d1cd9e760d1b8eca0c35e8065f1`.
+- Original implementation base: `444b52777c7861e1c6e32346b361583edba383ca`.
+- Independent Claude code/test review PASS; final documentation review FAIL
+  (B1-residual). B2 correction awaits Claude final correction pass. No final
+  review PASS is preclaimed.
+- Do not commit until Claude final correction pass. ACTION1 gates push only. No commit occurred at generation.
+  No push, main change or deployment. Artifact generation is a working-tree snapshot,
+  not its eventual containing commit. Resolve that identity with
+  `git log --follow -- docs/PUBLISH_IMPLEMENTATION_CHECKPOINT.md`; no self hash is embedded.
+- The former documentation closeout is included in starting HEAD. Old statements
+  that it remained uncommitted and that all discovery targets were UNKNOWN are
+  superseded by this current section and PUBLISH_STAGE2_VALIDATION_ACTIONS.md.
+
+## Implementation and current evidence
+
+Only `apps-script/PublishStore.gs` wrapper and
+`tests/publish_store_adapter.test.cjs` changed as code. Four runbooks/checkpoint
+files changed as documentation. Required `PUBLISH_SPREADSHEET_ID` is trimmed;
+active identity must be usable and distinct; opened identity must exactly match.
+All validation occurs inside the existing try/finally and before any sheet access.
+No fallback. Disabled gate, tryLock(10000), finally release, flush under lock and
+Drive blob path are preserved. Engine lines 1–34 match the Node engine exactly.
+Code.gs Save/Load/auth/dispatch, frontend/api/lib and original schedule tests are
+byte-identical to starting HEAD. PNG/preview/download/printing remains protected
+at 1080×1920 and html2canvas scale 2. No secrets or temporary debug endpoint added.
+
+Actual execution evidence (original artifacts preserved):
+- Historical command: `node --test --test-name-pattern='^(?!localhost HTTP)' tests/*.test.cjs`.
+  `/private/tmp/clinic-ledger-node.txt`: **339 total, 338 PASS, 0 FAIL, 1 SKIP**.
+  Test #221 attempted localhost bind and self-skipped EPERM; no socket bound.
+  The previous claim of exclusion before execution was false (Claude B1).
+- Corrected command: `node --test --test-skip-pattern='^localhost HTTP auth, save, prepare, confirm, public image, limits$' tests/*.test.cjs`.
+  `/private/tmp/clinic-ledger-b1-node.txt`: **338 total, 338 PASS, 0 FAIL, 0 SKIP**,
+  exit 0. Node omits the filtered test entirely; there is no skip message, localhost
+  test entry or in-body EPERM message. This is filtering, not an EPERM self-skip.
+  `node --version` and `node --help` were recorded in
+  `/private/tmp/clinic-ledger-b1-node-help.txt`; help confirms --test-skip-pattern.
+  VM coverage includes isolated ledgers, fail-closed guards, CAS/nonce/reconcile/blob,
+  MUTATING recovery, release on failure and combined mock Save/Load continuity.
+- Preserved prior run: `python3 -m unittest discover -s tests`: **8 PASS**; not rerun in B1 correction.
+- Preserved prior VM syntax compile: Code.gs, PublishStore.gs, adapter test **3 PASS**.
+- `git diff --check`: **PASS**; byte/line-ending scope checks **PASS**.
+- No build/package pipeline exists; no build/install executed. VM syntax and local
+  regression checks are the applicable verification, not a fabricated build PASS.
+- The historical regression attempted bind as stated above. No standalone harness
+  or browser launched in this ledger increment; no sandbox bypass or live
+  Google/Vercel/CMS access. The correction rerun did not execute the listener body.
+  Parent host browser/HTTP evidence remains pending; historical PASS is not current.
+  Historical EPERM/MachPort does not block already-authorized parent host execution
+  on human-approval grounds; Codex sandbox bypass remains prohibited.
+
+The early targeted VM run had a cross-realm object-comparison assertion failure
+(55 PASS, 1 FAIL, 1 SKIP); it was corrected to compare serialized persisted data.
+Both full-suite records above include that code correction. The filtered rerun
+supersedes the original suite only for current execution evidence, not history.
+Its diagnostic log `/private/tmp/clinic-ledger-targeted.txt` is not PASS evidence.
+
+## Discovery provenance and unresolved service boundaries
+
+Parent verified approved PNG `/Users/iaiangela/Downloads/115-九月_醫師門診表 (1).png`:
+781588 bytes, 2160×3840, SHA-256
+`f78a1ed1cb91a89cea9962efd5de76ae0d07702c801ce391664640cec402725d`.
+Exact bytes match the embedded humanConfirmed=true workpack
+`/Users/iaiangela/Downloads/jinan-publish-2026-09-6426208f-c8ef-4407-9f8b-92bf7d8cc7ac.json`,
+month 2026-09, created 2026-09-06T15:15:22.402Z. This is parent approval provenance,
+not fresh visual certification. Sensitive PNG/workpack was not read/copied or regenerated here.
+
+Parent safe metadata: project `prj_wPxlARuPDnGh1Ta7ArPQZJbXj1B7`, team
+`team_C82VjEfdjqixtSPCUlfpHWta`, project name `clinic-timetable-output`, from
+`/Users/iaiangela/Projects/clinic-timetable-output/.vercel/project.json`.
+Prior CLI scope: `aangela-stars-projects/clinic-timetable-output`; no Vercel CLI rerun
+(unexpected plugin auto-update). api/schedule.js deployment literal:
+`AKfycbz5OXGNDZJWEj2-W1g-1r_SISPjYYcI-7gsUsivt3Rx7-zY6AzpQqqZTIFROVKMU1eh3w`.
+Actual Script PROJECT ID, schedule Spreadsheet ID, live deployed version,
+independent ledger/folder IDs, Vercel runtime/plan and current OAuth grants remain
+UNKNOWN. Parent bounded discovery found no .clasp metadata; no credentials read.
+
+openById requires spreadsheets scope; folder createFile requires full Drive scope
+(not readonly/not proven drive.file). Deployment/reconsent can affect service;
+VM Save/Load continuity is not live-service certification.
+
+Stage2 forbids all formal schedule workbook writes, including Save regressions.
+Save regression is allowed only in local VM/mocks or a separately approved isolated
+schedule copy, never the formal resource. Live continuity uses only existing
+permitted read-only Load/health observations before/after; it grants no implicit
+Save authorization. ACTION3 deployment, scope verification and reconsent remain
+separately approval bound. No live observations or scope changes were run here.
+
+ACTION1–7 are pending,
+none executed. ACTION4 expressly requires separate approval for an independent
+PRIVATE test ledger AND private test Drive folder plus properties including
+PUBLISH_SPREADSHEET_ID. No actual resources created. No CMS repoint in Stage2.
+Live durability, latency/quota/headroom and anonymous byte acceptance are pending.
+Future Stage3 static-target/browser limitations remain in the action document.
+
+## Exact parent host handoff — not executed here
+
+From existing runbook/evidence: installed Playwright module
+`/Users/iaiangela/.hermes/hermes-agent/node_modules/playwright/index.mjs`;
+Chromium runtime
+`/Users/iaiangela/Library/Caches/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell`.
+Use a fresh harness path below, port **4187** (not probed); leave owner port 4174 alone.
+
+```sh
+node tools/mock-publish-store-server.js /private/tmp/clinic-ledger-host-store-20260908 4187
+node tests/e2e/publish_local.mjs --port 4187 --playwright-module /Users/iaiangela/.hermes/hermes-agent/node_modules/playwright/index.mjs
+```
+
+## Current manifests and review handoff
+
+Full changed-file map relative to original base, **27 paths excluding this
+checkpoint** to avoid self-reference. Compact sorted JSON map SHA-256:
+`2ecd203689c97993962ee449d823c5e2e10b7b4be5902e29bd208c5683371eaa`. Increment has six changed files including this checkpoint;
+five non-self hashes and evidence also recorded in
+`/private/tmp/clinic-ledger-b2-manifest.json`. No self-hash is embedded.
+
+```json
+{
+  ".gitignore": "e5cdb7ee58a2c3e499efc602049dc89e41a98a1404009a8d76ffc99f49ee1dc0",
+  "api/publish-image.js": "4ad9dba8a13ed17abc0a8d80d8b84c1cb78abacc5dafac04710dffc79a7b24b3",
+  "api/publish.js": "124826a822a509c8b30ed6fe5f889aa41fde28c20d64d4932b32b8acd20332eb",
+  "api/schedule.js": "d7986adfaf9250e94ce409013f66b66b1bdaedeee81391e5004b6235a137b7c2",
+  "apps-script/Code.gs": "fb7f6219705f2fc6cd9b78f9e77c348d91271e30f32c0686a171b22ffce60c98",
+  "apps-script/PublishStore.gs": "451b0a2003f92c2f4f4bbd1be1e1624a794025201335a878077455033beaf79a",
+  "docs/JINAN_ONE_TIME_REPOINT_RUNBOOK.md": "f0054797fd4e89a6cb92d724e65e6720ddd02eb20bf5f97636ca882cddc5a9b2",
+  "docs/PUBLISH_LOCAL_MOCK_RUNBOOK.md": "8d71b53bfc49126513f54cd777fd3a3749caf5e0918a0dc13aab2c826cfcd942",
+  "docs/PUBLISH_STAGE2_VALIDATION_ACTIONS.md": "593cd21c536d50353b7ffeb640bea1b4b577e07ab89571b9faf8751e28bb487e",
+  "index.html": "a83a255d4d2d102b7fe1eda2bab90047547d6db5c235698b394cd3fac9690f27",
+  "lib/publish-api.js": "24c1ff22cb342a96b0e23a7d43fa781e0d3d2b6b2073d8356aca0283e1b3f528",
+  "lib/publish-http.js": "818ba547e1d18fd05a08f5a7510027c46822a5bd91123098c03a401dee3a8519",
+  "lib/publish-provider.js": "cbc4430ac854ec257970593bab429ee7a6ec8e12d0ff2dad48314d92eb7e254b",
+  "lib/publish-store-adapter.js": "57d806cd41359a4c994dff84b903d07b59de4baeb4cfcd214d367e13a1f8f051",
+  "lib/publish-store-engine.js": "b8beb9e380fc4afe5f2702d693713e947491fd9ca2fe858935824a69790b4537",
+  "lib/publish-store-mock.js": "d3aff50ab0f90e7172e6450ee810d2c402a293e153050366395b21e9b5a01baa",
+  "lib/publish-target.js": "b9ab7d751507204b4e765ce4fa9098022c4364a90a02ac73c00323369bd4a61b",
+  "publish-core.js": "55da403e723304bef2c896a0219c3d63918d2256b86b848190960e98e2f0dfef",
+  "tests/e2e/publish_local.mjs": "0114783e5a440052445f58b662f39be1edeb38ab475c7922fd15862404720a5f",
+  "tests/publish_job.test.cjs": "461bfb93cdebdfa6aeb2b03a4a27e7808c8d81e7b978ff3241eec3ce106fbdc3",
+  "tests/publish_mock_routes.test.cjs": "faf2c7934b634a70303f96d39b973139ae80832d6f4d1fb8fcb6167e3bb25514",
+  "tests/publish_provider.test.cjs": "1c742f3ff9cc1a0cfadbacda8cbf6b6619689c34b61ecb2e4fbf2391c98e9a16",
+  "tests/publish_route.test.cjs": "b14b3b9f07929f63f23c9d67baf50e858de77de4ef97aecee8eda24ad7c49536",
+  "tests/publish_store_adapter.test.cjs": "96509dab3829dd1a1eb4e824ffd9a51f28ae4c42d4d29368e4a8a61a95ae542b",
+  "tests/publish_target.test.cjs": "0bdc2731d1fdc02e863e21d9715b9a61bf65f2d8884e3cf61ad6f0730d16312c",
+  "tests/publish_ui.test.cjs": "d522a4cd6099daa4399fe3fe6404c0fc75a094fa057eaa6fbc5266474ae6f188",
+  "tools/mock-publish-store-server.js": "d9f62e231a3f9d334a33adc207f2b57a95e61ecaf04ea2f465246c2ff6ec0f37"
+}
+```
+
+Historical and corrected execution / review evidence SHA-256:
+
+```json
+{
+  "/private/tmp/clinic-ledger-node.txt": "8d3cbbf1c60a11e6566ad0a6b934cd3a5bfddf27aa5cc0f1b398fa63dc8eb41d",
+  "/private/tmp/clinic-ledger-python.txt": "698d16d7b93c4bd9707d3cfacda6fb1e0fea99ed0cda6e69bedc42772940540a",
+  "/private/tmp/clinic-ledger-syntax.txt": "efc99d0ee0d06f6b8566dd15b9e3df892c1fd68f069927de488dd7218c1186ed",
+  "/private/tmp/clinic-ledger-protected.txt": "4a84e811d05fd9a3df7736ad3ae596e3abdac1b56d27ccced2877f54e55e3017",
+  "/private/tmp/clinic-ledger-diff-check.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "/private/tmp/clinic-ledger-targeted.txt": "c3faca2bce9429965373d28ec27704039f7413cbfa8652b684a66fc13784acba",
+  "/private/tmp/clinic-ledger-claude-review.json": "0ccfa5df9d7a6ffc623b1a9ed162e0575896710370033cb67bb57f6fbd948521",
+  "/private/tmp/clinic-ledger-b1-node.txt": "0ed4ff45e7e09697a94a4f41d3df10e85f2e0bf8c904a8a1c9c4acc5fd0be871",
+  "/private/tmp/clinic-ledger-b1-node-help.txt": "c7ac0da679b1b9b5a8a24db50b8444d2e5948fc673b5779614770c9585198981",
+  "/private/tmp/clinic-ledger-b1-diff-check.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "/private/tmp/clinic-ledger-final-doc-review.json": "a866d0c1e0730f03d18dd8f1d4b13d49d8a827ed91344b2f481d0318cc5a38dc",
+  "/private/tmp/clinic-ledger-b2-diff-check.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}
+```
+
+Independent Claude review artifact (immutable):
+`/private/tmp/clinic-ledger-claude-review.json`, SHA-256
+`0ccfa5df9d7a6ffc623b1a9ed162e0575896710370033cb67bb57f6fbd948521`.
+Code/tests PASS; B1 documents the false historical exclusion claim. Final docs
+review `/private/tmp/clinic-ledger-final-doc-review.json` returned FAIL solely for
+B1-residual: the local mock runbook still claimed the historical command excluded
+the listener. B2 replaces that sentence with the successful exact-name skip command.
+All four current docs were scanned; the truthful historical failure is preserved.
+No code/test changes or test/server/browser/network/production execution in B2.
+Claude final correction pass remains pending. Original reviews, logs, diffs and
+manifests retain their original bytes and describe their original snapshots only.
+
+The new review snapshot patch and complete six-file manifest are
+`/private/tmp/clinic-ledger-b2-final.diff` and
+`/private/tmp/clinic-ledger-b2-final-manifest.json`. They are generated after this
+checkpoint; their hashes and final read-only check result are reported externally.
+No commit is made in this correction handoff. Do not commit until Claude final
+correction pass; push remains gated.
+
+---
+
+# HISTORICAL ARCHIVE — all following current/status/manifest headings are historical
+
+The following prior checkpoint is retained verbatim. Its CURRENT headings,
+UNCOMMITTED closeout claims and blanket UNKNOWN discovery statements apply only
+to their recorded generations, not to the current increment above.
+
 # CURRENT Stage2 closeout — code review PASS; execution partial; browser pending
 
 - Generation: fc905159-22b7-4957-876b-83b17eee15bf

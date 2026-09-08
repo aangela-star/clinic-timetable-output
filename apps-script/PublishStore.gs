@@ -39,7 +39,15 @@ function publishRequest_(body) {
   const lock=LockService.getScriptLock();
   if(!lock.tryLock(10000))return json_({ok:false,error:'STORE_LOCKED'});
   try {
-    const book=SpreadsheetApp.getActiveSpreadsheet();
+    const configuredId=PropertiesService.getScriptProperties().getProperty('PUBLISH_SPREADSHEET_ID');
+    if(typeof configuredId!=='string'||!configuredId.trim())throw Error('STORE_UNAVAILABLE');
+    const ledgerId=configuredId.trim();
+    const active=SpreadsheetApp.getActiveSpreadsheet();
+    const activeId=active&&active.getId();
+    if(typeof activeId!=='string'||!activeId.trim()||activeId.trim()===ledgerId)throw Error('STORE_UNAVAILABLE');
+    const book=SpreadsheetApp.openById(ledgerId);
+    const openedId=book&&book.getId();
+    if(typeof openedId!=='string'||!openedId.trim()||openedId!==ledgerId)throw Error('STORE_UNAVAILABLE');
     function sheet(name) {return book.getSheetByName(name)||book.insertSheet(name);}
     const pointers=sheet('PublishPointer'), jobs=sheet('ConsumedNonces');
     function readPointer(){const v=pointers.getRange(1,1).getValue();return v?JSON.parse(v):{pointerVersion:0,pointerEtag:'empty',targetPointerId:'jinan-website/current'};}

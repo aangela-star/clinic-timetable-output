@@ -67,7 +67,7 @@
     // Copy before the first await: subsequent editor changes cannot alter metadata.
     const snapshot = JSON.parse(JSON.stringify(input));
     if (snapshot.channelIds?.length !== 1 || snapshot.channelIds[0] !== 'jinan-website'
-        || snapshot.primaryClinicId !== 'clinic-1' || snapshot.humanConfirmed !== true
+        || snapshot.primaryClinicId !== 'clinic-1' || (snapshot.humanConfirmed !== true && snapshot.preparing !== true)
         || typeof snapshot.title !== 'string' || !snapshot.title.trim() || snapshot.title.length > 100
         || !/^\d{4}-(0[1-9]|1[0-2])$/.test(snapshot.monthKey)) {
       throw new Error('INVALID_JOB');
@@ -90,11 +90,13 @@
     const digest = await cryptoApi.subtle.digest('SHA-256', bytes);
     const sha256 = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
     return freezeTree({
-      schemaVersion: 1, jobId, createdAt, status: 'READY_FOR_BROWSER_EXECUTION',
+      nonce: cryptoApi.randomUUID(), targetPointerId: 'jinan-website/current',
+      confirmedBySession: snapshot.confirmedBySession || null,
+      schemaVersion: 1, jobId, createdAt, status: snapshot.preparing ? 'PREPARING' : 'READY_FOR_BROWSER_EXECUTION',
       channelId: 'jinan-website', primaryClinicId: snapshot.primaryClinicId,
-      title: snapshot.title, monthKey: snapshot.monthKey, humanConfirmed: true,
+      title: snapshot.title, monthKey: snapshot.monthKey, humanConfirmed: snapshot.preparing ? false : true,
       png: { dataUrl: encoded, sha256, dimensions, bytes: bytes.length },
-      baseline: JSON.parse(JSON.stringify(JINAN_BASELINE)),
+      baseline: JSON.parse(JSON.stringify(snapshot.baseline || JINAN_BASELINE)),
     });
   }
 
@@ -121,7 +123,26 @@
     }
   }
 
+  function canonical(value) {
+    if (Array.isArray(value)) return value.map(canonical);
+    if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(k => [k, canonical(value[k])]));
+    return value;
+  }
+  function savedScheduleEqual(editor, saved) {
+    if (!editor || !saved) return false;
+    const facts = x => canonical({title:x.title, note:x.note, clinics:x.clinics});
+    return JSON.stringify(facts(editor)) === JSON.stringify(facts(saved));
+  }
+  function reconcilePublishOutcome(job, live) {
+    return live && Number.isSafeInteger(job.baseline?.pointerVersion)
+      && live.pointerVersion === job.baseline.pointerVersion + 1
+      && typeof live.pointerEtag === 'string' && live.pointerEtag.length > 0
+      && live.pointerEtag !== job.baseline.pointerEtag && live.approvalId === job.approvalId && live.nonce === job.nonce
+      && live.targetPointerId === job.targetPointerId && live.pngSha256 === job.pngSha256
+      && live.verifiedSha256 === job.pngSha256 ? {status:'PUBLISHED'} : {status:'MANUAL_CHECK_REQUIRED', orphanUploadRisk:true};
+  }
   return {
+    savedScheduleEqual, reconcilePublishOutcome,
     PUBLISH_CHANNELS,
     evaluatePublishSelection,
     createPublishJob,

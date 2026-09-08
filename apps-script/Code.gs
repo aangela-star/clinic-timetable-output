@@ -12,6 +12,7 @@ function doPost(e) {
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     assertServerSecret_(body.secret);
+    if (body.action === 'publish') return publishRequest_(body);
 
     const action = String(body.action || '');
     const monthKey = String(body.month || '');

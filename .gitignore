@@ -1,2 +1,5 @@
 .vercel
 .env*
+
+.publish-runs/
+.pilot-private/

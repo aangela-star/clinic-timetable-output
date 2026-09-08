@@ -1,4 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),vm=require('node:vm');
+const {targetFingerprint}=require('../lib/publish-target');
 const {LocalStore,hash}=require('../lib/publish-store-mock');
 const {createAdapter,createAppsScriptTransport,MAX_BODY_BYTES}=require('../lib/publish-store-adapter');
 const fixture={require,Buffer};vm.runInNewContext(fs.readFileSync(require.resolve('./publish_contract.test.cjs'),'utf8').split("test('")[0]+';globalThis.png=validPngBuffer();',fixture);
@@ -24,7 +25,7 @@ test('Apps Script VM transport actually persists Drive blob / journal / pointer 
  const {createProvider}=require('../lib/publish-provider');
  const pageUrl='https://www.tainanrehab.com/time.html',imageUrl='https://clinic-timetable-output.vercel.app/api/publish-image';
  const html='<img src="'+imageUrl+'" style="width:675px;height:1200px">';
- const factory=createProvider({config:{PUBLISH_IMAGE_ENABLED:'true',PUBLISH_FLOW_ENABLED:'true',PUBLISH_PUBLIC_PAGE_URL:pageUrl,PUBLISH_PUBLIC_IMAGE_URL:imageUrl,PUBLISH_PUBLIC_PAGE_SHA256:hash(Buffer.from(html))},getSecret:()=> 'synthetic-test-only',fetchImpl:async(url,options)=>{
+ const factory=createProvider({config:{PUBLISH_IMAGE_ENABLED:'true',PUBLISH_FLOW_ENABLED:'true',PUBLISH_PUBLIC_PAGE_URL:pageUrl,PUBLISH_PUBLIC_IMAGE_URL:imageUrl,PUBLISH_PUBLIC_TARGET_SHA256:targetFingerprint(html,pageUrl,imageUrl)},getSecret:()=> 'synthetic-test-only',fetchImpl:async(url,options)=>{
   if(options.method==='GET')return new Response(url===pageUrl?html:await transport.bytes((await transport.call('pointer')).blobId),{headers:{'Content-Type':url===pageUrl?'text/html':'image/png'}});
   const body=JSON.parse(options.body);
   if(body.action==='load')return Response.json({ok:true,found:true,month:body.month,schemaVersion:1,data});
@@ -57,4 +58,46 @@ test('actual process death after pointer persistence: restart reads journal with
  const child=spawnSync(process.execPath,['-e',code,s.root,JSON.stringify({...binding(p),session:'a',executorId:'vercel-publish-v1'})]);assert.equal(child.status,91);
  assert.ok(fs.existsSync(s.root+'/lock'));
  const r=await s.adapter.handle('reconcile',binding(p),'a');assert.equal(r.status,'PUBLISHED');assert.equal((await s.store.call('pointer')).pointerVersion,1);
+});
+
+test('local latency and repeated confirms preserve exact bytes and one blob/version',async()=>{
+ const s=setup({latencyMs:2}),start=Date.now(),p=await prepare(s);
+ for(let i=0;i<2;i++)assert.equal((await s.adapter.handle('confirm',binding(p),'a')).status,'PUBLISHED');
+ assert.ok(Date.now()-start>=2);assert.equal((await s.store.call('pointer')).pointerVersion,1);
+ assert.equal(fs.readdirSync(s.root).filter(n=>n.startsWith('blob-')).length,1);
+ assert.deepEqual(await s.store.bytes((await s.store.call('pointer')).blobId),fixture.png);
+});
+test('transient first engine write has no effects; confirm fault reconciles without retry',async()=>{
+ const s=setup({transientOnce:true});await assert.rejects(prepare(s),/STORE_UNAVAILABLE/);
+ assert.equal(fs.readdirSync(s.root).length,0);
+ const p=await prepare(s);s.store.transientUsed=false;
+ let confirms=0;const original=s.store.call.bind(s.store);s.store.call=(op,input)=>{if(op==='confirm')confirms++;return original(op,input);};
+ assert.equal((await s.adapter.handle('confirm',binding(p),'a')).status,'MANUAL_CHECK_REQUIRED');assert.equal(confirms,1);
+ assert.equal((await s.store.call('pointer')).pointerVersion,0);
+ assert.equal((await s.adapter.handle('reconcile',binding(p),'a')).status,'MANUAL_CHECK_REQUIRED');assert.equal(confirms,1);
+ // Explicit simulated second caller; never an automatic retry.
+ assert.equal((await s.adapter.handle('confirm',binding(p),'a')).status,'PUBLISHED');assert.equal(confirms,2);
+ assert.equal(fs.readdirSync(s.root).filter(n=>n.startsWith('blob-')).length,1);
+});
+test('AbortError confirm remains ambiguous and reconciliation does not mutate',async()=>{
+ const s=setup(),p=await prepare(s);s.store.faults.timeout='confirm';let confirms=0;
+ const original=s.store.call.bind(s.store);s.store.call=(op,input)=>{if(op==='confirm')confirms++;return original(op,input);};
+ assert.equal((await s.adapter.handle('confirm',binding(p),'a')).status,'MANUAL_CHECK_REQUIRED');
+ const before=fs.readdirSync(s.root).map(n=>[n,hash(fs.readFileSync(s.root+'/'+n))]);
+ assert.equal((await s.adapter.handle('reconcile',binding(p),'a')).status,'MANUAL_CHECK_REQUIRED');
+ assert.deepEqual(fs.readdirSync(s.root).map(n=>[n,hash(fs.readFileSync(s.root+'/'+n))]),before);assert.equal(confirms,1);
+});
+test('HTTP harness never supplies simulation faults',()=>{
+ const {createHarness}=require('../tools/mock-publish-store-server');
+ const h=createHarness(fs.mkdtempSync(os.tmpdir()+'/publish-no-fault-'));assert.deepEqual(h.store.faults,{});h.server.close();
+});
+test('production transport deadline actually aborts delayed fetch using VM-only short clock',async()=>{
+ const deadlines=[],context={module:{exports:{}},require:n=>n.startsWith('.')?require(require('node:path').resolve('lib',n)):require(n),Buffer,setTimeout,
+  AbortSignal:{timeout:ms=>{deadlines.push(ms);return AbortSignal.timeout(5);}}};
+ vm.runInNewContext(fs.readFileSync('lib/publish-store-adapter.js','utf8'),context);
+ const transport=context.module.exports.createAppsScriptTransport({enabled:true,url:'https://synthetic.invalid',secret:'synthetic',fetchImpl:async(_,o)=>new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>resolve(Response.json({ok:true,result:{}})),100);
+  o.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(o.signal.reason);},{once:true});
+ })});
+ await assert.rejects(transport.call('confirm',{}),e=>e.name==='TimeoutError');assert.deepEqual(deadlines,[25000]);
 });

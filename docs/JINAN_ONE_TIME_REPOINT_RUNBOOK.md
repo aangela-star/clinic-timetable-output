@@ -1,3 +1,7 @@
+> Current work: Stage2, uncommitted, independent Claude review pending.
+> Freeze: `fd3faf335eb5c22bd1f21039cca72f6b7c2799b2`. Earlier PASS records below
+> describe the freeze only. See PUBLISH_STAGE2_VALIDATION_ACTIONS.md for current gates.
+
 # Separate production gate — NOT authorized or executed
 
 Production composition is implemented in `lib/publish-provider.js`, used lazily by
@@ -13,7 +17,7 @@ The legacy CMS integration and its separate gates remain unchanged.
 | Vercel | `PUBLISH_FLOW_ENABLED` | Exactly `true`, plus image gate and complete valid page config, enables prepare/confirm |
 | Vercel | `PUBLISH_PUBLIC_PAGE_URL` | Exactly `https://www.tainanrehab.com/time.html` |
 | Vercel | `PUBLISH_PUBLIC_IMAGE_URL` | Exactly `https://clinic-timetable-output.vercel.app/api/publish-image` |
-| Vercel | `PUBLISH_PUBLIC_PAGE_SHA256` | Lowercase SHA-256 of the approved, post-repoint public HTML response bytes |
+| Vercel | `PUBLISH_PUBLIC_TARGET_SHA256` | Lowercase SHA-256 of the approved static target/context canonical record (Stage3 only; UNKNOWN) |
 | Apps Script properties | `PUBLISH_STORE_ENABLED` | Exactly `true`; requires separate deployment/scope approval |
 | Apps Script properties | `PUBLISH_FOLDER_ID` | Approved private Drive folder, accessible to deployment identity |
 | Apps Script properties | `CLINIC_SERVER_SECRET` | Existing matching server secret; no new auth service |
@@ -28,21 +32,19 @@ pointer require a separately reviewed, human-approved staging procedure.
 
 Every job binds the exact PNG hash, saved-facts digest, pointer version/etag/hash,
 target, session identity, and executor identity derived from the server page/image
-configuration. Changing the approved HTML hash invalidates existing approvals.
+configuration. Changing the approved target/context hash invalidates existing approvals.
 Cookie identity follows existing authentication's decoded, last-cookie semantics;
 this fixes binding consistency without changing authentication configuration.
 
 Before preparation/confirmation, anonymous GET must return the configured page
-without redirects, with HTML MIME and exact approved HTML hash, containing exactly
-one quoted target img source and no base/picture or target srcset/event attributes.
+without redirects, with HTML MIME, exactly one canonical target, and an approved
+target/context fingerprint. The Stage2 scanner contract and limits are in
+PUBLISH_LOCAL_MOCK_RUNBOOK.md. Unrelated content changes may pass; target/context
+changes fail closed. Never automatically refresh the approved fingerprint.
 After mutation, verification repeats the page check and compares public PNG bytes,
 private bytes and journal/pointer identity, including baseline version + 1.
-Any HTML drift blocks writes; never automatically refresh the configured hash.
-A drift after the preflight read is not atomically preventable across CMS and Google:
-post-write drift returns MANUAL_CHECK_REQUIRED and must be investigated read-only.
-Scripts/CSS can affect rendering: real browser/CMS acceptance is still UNKNOWN.
-Dynamic HTML may make this strict contract unsuitable; that must be resolved and
-reviewed before activation, not bypassed by weakening verification.
+Preflight and Google CAS are not atomic: post-write drift is MANUAL_CHECK_REQUIRED.
+Real browser/CMS acceptance remains UNKNOWN. Stage3 is not authorized here.
 
 Transport uses existing server-side POST/secret handling, 25-second abort signals,
 bounded streamed JSON responses and no write retries. Public GET has 15-second
@@ -111,7 +113,7 @@ Google Apps Script / Drive / Sheet real-service acceptance: **UNKNOWN**.
 CMS external-src, public HTML stability, redirect policy, caching, CSP and actual
 browser rendering acceptance: **UNKNOWN**. No new production enablement evidence.
 
-### FINAL nonproduction acceptance — verified and reviewed
+### Historical freeze acceptance — not a Stage2 review
 
 The final evidence files have been read. These runs cover the final code AFTER
 review item 3/5 fixes; the coordinator confirms the Chromium run used a fresh
@@ -266,8 +268,8 @@ const binding = {approvalId:prepared.approvalId, nonce:prepared.nonce,
    bytes; both must equal the approved hash, with 2160×3840 decoded dimensions.
    Check no-store/MIME and visual rendering independently. On mismatch or MUTATING,
    stop for read-only investigation, preserve records, no pointer reset/deletion.
-5. Only after image acceptance, obtain approval for the exact CMS source replacement
-   and verify it. Review/hash the resulting anonymous HTML bytes; separately approve
+5. FUTURE STAGE3 ONLY, excluded from Stage2: after image acceptance, obtain approval for the exact CMS source replacement
+   and verify it. Review the resulting anonymous HTML and approve its target/context fingerprint; separately approve
    page configuration and flow enablement. A new normal approval uses the provider's
    derived executor identity; never reuse the bootstrap binding in the UI. Archive
    the initial journal/approval with the retention policy. Deployment approval,
@@ -276,3 +278,35 @@ const binding = {approvalId:prepared.approvalId, nonce:prepared.nonce,
 The snippets are executable JavaScript in an async operator session using the
 existing APIs, with explicit reviewed inputs; they are documentation, not a new
 endpoint or an automatic startup action. No bootstrap call was run here.
+
+## Current Stage2 boundary and cumulative budget
+
+Use PUBLISH_STAGE2_VALIDATION_ACTIONS.md as the current action/acceptance contract.
+All CMS steps elsewhere in this runbook are FUTURE STAGE3, excluded from Stage2.
+Real PNG, Google IDs and actual Vercel targets/budgets remain UNKNOWN. Synthetic
+local PNGs are not approved real sources. No actual setting has been read or changed.
+
+Stage2 image GET uses two inbound Apps Script executions, not Script UrlFetch:
+pointer then Drive blob. `no-store` prevents intentional edge/browser caching and
+every cold/warm hit pays both calls. It does not prove intermediary compliance or
+freshness: repeated anonymous exact-byte/hash acceptance is still required.
+There is no stale fallback. Concurrent GETs multiply executions and lock pressure;
+measure schedule Save/Load isolation, contention and quota headroom on approved
+resources before declaring the path usable.
+
+The two sequential 25s deadlines imply ~50s plus overhead for one image function.
+Future Stage3 verification has five Script executions + two anonymous GETs per
+attempt; three attempts can cost fifteen Script executions, plus confirm and
+possible reconcile. Prepare costs load + prepare + one page GET. The nominal
+315.06s verification / 380.06s confirm envelopes above are arithmetic limits of
+sequential call deadlines, NOT measured Vercel durations or service guarantees.
+Actual usable budget and latency are UNKNOWN. Per-call aborts neither cap the whole
+function nor guarantee downstream cancellation. No duration setting changed.
+
+Parent to fill before acceptance: real approved PNG size/hash/dimensions; peak RPS,
+sustained RPD and burst duration; actual Vercel plan/runtime/maxDuration/concurrency;
+Apps Script execution/lock quotas and remaining schedule-workload capacity;
+image GET and confirm/reconcile p50/p95/p99/max; cold/warm repeated byte consistency;
+cache headers, error/timeout behavior and recovery evidence. HTML stability window,
+real browser review and approved PUBLISH_PUBLIC_TARGET_SHA256 belong to Stage3,
+remain UNKNOWN, and must not be synthesized from a local mock page.

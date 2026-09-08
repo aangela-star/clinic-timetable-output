@@ -1,3 +1,114 @@
+# CURRENT Stage2 implementation checkpoint — review pending
+
+- Generation: f31c91dc-2543-403d-b09a-1e3ed6f76a83
+- Generated at: 2026-09-08T01:34:46.790366+00:00
+- Repository: aangela-star/clinic-timetable-output
+- Worktree: /private/tmp/inspection-repo-publish-worktree
+- Branch: feature/official-publish-flow
+- Original implementation base: `444b52777c7861e1c6e32346b361583edba383ca`
+- Exact historical freeze/current HEAD: `fd3faf335eb5c22bd1f21039cca72f6b7c2799b2`
+- Stage2 is UNCOMMITTED. No amend, push, merge, deploy, actual config/env/auth change,
+  credentials, real stores, CMS calls or infrastructure/dependency additions.
+- Independent Claude review: PENDING. Real Google/Vercel/PNG acceptance: UNKNOWN.
+- Current full changed-file manifest SHA-256: `67c375aab9d09f020b272b12a1eb105fc37cbd5727565ce9a097d8d7ca60c0e7`
+- Historical freeze manifest fingerprint: `6df7e511b9b5050cf0c61c3eb462d3c4e1be845a683054ef3c0aa6d4a672bde0`;
+  verified against freeze bytes before edits. Historical checkpoint retained verbatim below.
+
+## Current Stage2 evidence and scope
+
+Node: 298 total, 297 PASS, 0 FAIL, 1 SKIP (localhost EPERM).
+Targeted provider/store/scanner: 81 total, 80 PASS, 0 FAIL, 1 SKIP (same listener).
+Python: 8 PASS. Baseline: Node 239 PASS / 1 SKIP, Python 8 PASS.
+Fresh browser attempt on 4187 blocked by listener EPERM and Chromium MachPort
+permission; no current browser PASS. Port 4174 untouched. Earlier browser/review
+PASS records below are historical and do not approve Stage2.
+
+Production provider uses a stateful bounded static target/context fingerprint with
+safe semantic attribute normalization, explicit nesting and conservative rejects.
+The loopback-only legacy whole-page verifier pin preserves the frozen harness.
+Local injected latency/transient/AbortError simulations, actual short VM deadline
+abort, no-retry reconciliation, repeated/concurrent exact bytes and stale rejection
+have regression coverage. No production deadline or HTTP helper change.
+Runbooks and ACTION1–7 acceptance contract document UNKNOWN real targets and
+separate approvals. No CMS repoint in Stage2. Provider defaults remain disabled.
+
+All 42 tracked files outside the Stage2 allowlist are byte-identical to
+freeze, including entire protected index, Save/Load, preview/download/print/capture,
+1080×1920 scale 2, auth, API routes, engines and Apps Script. Engine prefix equality
+and git diff --check pass; edited existing files preserve CRLF counts.
+
+Limits: static subset is not browser-equivalent; JS/CSS mutation and context beyond
+four ancestors need real human/browser review. Real Google durability/quotas and
+Vercel budgets are unmeasured. Browser rerun and independent Claude review remain
+required before any commit/action approval. No synthetic PNG is a real approved source.
+
+## Current full changed-file manifest (relative to original base)
+
+Includes inherited changes plus Stage2 changes/new files; checkpoint excluded to
+avoid self-reference. SHA-256 fingerprint uses sorted compact JSON separators
+(',', ':'). This supersedes only the current-state interpretation of the historical
+manifest; the historical map itself is preserved unchanged.
+
+```json
+{
+  ".gitignore": "e5cdb7ee58a2c3e499efc602049dc89e41a98a1404009a8d76ffc99f49ee1dc0",
+  "api/publish-image.js": "4ad9dba8a13ed17abc0a8d80d8b84c1cb78abacc5dafac04710dffc79a7b24b3",
+  "api/publish.js": "124826a822a509c8b30ed6fe5f889aa41fde28c20d64d4932b32b8acd20332eb",
+  "api/schedule.js": "d7986adfaf9250e94ce409013f66b66b1bdaedeee81391e5004b6235a137b7c2",
+  "apps-script/Code.gs": "fb7f6219705f2fc6cd9b78f9e77c348d91271e30f32c0686a171b22ffce60c98",
+  "apps-script/PublishStore.gs": "33ae7707b4a41bd5983bc150380dd67441442a84deee38d0e83c2bd8f11dc140",
+  "docs/JINAN_ONE_TIME_REPOINT_RUNBOOK.md": "de5fe5f681215b951fd9672701a6ae70d9c650a9413c8b1cebb4e7e26bcdbfec",
+  "docs/PUBLISH_LOCAL_MOCK_RUNBOOK.md": "de455ed13b43138e1021d62480ff4b2e3b0e30772ed7462cfbd2d9322c61849b",
+  "docs/PUBLISH_STAGE2_VALIDATION_ACTIONS.md": "863a1cf131d99ef30a8d622b8529b0434b15a559395abcf9d3fa93233e83f8e7",
+  "index.html": "a83a255d4d2d102b7fe1eda2bab90047547d6db5c235698b394cd3fac9690f27",
+  "lib/publish-api.js": "24c1ff22cb342a96b0e23a7d43fa781e0d3d2b6b2073d8356aca0283e1b3f528",
+  "lib/publish-http.js": "818ba547e1d18fd05a08f5a7510027c46822a5bd91123098c03a401dee3a8519",
+  "lib/publish-provider.js": "cbc4430ac854ec257970593bab429ee7a6ec8e12d0ff2dad48314d92eb7e254b",
+  "lib/publish-store-adapter.js": "57d806cd41359a4c994dff84b903d07b59de4baeb4cfcd214d367e13a1f8f051",
+  "lib/publish-store-engine.js": "b8beb9e380fc4afe5f2702d693713e947491fd9ca2fe858935824a69790b4537",
+  "lib/publish-store-mock.js": "d3aff50ab0f90e7172e6450ee810d2c402a293e153050366395b21e9b5a01baa",
+  "lib/publish-target.js": "b9ab7d751507204b4e765ce4fa9098022c4364a90a02ac73c00323369bd4a61b",
+  "publish-core.js": "55da403e723304bef2c896a0219c3d63918d2256b86b848190960e98e2f0dfef",
+  "tests/e2e/publish_local.mjs": "0114783e5a440052445f58b662f39be1edeb38ab475c7922fd15862404720a5f",
+  "tests/publish_job.test.cjs": "461bfb93cdebdfa6aeb2b03a4a27e7808c8d81e7b978ff3241eec3ce106fbdc3",
+  "tests/publish_mock_routes.test.cjs": "faf2c7934b634a70303f96d39b973139ae80832d6f4d1fb8fcb6167e3bb25514",
+  "tests/publish_provider.test.cjs": "1c742f3ff9cc1a0cfadbacda8cbf6b6619689c34b61ecb2e4fbf2391c98e9a16",
+  "tests/publish_route.test.cjs": "b14b3b9f07929f63f23c9d67baf50e858de77de4ef97aecee8eda24ad7c49536",
+  "tests/publish_store_adapter.test.cjs": "3f4e947038067748c25d6be6b80376c6870d801174d4dbfdacf8c32eb8e39063",
+  "tests/publish_target.test.cjs": "0bdc2731d1fdc02e863e21d9715b9a61bf65f2d8884e3cf61ad6f0730d16312c",
+  "tests/publish_ui.test.cjs": "d522a4cd6099daa4399fe3fe6404c0fc75a094fa057eaa6fbc5266474ae6f188",
+  "tools/mock-publish-store-server.js": "d9f62e231a3f9d334a33adc207f2b57a95e61ecaf04ea2f465246c2ff6ec0f37"
+}
+```
+
+## Current evidence SHA-256 (outside repository)
+
+```json
+{
+  "clinic-stage2-baseline-node.txt": "6ab49a3c47e0ecae69f7a933f599dc76ad2a2f1641714d433853a77803ce4b56",
+  "clinic-stage2-baseline-python.txt": "698d16d7b93c4bd9707d3cfacda6fb1e0fea99ed0cda6e69bedc42772940540a",
+  "clinic-stage2-browser-server.txt": "0b15fe086edb33da2ff8743d5d310d7420ca7964e6d71dcb3efe0e1b43912ee3",
+  "clinic-stage2-browser.txt": "e6e913ba7750d0c8003d96abdb40514100d5fa62aeef70b6230c13638e035075",
+  "clinic-stage2-freeze-codex.txt": "33f0d5762e070ccb3d750c02f562c8951a036ad4d69f33157c76d59e08b064c4",
+  "clinic-stage2-freeze-node.txt": "78d8ebc8dae2ade2de73b4f7e183005fcd2faf793c1c48e56c662bfa595cf270",
+  "clinic-stage2-freeze-python.txt": "698d16d7b93c4bd9707d3cfacda6fb1e0fea99ed0cda6e69bedc42772940540a",
+  "clinic-stage2-freeze.txt": "3192fef0b38b979c3fa1f76f8cabe70594101b7afb9f129d1bacd1cd93454be7",
+  "clinic-stage2-implementation-codex.txt": "cf8ebb46aba9183a79ab0f754edc3bfd9b4298bd2f958c99e956df166f79e1a5",
+  "clinic-stage2-independent-freeze-node.txt": "24b55d1bdc0259678c0801c6386a501b1cd733548cde58821f2a803fd8b42fa5",
+  "clinic-stage2-node.txt": "d9dd26c6ede41622d751eec0af440efcc16b3e4cf1e5bf130b530c20480814f8",
+  "clinic-stage2-protected.txt": "b5a950c33354ec79d47b7ead7f0f146f4e9b16caf78add18ebb6b78d586c6247",
+  "clinic-stage2-python.txt": "698d16d7b93c4bd9707d3cfacda6fb1e0fea99ed0cda6e69bedc42772940540a",
+  "clinic-stage2-targeted.txt": "d539fd71cfeafbd12510a3b05454b12caf00353a6babdc394e6ce5a3f8dc82c7"
+}
+```
+
+---
+
+# HISTORICAL FREEZE CHECKPOINT — verbatim archive, NOT current Stage2 acceptance
+
+All statements below describe the pre-Stage2 generation frozen at `fd3faf335eb5c22bd1f21039cca72f6b7c2799b2`.
+Its old baseHEAD/currentHEAD fields and PASS statements must not be read as current.
+
 # Publish implementation checkpoint
 
 - Generation: edba00ff-c50b-4d20-817f-c5c0625cc27c

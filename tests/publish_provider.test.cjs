@@ -1,10 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),vm=require('node:vm');
 const {createProvider,createPublicVerifier}=require('../lib/publish-provider');
+const {targetFingerprint}=require('../lib/publish-target');
 const {LocalStore,hash}=require('../lib/publish-store-mock');
 const fixture={require,Buffer};vm.runInNewContext(fs.readFileSync(require.resolve('./publish_contract.test.cjs'),'utf8').split("test('")[0]+';globalThis.png=validPngBuffer();',fixture);
 const pageUrl='https://www.tainanrehab.com/time.html',imageUrl='https://clinic-timetable-output.vercel.app/api/publish-image';
-const html=`<html><img src="${imageUrl}" style="width:675px;height:1200px"></html>`;
-const config={PUBLISH_IMAGE_ENABLED:'true',PUBLISH_FLOW_ENABLED:'true',PUBLISH_PUBLIC_PAGE_URL:pageUrl,PUBLISH_PUBLIC_IMAGE_URL:imageUrl,PUBLISH_PUBLIC_PAGE_SHA256:hash(Buffer.from(html))};
+const html=`<html><body><img src="${imageUrl}" style="width:675px;height:1200px"></body></html>`;
+const config={PUBLISH_IMAGE_ENABLED:'true',PUBLISH_FLOW_ENABLED:'true',PUBLISH_PUBLIC_PAGE_URL:pageUrl,PUBLISH_PUBLIC_IMAGE_URL:imageUrl,PUBLISH_PUBLIC_TARGET_SHA256:targetFingerprint(html,pageUrl,imageUrl)};
 function setup() {
  const root=fs.mkdtempSync(os.tmpdir()+'/publish-factory-'),store=new LocalStore(root),calls=[];
  const state={html,drop:false},data={title:'SYNTHETIC MOCK',note:'',clinics:[]};
@@ -23,7 +24,7 @@ function setup() {
 async function prepare(s){return s.provider.adapter.handle('prepare',{baseline:await s.store.call('pointer'),data:s.data,monthKey:'2099-01',pngDataUrl:'data:image/png;base64,'+fixture.png.toString('base64'),pngSha256:hash(fixture.png),targetPointerId:'jinan-website/current'},'session');}
 const binding=p=>({approvalId:p.approvalId,nonce:p.nonce});
 test('factory defaults and incomplete configuration fail closed without transport calls',async()=>{
- for(const c of [{},{PUBLISH_FLOW_ENABLED:'true'},{...config,PUBLISH_PUBLIC_PAGE_URL:'https://evil.invalid/time.html'},{...config,PUBLISH_PUBLIC_PAGE_SHA256:''}]){
+ for(const c of [{},{PUBLISH_FLOW_ENABLED:'true'},{...config,PUBLISH_PUBLIC_PAGE_URL:'https://evil.invalid/time.html'},{...config,PUBLISH_PUBLIC_TARGET_SHA256:''}]){
   let calls=0;const p=createProvider({config:c,getSecret:()=> 'synthetic',fetchImpl:()=>{calls++;throw Error();}});
   assert.equal((await p.adapter.handle('pointer')).status,'CMS_RESPONSE_CONTRACT_UNVERIFIED');assert.equal(calls,0);assert.equal(Boolean(p.store),c.PUBLISH_IMAGE_ENABLED==='true');
  }
@@ -36,17 +37,17 @@ test('real factory composes saved facts, page binding, transport, hash, CAS and 
  assert.ok(s.calls.some(c=>c.url===pageUrl));assert.ok(s.calls.some(c=>c.url===imageUrl));
 });
 test('page drift blocks mutation even with correct own-route image; configuration drift cannot adopt approval',async()=>{
- const s=setup(),p=await prepare(s);s.state.html=html+'<!-- CMS drift -->';
+ const s=setup(),p=await prepare(s);s.state.html=html.replace('width:675px','width:676px');
  assert.equal((await s.provider.adapter.handle('confirm',binding(p),'session')).status,'MANUAL_CHECK_REQUIRED');assert.equal((await s.store.call('pointer')).pointerVersion,0);
- const changed=createProvider({config:{...config,PUBLISH_PUBLIC_PAGE_SHA256:hash(Buffer.from(s.state.html))},getSecret:()=> 'synthetic-only-secret',fetchImpl:s.fetchImpl});
+ const changed=createProvider({config:{...config,PUBLISH_PUBLIC_TARGET_SHA256:targetFingerprint(s.state.html,pageUrl,imageUrl)},getSecret:()=> 'synthetic-only-secret',fetchImpl:s.fetchImpl});
  assert.equal((await changed.adapter.handle('confirm',binding(p),'session')).status,'INVALID_APPROVAL');assert.equal((await s.store.call('pointer')).pointerVersion,0);
 });
 test('strict target verification rejects wrong src, duplicate image, base, srcset, redirects, MIME and bytes drift',async()=>{
  for(const content of [html.replace(imageUrl,'https://wrong.invalid/x.png'),html+html,html+'<base href="https://evil.invalid/">',html.replace(' style=',' srcset="x.png 2x" style=')]){
-  const v=createPublicVerifier({pageUrl,imageUrl,pageSha256:hash(Buffer.from(content)),fetchImpl:async()=>new Response(content,{headers:{'Content-Type':'text/html'}})});await assert.rejects(v.checkPage());
+  const v=createPublicVerifier({pageUrl,imageUrl,targetSha256:config.PUBLISH_PUBLIC_TARGET_SHA256,fetchImpl:async()=>new Response(content,{headers:{'Content-Type':'text/html'}})});await assert.rejects(v.checkPage());
  }
  for(const r of [{ok:true,url:'https://wrong.invalid/',headers:new Headers({'Content-Type':'text/html'})},new Response(html,{headers:{'Content-Type':'text/plain'}}),new Response('changed',{headers:{'Content-Type':'text/html'}})]){
-  await assert.rejects(createPublicVerifier({pageUrl,imageUrl,pageSha256:config.PUBLISH_PUBLIC_PAGE_SHA256,fetchImpl:async()=>r}).checkPage());
+  await assert.rejects(createPublicVerifier({pageUrl,imageUrl,targetSha256:config.PUBLISH_PUBLIC_TARGET_SHA256,fetchImpl:async()=>r}).checkPage());
  }
 });
 test('fixed image handler refuses bytes inconsistent with pointer hash',async()=>{
@@ -94,7 +95,7 @@ test('real image route preserves bytes with invalid/incomplete flow config while
   {...config,PUBLISH_PUBLIC_IMAGE_URL:'not a URL'},
   {...config,PUBLISH_PUBLIC_PAGE_URL:'https://wrong.invalid/'},
   {...config,PUBLISH_PUBLIC_IMAGE_URL:'https://wrong.invalid/image'},
-  {...config,PUBLISH_PUBLIC_PAGE_SHA256:''},
+  {...config,PUBLISH_PUBLIC_TARGET_SHA256:''},
   {...config,PUBLISH_FLOW_ENABLED:'false'},
  ];
  for(const c of configs){
@@ -121,4 +122,35 @@ test('confirm INVALID_PNG is pre-mutation; ambiguous prior intent never returns 
  s.store.write(name,{...job,status:'MUTATING'});
  assert.equal((await s.provider.adapter.handle('confirm',binding(p),'session')).status,'MANUAL_CHECK_REQUIRED');
  assert.deepEqual(await s.store.call('pointer'),before);
+});
+
+test('unrelated page edits preserve approval and byte verification',async()=>{
+ const s=setup(),p=await prepare(s);s.state.html=s.state.html.replace('</body>','<footer>New announcement <img src="/unrelated.png"></footer></body>');
+ assert.equal((await s.provider.adapter.handle('confirm',binding(p),'session')).status,'PUBLISHED');
+});
+test('public verifier enforces overflow, redirect, no-store, and exact bytes',async()=>{
+ for(const response of [new Response('x',{headers:{'content-type':'text/html','content-length':'1000001'}}),new Response('x'.repeat(1000001),{headers:{'content-type':'text/html'}})]){
+  await assert.rejects(createPublicVerifier({pageUrl,imageUrl,targetSha256:config.PUBLISH_PUBLIC_TARGET_SHA256,fetchImpl:async()=>response}).checkPage());
+ }
+ const v=createPublicVerifier({pageUrl,imageUrl,targetSha256:config.PUBLISH_PUBLIC_TARGET_SHA256,fetchImpl:async(url,o)=>{
+  assert.equal(o.redirect,'error');assert.equal(o.cache,'no-store');assert.ok(o.signal);
+  return new Response(url===pageUrl?html:fixture.png,{headers:{'content-type':url===pageUrl?'text/html':'image/png'}});
+ }});assert.deepEqual(await v.publicRead(),fixture.png);
+});
+
+test('frozen local harness legacy pin remains strict and cannot enable production verifier',async()=>{
+ const page='http://127.0.0.1:4187/public/jinan',image='http://127.0.0.1:4187/api/publish-image';
+ const content='<h1>MOCK</h1><img src="/api/publish-image">';
+ const options={pageUrl:page,imageUrl:image,pageSha256:hash(Buffer.from(content)),fetchImpl:async()=>new Response(content,{headers:{'content-type':'text/html'}})};
+ await createPublicVerifier(options).checkPage();
+ await assert.rejects(createPublicVerifier({...options,fetchImpl:async()=>new Response(content+' ',{headers:{'content-type':'text/html'}})}).checkPage());
+ await assert.rejects(createPublicVerifier({...options,pageUrl,imageUrl}).checkPage());
+});
+test('anonymous image handler repeated concurrent reads return exact bytes and freshness headers',async()=>{
+ const s=setup(),p=await prepare(s);assert.equal((await s.provider.adapter.handle('confirm',binding(p),'session')).status,'PUBLISHED');
+ const handler=require('../api/publish-image').createImageHandler({store:s.store});
+ async function get(){const headers={};let bytes;const res={statusCode:200,setHeader:(k,v)=>headers[k]=v,end:b=>bytes=b};await handler({method:'GET'},res);
+  assert.equal(res.statusCode,200);assert.equal(headers['Cache-Control'],'no-store');assert.equal(headers['X-Content-Type-Options'],'nosniff');assert.equal(headers['Content-Type'],'image/png');assert.deepEqual(bytes,fixture.png);assert.equal(bytes.length,fixture.png.length);assert.equal(hash(bytes),hash(fixture.png));}
+ await get();await Promise.all([get(),get(),get()]);
+ s.store.faults.cache=true;let status;await handler({method:'GET'},{set statusCode(v){status=v;},setHeader(){},end(){}});assert.equal(status,404);
 });

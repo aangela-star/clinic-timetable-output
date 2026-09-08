@@ -1,11 +1,28 @@
 # Stage2 validation and separately gated actions
 
-Current state: LOCAL implementation only; independent Claude review pending.
-Exact historical freeze: `fd3faf335eb5c22bd1f21039cca72f6b7c2799b2`.
+Current state: Stage2 code review PASS; execution PARTIAL; browser acceptance
+UNVERIFIED / pending (sandbox listener EPERM / Chromium MachPort). Whole Stage2 is
+not complete and production is not approved. No browser retry or sandbox bypass.
+Exact initial reviewed commit (immutable freeze): `fd3faf335eb5c22bd1f21039cca72f6b7c2799b2`.
+Exact Stage2 reviewed commit (local): `255f449154c89d1cd9e760d1b8eca0c35e8065f1`.
 Original implementation base: `444b52777c7861e1c6e32346b361583edba383ca`.
-No commit, push, merge, deploy, credentials, real store access, actual configuration
+The user authorized the exact local Stage2 commit; it is a direct child of the
+initial freeze, which was not amended. This later documentation-only closeout is
+UNCOMMITTED, pending final Claude read-only documentation review.
+
+Independent Claude code review: PASS, 19 turns, no coding blockers; evidence
+`/private/tmp/clinic-stage2-review.json`, SHA-256 `ee82dde69cbca7b5a6f161ce3194b22a58d53bf11e83e2544fe661f29e673156`.
+Independent coordinator execution: Node 298 PASS, 0 FAIL, 0 SKIP; Python 8 PASS;
+`git diff --check` PASS. The checkpoint records exact log hashes. Those executions
+satisfy the review's pending Node/Python rerun; browser acceptance remains pending.
+Historical browser PASS does not apply to this Stage2 identity. No tests were run
+in this closeout. Protected PNG/preview/download/print behavior remains unchanged
+from the initial freeze (1080×1920, html2canvas scale 2).
+
+No push, merge, deploy, credentials, real store access, actual configuration
 change or CMS mutation is authorized by this document. Settings named here are
-DOCUMENTATION ONLY. Provider gates remain disabled by default.
+DOCUMENTATION ONLY. Provider gates remain disabled by default. No targets were
+discovered and no values were invented during closeout.
 
 ## Targets and evidence still required from parent
 
@@ -33,7 +50,7 @@ approved PNG. The parent must resolve UNKNOWN fields before authorizing an actio
 
 | Action | Exact target | Proposed change | Rollback / recovery |
 |---|---|---|---|
-| ACTION1 | aangela-star/clinic-timetable-output, feature/official-publish-flow; remote identity and resulting preview UNKNOWN | After Claude review and separate commit approval, push approved feature commit. Git integration may auto-create preview. | Stop rollout; preserve SHA/evidence; separately approve a revert commit/preview retirement. Never amend the freeze or force push. |
+| ACTION1 | aangela-star/clinic-timetable-output, feature/official-publish-flow; remote identity and resulting preview UNKNOWN | After final read-only documentation review and separate push approval, push the approved feature commit; the exact reviewed Stage2 code is already committed locally. Git integration may auto-create preview. | Stop rollout; preserve SHA/evidence; separately approve a revert commit/preview retirement. Never amend the freeze or force push. |
 | ACTION2 | Repository main; Vercel project/deployment UNKNOWN | Merge reviewed commit only after human approval. Git integration may automatically deploy production; separate merge-then-deploy ordering is NOT guaranteed. Approve coupled effect first. | Separately approve reverting merge or restoring known-good deployment; retain code/store records and gates off. |
 | ACTION3 | Apps Script project/deployment/version UNKNOWN | Deploy reviewed Code.gs + PublishStore.gs via existing authorized deployment, including separately reviewed scopes. | Restore recorded prior deployment/version with approval; retain new journals/blobs; verify Save/Load. |
 | ACTION4 | Drive folder, Script Properties, Sheet IDs UNKNOWN | Approve existing private folder/scope and store properties PUBLISH_FOLDER_ID/PUBLISH_STORE_ENABLED using existing secret facilities. | Restore recorded prior property values/access under approval; do not delete data or change existing shared auth. |
@@ -85,3 +102,20 @@ explicit approved margin before future enablement. Timeouts may leave downstream
 work running. Recovery must reconcile without repeating a mutation. Any timeout,
 stale bytes or error in acceptance blocks PASS pending investigation. No results
 or runtime assumptions are supplied here; the parent must measure them.
+
+## Outstanding human acceptance limits — future Stage3 only
+
+The target fingerprint does not pin sibling order or added sibling elements,
+outer ancestry beyond the nearest four ancestors, or JS/CSS effects on the target.
+Human acceptance must inspect the real page, its full surrounding structure,
+staticness and browser rendering; a matching fingerprint alone cannot establish
+visual equivalence. Confirm the served HTTP/meta charset is UTF-8 and consistent
+with actual bytes: the reader decodes UTF-8 without checking charset declarations.
+
+Optional leading-text parser hardening remains OUTSTANDING: reject non-whitespace
+character data before `<!DOCTYPE html>` / `<html>` to avoid an unrecorded browser
+quirks-mode difference. It was not implemented in this closeout, preserving the
+reviewed code identity. Until separately changed and reviewed, human acceptance
+must check for such leading text and verify actual browser document mode. These
+limits remain future hardening/acceptance gates, not Stage2 coding blockers or
+permission to enable production. No CMS repoint is part of Stage2.

@@ -1,3 +1,130 @@
+# CURRENT Stage2 closeout — code review PASS; execution partial; browser pending
+
+- Generation: fc905159-22b7-4957-876b-83b17eee15bf
+- Generated at: 2026-09-08T01:46:52.726347+00:00
+- Repository: aangela-star/clinic-timetable-output
+- Worktree: /private/tmp/inspection-repo-publish-worktree
+- Branch: feature/official-publish-flow
+- Original implementation base: `444b52777c7861e1c6e32346b361583edba383ca`
+- Exact initial reviewed commit / immutable freeze: `fd3faf335eb5c22bd1f21039cca72f6b7c2799b2`
+- Exact Stage2 reviewed commit / current HEAD: `255f449154c89d1cd9e760d1b8eca0c35e8065f1`
+- Stage2 commit message: `feat: scope publish guard and validate degraded store behavior`
+- Current full changed-file manifest SHA-256: `580629537c00bd42d9d37fd233673accac28c2c63f5f4dfd3a3379bc109d6708`
+- Previous generation: f31c91dc-2543-403d-b09a-1e3ed6f76a83
+- Previous manifest SHA-256: `67c375aab9d09f020b272b12a1eb105fc37cbd5727565ce9a097d8d7ca60c0e7`
+
+## Current evidence and authorization boundary
+
+Independent Claude code review PASS, 19 turns, no coding blockers. Coordinator
+independent execution: Node 298 PASS / 0 FAIL / 0 SKIP; Python 8 PASS;
+`git diff --check` PASS. Exact evidence hashes follow. The review's then-pending
+Node/Python rerun is satisfied by these independent records. Browser/e2e remains
+UNVERIFIED due to sandbox listener EPERM / Chromium MachPort; no retry or sandbox
+bypass was attempted. Historical browser PASS does not establish Stage2 acceptance.
+Execution is PARTIAL: whole Stage2 is not complete and production is not approved.
+
+Before committing, all 10 changed-file SHA-256 values and exact path scope matched
+`/private/tmp/clinic-stage2-implementation.md`. No source or documentation edits
+preceded the commit. Effective hooks directory contained only inactive `.sample`
+files, no core.hooksPath override; no hooks were bypassed. The user-authorized local
+commit is a direct child of the initial freeze; all 10 committed blob hashes were
+verified again. Freeze was never amended. No new secrets/debug endpoints or
+formatting/line-ending changes were introduced by this exact-byte commit.
+
+Only this checkpoint and PUBLISH_STAGE2_VALIDATION_ACTIONS.md are modified after
+that commit; both remain UNCOMMITTED for final Claude read-only documentation
+review. This documentation review is distinct from the completed Stage2 code
+review. No tests/code changes, installations, auth/env/settings changes, production
+calls, push, merge or deployment occurred during closeout. Protected index and
+PNG/preview/download/print code remain byte-identical to the initial freeze;
+1080×1920 and html2canvas scale 2 remain intact.
+
+Stage2 acceptance is approved REAL PNG → existing Google store → anonymous image
+GET, with separate ACTION1–7 approvals still pending; none executed. No CMS repoint
+in Stage2. All real PNG/Google/Vercel targets, measurements and results remain
+UNKNOWN. No target discovery or invented values. Save is not Publish; flow remains
+disabled by default. Real durability, quota/headroom and duration acceptance remain
+outstanding as detailed in PUBLISH_STAGE2_VALIDATION_ACTIONS.md.
+
+## Outstanding human acceptance limits — future Stage3 only
+
+The target fingerprint does not pin sibling order or added sibling elements,
+outer ancestry beyond the nearest four ancestors, or JS/CSS effects on the target.
+Human acceptance must inspect the real page, its full surrounding structure,
+staticness and browser rendering; a matching fingerprint alone cannot establish
+visual equivalence. Confirm the served HTTP/meta charset is UTF-8 and consistent
+with actual bytes: the reader decodes UTF-8 without checking charset declarations.
+
+Optional leading-text parser hardening remains OUTSTANDING: reject non-whitespace
+character data before `<!DOCTYPE html>` / `<html>` to avoid an unrecorded browser
+quirks-mode difference. It was not implemented in this closeout, preserving the
+reviewed code identity. Until separately changed and reviewed, human acceptance
+must check for such leading text and verify actual browser document mode. These
+limits remain future hardening/acceptance gates, not Stage2 coding blockers or
+permission to enable production. No CMS repoint is part of Stage2.
+
+## Current full changed-file manifest (relative to original base)
+
+All 27 changed paths relative to `444b52777c7861e1c6e32346b361583edba383ca`, including inherited
+implementation and the current documentation closeout. Checkpoint excluded to
+avoid self-reference. SHA-256 fingerprint is over sorted compact JSON using
+separators `(',', ':')`. Historical generations below are preserved verbatim and
+their former current/review-pending statements are archival, not current status.
+
+```json
+{
+  ".gitignore": "e5cdb7ee58a2c3e499efc602049dc89e41a98a1404009a8d76ffc99f49ee1dc0",
+  "api/publish-image.js": "4ad9dba8a13ed17abc0a8d80d8b84c1cb78abacc5dafac04710dffc79a7b24b3",
+  "api/publish.js": "124826a822a509c8b30ed6fe5f889aa41fde28c20d64d4932b32b8acd20332eb",
+  "api/schedule.js": "d7986adfaf9250e94ce409013f66b66b1bdaedeee81391e5004b6235a137b7c2",
+  "apps-script/Code.gs": "fb7f6219705f2fc6cd9b78f9e77c348d91271e30f32c0686a171b22ffce60c98",
+  "apps-script/PublishStore.gs": "33ae7707b4a41bd5983bc150380dd67441442a84deee38d0e83c2bd8f11dc140",
+  "docs/JINAN_ONE_TIME_REPOINT_RUNBOOK.md": "de5fe5f681215b951fd9672701a6ae70d9c650a9413c8b1cebb4e7e26bcdbfec",
+  "docs/PUBLISH_LOCAL_MOCK_RUNBOOK.md": "de455ed13b43138e1021d62480ff4b2e3b0e30772ed7462cfbd2d9322c61849b",
+  "docs/PUBLISH_STAGE2_VALIDATION_ACTIONS.md": "3e08d91df32553ee7f357439cc7ad2b04952c5d4cf926ae29a9362b6d93fde7c",
+  "index.html": "a83a255d4d2d102b7fe1eda2bab90047547d6db5c235698b394cd3fac9690f27",
+  "lib/publish-api.js": "24c1ff22cb342a96b0e23a7d43fa781e0d3d2b6b2073d8356aca0283e1b3f528",
+  "lib/publish-http.js": "818ba547e1d18fd05a08f5a7510027c46822a5bd91123098c03a401dee3a8519",
+  "lib/publish-provider.js": "cbc4430ac854ec257970593bab429ee7a6ec8e12d0ff2dad48314d92eb7e254b",
+  "lib/publish-store-adapter.js": "57d806cd41359a4c994dff84b903d07b59de4baeb4cfcd214d367e13a1f8f051",
+  "lib/publish-store-engine.js": "b8beb9e380fc4afe5f2702d693713e947491fd9ca2fe858935824a69790b4537",
+  "lib/publish-store-mock.js": "d3aff50ab0f90e7172e6450ee810d2c402a293e153050366395b21e9b5a01baa",
+  "lib/publish-target.js": "b9ab7d751507204b4e765ce4fa9098022c4364a90a02ac73c00323369bd4a61b",
+  "publish-core.js": "55da403e723304bef2c896a0219c3d63918d2256b86b848190960e98e2f0dfef",
+  "tests/e2e/publish_local.mjs": "0114783e5a440052445f58b662f39be1edeb38ab475c7922fd15862404720a5f",
+  "tests/publish_job.test.cjs": "461bfb93cdebdfa6aeb2b03a4a27e7808c8d81e7b978ff3241eec3ce106fbdc3",
+  "tests/publish_mock_routes.test.cjs": "faf2c7934b634a70303f96d39b973139ae80832d6f4d1fb8fcb6167e3bb25514",
+  "tests/publish_provider.test.cjs": "1c742f3ff9cc1a0cfadbacda8cbf6b6619689c34b61ecb2e4fbf2391c98e9a16",
+  "tests/publish_route.test.cjs": "b14b3b9f07929f63f23c9d67baf50e858de77de4ef97aecee8eda24ad7c49536",
+  "tests/publish_store_adapter.test.cjs": "3f4e947038067748c25d6be6b80376c6870d801174d4dbfdacf8c32eb8e39063",
+  "tests/publish_target.test.cjs": "0bdc2731d1fdc02e863e21d9715b9a61bf65f2d8884e3cf61ad6f0730d16312c",
+  "tests/publish_ui.test.cjs": "d522a4cd6099daa4399fe3fe6404c0fc75a094fa057eaa6fbc5266474ae6f188",
+  "tools/mock-publish-store-server.js": "d9f62e231a3f9d334a33adc207f2b57a95e61ecaf04ea2f465246c2ff6ec0f37"
+}
+```
+
+## Current evidence SHA-256 (outside repository)
+
+All paths are under `/private/tmp/`; evidence artifacts remain unchanged.
+
+```json
+{
+  "clinic-stage2-implementation.md": "3f32f90084c90b0c20cda646ebf069ba7e2c6d93064fdd822a745484baa3994b",
+  "clinic-stage2-review.json": "ee82dde69cbca7b5a6f161ce3194b22a58d53bf11e83e2544fe661f29e673156",
+  "clinic-stage2-independent-node.txt": "311366dfd22339a2b82735e65e31c331ede6718ac0174c30be2b0b78f7658710",
+  "clinic-stage2-independent-python.txt": "698d16d7b93c4bd9707d3cfacda6fb1e0fea99ed0cda6e69bedc42772940540a",
+  "clinic-stage2-browser-server.txt": "0b15fe086edb33da2ff8743d5d310d7420ca7964e6d71dcb3efe0e1b43912ee3",
+  "clinic-stage2-browser.txt": "e6e913ba7750d0c8003d96abdb40514100d5fa62aeef70b6230c13638e035075"
+}
+```
+
+---
+
+# HISTORICAL Stage2 pre-review generation — verbatim archive, superseded status
+
+The following generation describes the tree before independent review/execution
+and the local Stage2 commit. Its UNCOMMITTED/review-pending statements are historical.
+
 # CURRENT Stage2 implementation checkpoint — review pending
 
 - Generation: f31c91dc-2543-403d-b09a-1e3ed6f76a83

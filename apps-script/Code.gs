@@ -13,6 +13,7 @@ function doPost(e) {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     assertServerSecret_(body.secret);
     if (body.action === 'publish') return publishRequest_(body);
+    if (body.action === 'prepareValidation') return prepareValidationRequest_(body, e && e.postData && e.postData.contents);
 
     const action = String(body.action || '');
     const monthKey = String(body.month || '');

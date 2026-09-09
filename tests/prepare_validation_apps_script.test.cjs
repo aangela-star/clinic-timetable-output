@@ -288,3 +288,81 @@ test('approval revocation or expiry immediately before persistence/staging leave
     assert.equal(h.events.filter(x=>x==='write').length,point==='beforeIntent'?0:1);
   }
 });
+
+function pointerWrapperHarness(value, missing=false) {
+  const h=harness();
+  h.pointer.rows[0][0]=value;
+  const getRange=h.pointer.getRange;
+  h.pointer.getRange=(...args)=>{
+    assert.deepEqual(args,[1,1]);
+    const range=getRange(...args);
+    return {...range,getValue:()=>{h.events.push('pointerRead');return value;},
+      setValue:()=>{h.events.push('pointerWrite');throw Error('FORBIDDEN pointer write');},
+      setValues:()=>{h.events.push('pointerWrite');throw Error('FORBIDDEN pointer write');}};
+  };
+  if(missing) {
+    const open=h.ctx.SpreadsheetApp.openById;
+    h.ctx.SpreadsheetApp.openById=id=>{
+      const book=open(id);
+      if(id!==PINS.ledger)return book;
+      return {...book,getSheetByName:name=>name==='PublishPointer'?null:book.getSheetByName(name)};
+    };
+  }
+  // Keep the real doPost and strict-JSON wrapper; replace only the PNG pin for synthetic bytes.
+  const verify=h.ctx.validationPng_;
+  h.ctx.validationPng_=(bytes,hash)=>verify(bytes,hash,{pngBytes:png.length,pngSha256:sha(png)});
+  return h;
+}
+test('actual prepare wrapper accepts empty pointer A1 without pointer writes',()=>{
+  const h=pointerWrapperHarness('');
+  assert.equal(h.post().result.status,'PREPARED');
+  assert.equal(h.events.filter(e=>e==='pointerRead').length,1);
+  assert.equal(h.events.filter(e=>e==='pointerWrite').length,0);
+  assert.equal(h.pointer.rows[0][0],'');
+  assert.equal(h.files.size,1);
+  assert.equal(h.events.filter(e=>e==='write').length,2);
+  assert.deepEqual(JSON.parse(h.journal.rows[1][1]).status,'PREPARED');
+});
+
+test('actual prepare wrapper mirrors normal pointer falsy and JSON String coercion semantics',()=>{
+  const valid=JSON.stringify({targetPointerId:'jinan-website/current',...input.baseline});
+  for(const value of [false,0,-0,null,undefined,NaN,valid,'  '+valid+'  ',{toString:()=>valid}]) {
+    const h=pointerWrapperHarness(value);
+    assert.equal(h.post().result.status,'PREPARED');
+    assert.equal(h.events.filter(e=>e==='pointerRead').length,1);
+    assert.ok(!h.events.includes('pointerWrite'));
+    assert.ok(Object.is(h.pointer.rows[0][0],value));
+    assert.equal(h.files.size,1);
+    assert.equal(h.events.filter(e=>e==='write').length,2);
+  }
+});
+test('actual prepare wrapper preserves existing nonzero pointer and checks exact baseline',()=>{
+  const baseline={pointerVersion:7,pointerEtag:'synthetic-existing',pngSha256:'b'.repeat(64)};
+  const value=JSON.stringify({targetPointerId:'jinan-website/current',...baseline});
+  const h=pointerWrapperHarness(value);
+  assert.equal(h.post().result.status,'STALE_BASELINE');
+  assert.deepEqual(mutations(h),[]);
+  assert.equal(h.post('prepare',{input:{...input,baseline}}).result.status,'PREPARED');
+  assert.equal(h.pointer.rows[0][0],value);
+  assert.ok(!h.events.includes('pointerWrite'));
+  assert.equal(h.files.size,1);
+});
+test('actual prepare wrapper malformed or missing pointer fails closed without any writes',()=>{
+  const invalid=[' ','\t','{','null','false','0','""','{}','[]',true,1,
+    JSON.stringify({targetPointerId:'other',...input.baseline}),
+    JSON.stringify({targetPointerId:input.targetPointerId,pointerVersion:-1,pointerEtag:'empty'}),
+    JSON.stringify({targetPointerId:input.targetPointerId,pointerVersion:0,pointerEtag:''}),
+    {toString:()=>'{'}];
+  for(const [value,missing] of [...invalid.map(value=>[value,false]),['',true]]) {
+    const h=pointerWrapperHarness(value,missing);
+    for(let attempt=0;attempt<2;attempt++)assert.equal(h.post().result.status,'MANUAL_CHECK_REQUIRED');
+    assert.equal(h.events.filter(e=>e==='pointerRead').length,missing?0:2);
+    assert.ok(!h.events.includes('pointerWrite'));
+    assert.deepEqual(mutations(h),[]);
+    assert.equal(h.files.size,0);
+    assert.equal(h.journal.rows.length,1);
+    assert.ok(!h.events.includes('folder'));
+    assert.ok(!h.events.includes('open:'+PINS.schedule));
+    assert.ok(Object.is(h.pointer.rows[0][0],value));
+  }
+});

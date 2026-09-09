@@ -185,7 +185,8 @@ function validationRequest_(body, verifyPng) {
     if(read(cap.operationId))return json_({ok:true,result:validationOperation(io,'prepare',binding)});
     const pointers=book.getSheetByName('PublishPointer');
     if(!pointers)return reply('MANUAL_CHECK_REQUIRED');
-    const pointer=JSON.parse(pointers.getRange(1,1).getValue());
+    const v=pointers.getRange(1,1).getValue();
+    const pointer=v?JSON.parse(v):{pointerVersion:0,pointerEtag:'empty',targetPointerId:'jinan-website/current'};
     if(pointer.targetPointerId!=='jinan-website/current' || !Number.isSafeInteger(pointer.pointerVersion)
       || pointer.pointerVersion<0 || pointer.pointerVersion>=Number.MAX_SAFE_INTEGER || typeof pointer.pointerEtag!=='string' || !pointer.pointerEtag)throw Error('INVALID_BASELINE');
     if(!input.baseline || input.baseline.pointerVersion!==pointer.pointerVersion

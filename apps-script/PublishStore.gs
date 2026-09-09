@@ -15,7 +15,9 @@ function publishStoreOperation(io, op, input) {
     io.saveJob(job);
     return {status:'PREPARED', approvalId, nonce:job.nonce, pngSha256:job.pngSha256, baseline:job.baseline, targetPointerId:job.targetPointerId, executorId:job.executorId, confirmedBySession:job.session, expiresAt:job.expiresAt};
   }
+  if (String(input.approvalId || '').startsWith('validation:')) return {status:'INVALID_APPROVAL'};
   const job = io.job(input.approvalId);
+  if (job && job.purpose === 'clinic-prepare-validation-v1') return {status:'INVALID_APPROVAL'};
   if (!job || job.session !== input.session || job.nonce !== input.nonce || job.executorId !== input.executorId) return {status:'INVALID_APPROVAL'};
   if (op === 'reconcile' || job.status !== 'PREPARED') return {status:'RECONCILE', job, pointer};
   if (op !== 'confirm') throw Error('INVALID_REQUEST');

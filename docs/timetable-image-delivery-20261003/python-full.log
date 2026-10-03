@@ -1,0 +1,13 @@
+test_auth_scripts_load_before_babel_app (test_deployment_smoke.DeploymentSmokeTest.test_auth_scripts_load_before_babel_app) ... ok
+test_external_runtime_dependencies_remain_exactly_pinned (test_deployment_smoke.DeploymentSmokeTest.test_external_runtime_dependencies_remain_exactly_pinned) ... ok
+test_html_entrypoint_and_root_exist (test_deployment_smoke.DeploymentSmokeTest.test_html_entrypoint_and_root_exist) ... ok
+test_login_form_uses_password_input (test_deployment_smoke.DeploymentSmokeTest.test_login_form_uses_password_input) ... ok
+test_logout_control_is_wired (test_deployment_smoke.DeploymentSmokeTest.test_logout_control_is_wired) ... ok
+test_main_ui_is_not_rendered_before_authentication (test_deployment_smoke.DeploymentSmokeTest.test_main_ui_is_not_rendered_before_authentication) ... ok
+test_no_floating_runtime_aliases_remain (test_deployment_smoke.DeploymentSmokeTest.test_no_floating_runtime_aliases_remain) ... ok
+test_runtime_dependencies_are_pinned_and_ordered (test_deployment_smoke.DeploymentSmokeTest.test_runtime_dependencies_are_pinned_and_ordered) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.001s
+
+OK

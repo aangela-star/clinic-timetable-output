@@ -1,0 +1,5104 @@
+TAP version 13
+# Subtest: load finds a Google Sheets Date month cell
+ok 1 - load finds a Google Sheets Date month cell
+  ---
+  duration_ms: 3.799667
+  type: 'test'
+  ...
+# Subtest: load matches text month with YYYY-MM display without writing
+ok 2 - load matches text month with YYYY-MM display without writing
+  ---
+  duration_ms: 1.71575
+  type: 'test'
+  ...
+# Subtest: load matches Date month with YYYY-MM display without writing
+ok 3 - load matches Date month with YYYY-MM display without writing
+  ---
+  duration_ms: 0.362959
+  type: 'test'
+  ...
+# Subtest: load matches numeric serial month with YYYY-MM display without writing
+ok 4 - load matches numeric serial month with YYYY-MM display without writing
+  ---
+  duration_ms: 0.311833
+  type: 'test'
+  ...
+# Subtest: load chooses the last matching displayed month and never another month
+ok 5 - load chooses the last matching displayed month and never another month
+  ---
+  duration_ms: 0.371708
+  type: 'test'
+  ...
+# Subtest: valid displayed month takes precedence over a conflicting raw month
+ok 6 - valid displayed month takes precedence over a conflicting raw month
+  ---
+  duration_ms: 0.257292
+  type: 'test'
+  ...
+# Subtest: save overwrites the newest same-month row, removes legacy duplicates, and writes a text month key under ScriptLock
+ok 7 - save overwrites the newest same-month row, removes legacy duplicates, and writes a text month key under ScriptLock
+  ---
+  duration_ms: 0.424375
+  type: 'test'
+  ...
+# Subtest: save lock timeout leaves all sheet rows unchanged
+ok 8 - save lock timeout leaves all sheet rows unchanged
+  ---
+  duration_ms: 0.252542
+  type: 'test'
+  ...
+# Subtest: correct password also requires a successful server session
+ok 9 - correct password also requires a successful server session
+  ---
+  duration_ms: 4.022333
+  type: 'test'
+  ...
+# Subtest: correct password authenticates and wrong password does not
+ok 10 - correct password authenticates and wrong password does not
+  ---
+  duration_ms: 0.621666
+  type: 'test'
+  ...
+# Subtest: authentication survives reload in the same session storage
+ok 11 - authentication survives reload in the same session storage
+  ---
+  duration_ms: 0.941583
+  type: 'test'
+  ...
+# Subtest: logout clears the authenticated session
+ok 12 - logout clears the authenticated session
+  ---
+  duration_ms: 0.595459
+  type: 'test'
+  ...
+# Subtest: new storage starts unauthenticated like a new browser session
+ok 13 - new storage starts unauthenticated like a new browser session
+  ---
+  duration_ms: 0.642125
+  type: 'test'
+  ...
+# Subtest: clinic-1 priority renders clinic-1 then clinic-2
+ok 14 - clinic-1 priority renders clinic-1 then clinic-2
+  ---
+  duration_ms: 0.667792
+  type: 'test'
+  ...
+# Subtest: clinic-2 priority renders clinic-2 then clinic-1
+ok 15 - clinic-2 priority renders clinic-2 then clinic-1
+  ---
+  duration_ms: 0.064792
+  type: 'test'
+  ...
+# Subtest: ordering returns a new array and does not mutate the input array or clinic objects
+ok 16 - ordering returns a new array and does not mutate the input array or clinic objects
+  ---
+  duration_ms: 0.098167
+  type: 'test'
+  ...
+# Subtest: unknown priority preserves original order
+ok 17 - unknown priority preserves original order
+  ---
+  duration_ms: 0.085584
+  type: 'test'
+  ...
+# Subtest: UI wires primary clinic ordering only into poster rendering
+ok 18 - UI wires primary clinic ordering only into poster rendering
+  ---
+  duration_ms: 1.5295
+  type: 'test'
+  ...
+# jinanCmsPublish {
+#   attemptId: 'jinan-1af5fd42-ce46-422e-8511-39fea902d120',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-30988b92-4136-4e6e-8562-35cbc405c6a8',
+#   stage: 'admission',
+#   status: 'PUBLISH_IN_PROGRESS',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-39302761-8f9f-42a4-964c-6ef7d91479e5',
+#   stage: 'admission',
+#   status: 'PUBLISH_IN_PROGRESS',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-1af5fd42-ce46-422e-8511-39fea902d120',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-1af5fd42-ce46-422e-8511-39fea902d120',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-1af5fd42-ce46-422e-8511-39fea902d120',
+#   stage: 'public-verification',
+#   status: 'PUBLISHED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-1d382461-4450-489e-903d-65efdf5ddb38',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-1d382461-4450-489e-903d-65efdf5ddb38',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/later.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-1d382461-4450-489e-903d-65efdf5ddb38',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/later.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-1d382461-4450-489e-903d-65efdf5ddb38',
+#   stage: 'public-verification',
+#   status: 'PUBLISHED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/later.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a956b942-57ff-4906-8b40-80b61f3b6e43',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a956b942-57ff-4906-8b40-80b61f3b6e43',
+#   stage: 'gate',
+#   status: 'CMS_RESPONSE_CONTRACT_UNVERIFIED',
+#   errorCode: 'CMS_RESPONSE_CONTRACT_UNVERIFIED',
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3b664485-8bc2-493a-945d-ad9d6ec252c1',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3b664485-8bc2-493a-945d-ad9d6ec252c1',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3b664485-8bc2-493a-945d-ad9d6ec252c1',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3b664485-8bc2-493a-945d-ad9d6ec252c1',
+#   stage: 'public-verification',
+#   status: 'PUBLISHED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-17a97c8a-19fd-4c10-9e9d-7546ab5818d1',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-17a97c8a-19fd-4c10-9e9d-7546ab5818d1',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-17a97c8a-19fd-4c10-9e9d-7546ab5818d1',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-17a97c8a-19fd-4c10-9e9d-7546ab5818d1',
+#   stage: 'public-verification',
+#   status: 'PUBLISHED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-40bacb39-cbe3-434c-b010-ac5d98dac405',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-40bacb39-cbe3-434c-b010-ac5d98dac405',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-40bacb39-cbe3-434c-b010-ac5d98dac405',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-40bacb39-cbe3-434c-b010-ac5d98dac405',
+#   stage: 'public-verification',
+#   status: 'PUBLISHED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-87163a71-6d58-43c7-ae17-bec6f5a75b11',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-87163a71-6d58-43c7-ae17-bec6f5a75b11',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-87163a71-6d58-43c7-ae17-bec6f5a75b11',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-87163a71-6d58-43c7-ae17-bec6f5a75b11',
+#   stage: 'public-verification',
+#   status: 'PUBLISHED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ff1cc575-b709-4aee-b230-d75320c965a3',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ff1cc575-b709-4aee-b230-d75320c965a3',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ff1cc575-b709-4aee-b230-d75320c965a3',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ff1cc575-b709-4aee-b230-d75320c965a3',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-483a43f0-b663-4365-85cf-8a49abd9692b',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-483a43f0-b663-4365-85cf-8a49abd9692b',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-483a43f0-b663-4365-85cf-8a49abd9692b',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-483a43f0-b663-4365-85cf-8a49abd9692b',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-e262ed1d-ae66-44b1-8f4e-ed150a1a10e7',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-e262ed1d-ae66-44b1-8f4e-ed150a1a10e7',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-e262ed1d-ae66-44b1-8f4e-ed150a1a10e7',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-e262ed1d-ae66-44b1-8f4e-ed150a1a10e7',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-2d415315-201f-413a-a757-addce525082d',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-2d415315-201f-413a-a757-addce525082d',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-2d415315-201f-413a-a757-addce525082d',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-2d415315-201f-413a-a757-addce525082d',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/a%20b.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3d3e98c2-478a-4771-987e-7eba2a621e40',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3d3e98c2-478a-4771-987e-7eba2a621e40',
+#   stage: 'editor-before-upload',
+#   status: 'FORM_CHANGED',
+#   errorCode: 'FORM_CHANGED',
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-163c0213-8e7c-45b7-a9e2-fc07bf915043',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-163c0213-8e7c-45b7-a9e2-fc07bf915043',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/drift.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-163c0213-8e7c-45b7-a9e2-fc07bf915043',
+#   stage: 'submit-prepare',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'FORM_CHANGED',
+#   finalImagePath: '/uploads/2026/drift.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-68eac7dc-de48-435f-88a2-316f6fda0655',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-68eac7dc-de48-435f-88a2-316f6fda0655',
+#   stage: 'editor-before-upload',
+#   status: 'FORM_CHANGED',
+#   errorCode: 'FORM_CHANGED',
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-598bcf1d-decf-4548-8644-c1d359ecf1ea',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-598bcf1d-decf-4548-8644-c1d359ecf1ea',
+#   stage: 'pre-login',
+#   status: 'FORM_CHANGED',
+#   errorCode: 'FORM_CHANGED',
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-92419b78-1e81-4fe2-b531-85300fc7d894',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-92419b78-1e81-4fe2-b531-85300fc7d894',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-92419b78-1e81-4fe2-b531-85300fc7d894',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-92419b78-1e81-4fe2-b531-85300fc7d894',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-bfd5d677-29d5-46b0-bff1-d4fa1ecf1bc6',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-bfd5d677-29d5-46b0-bff1-d4fa1ecf1bc6',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-bfd5d677-29d5-46b0-bff1-d4fa1ecf1bc6',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-bfd5d677-29d5-46b0-bff1-d4fa1ecf1bc6',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ff98cc27-d924-4c0d-b94d-1652664f0d3c',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ff98cc27-d924-4c0d-b94d-1652664f0d3c',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ff98cc27-d924-4c0d-b94d-1652664f0d3c',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ff98cc27-d924-4c0d-b94d-1652664f0d3c',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f372410c-a2e7-48e6-ae39-c1e498acb0f0',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f372410c-a2e7-48e6-ae39-c1e498acb0f0',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f372410c-a2e7-48e6-ae39-c1e498acb0f0',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f372410c-a2e7-48e6-ae39-c1e498acb0f0',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d3f0ce75-68b8-4c34-8822-d165c44f2a10',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d3f0ce75-68b8-4c34-8822-d165c44f2a10',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d3f0ce75-68b8-4c34-8822-d165c44f2a10',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d3f0ce75-68b8-4c34-8822-d165c44f2a10',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-316953d1-7717-4459-8c5c-9906e2886229',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-316953d1-7717-4459-8c5c-9906e2886229',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-316953d1-7717-4459-8c5c-9906e2886229',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-316953d1-7717-4459-8c5c-9906e2886229',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0efbc67b-b558-44cd-95ce-1749a2da52bb',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0efbc67b-b558-44cd-95ce-1749a2da52bb',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0efbc67b-b558-44cd-95ce-1749a2da52bb',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0efbc67b-b558-44cd-95ce-1749a2da52bb',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3937d73a-90e1-433c-828d-ca38e8a694f3',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3937d73a-90e1-433c-828d-ca38e8a694f3',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3937d73a-90e1-433c-828d-ca38e8a694f3',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3937d73a-90e1-433c-828d-ca38e8a694f3',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-2ccda35d-a7af-425a-bf20-8816d0f6fb4f',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-2ccda35d-a7af-425a-bf20-8816d0f6fb4f',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-2ccda35d-a7af-425a-bf20-8816d0f6fb4f',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-2ccda35d-a7af-425a-bf20-8816d0f6fb4f',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-269ea2b5-e584-409d-8925-5f74b7f473b6',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-269ea2b5-e584-409d-8925-5f74b7f473b6',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-269ea2b5-e584-409d-8925-5f74b7f473b6',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-269ea2b5-e584-409d-8925-5f74b7f473b6',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-5b0af50a-528a-464f-bcdd-fa2237e4ca5f',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-5b0af50a-528a-464f-bcdd-fa2237e4ca5f',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-5b0af50a-528a-464f-bcdd-fa2237e4ca5f',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-5b0af50a-528a-464f-bcdd-fa2237e4ca5f',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-161ffd9f-9478-49ca-8add-bc2a226f3627',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-161ffd9f-9478-49ca-8add-bc2a226f3627',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-161ffd9f-9478-49ca-8add-bc2a226f3627',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-161ffd9f-9478-49ca-8add-bc2a226f3627',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-49a71ce4-bf57-4011-86a0-cd7d2b699eee',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-49a71ce4-bf57-4011-86a0-cd7d2b699eee',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-49a71ce4-bf57-4011-86a0-cd7d2b699eee',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-49a71ce4-bf57-4011-86a0-cd7d2b699eee',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-df357a51-5878-47f3-8ffd-74f6e66958fe',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-df357a51-5878-47f3-8ffd-74f6e66958fe',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-df357a51-5878-47f3-8ffd-74f6e66958fe',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-df357a51-5878-47f3-8ffd-74f6e66958fe',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ebc5b38a-6a2f-4447-b9c7-16e0e31ed86c',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ebc5b38a-6a2f-4447-b9c7-16e0e31ed86c',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ebc5b38a-6a2f-4447-b9c7-16e0e31ed86c',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ebc5b38a-6a2f-4447-b9c7-16e0e31ed86c',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d058deff-5183-41d1-b9dd-cfc9eee915b4',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d058deff-5183-41d1-b9dd-cfc9eee915b4',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d058deff-5183-41d1-b9dd-cfc9eee915b4',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d058deff-5183-41d1-b9dd-cfc9eee915b4',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ccb0ad67-bb52-46c0-ba3a-0e2eb4822bc5',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ccb0ad67-bb52-46c0-ba3a-0e2eb4822bc5',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ccb0ad67-bb52-46c0-ba3a-0e2eb4822bc5',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ccb0ad67-bb52-46c0-ba3a-0e2eb4822bc5',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-38351772-e238-46af-945e-200b56d4ebe8',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-38351772-e238-46af-945e-200b56d4ebe8',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-38351772-e238-46af-945e-200b56d4ebe8',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-38351772-e238-46af-945e-200b56d4ebe8',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-dc3b09d1-a31d-42d5-be55-273dcd19e0e6',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-dc3b09d1-a31d-42d5-be55-273dcd19e0e6',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-dc3b09d1-a31d-42d5-be55-273dcd19e0e6',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-dc3b09d1-a31d-42d5-be55-273dcd19e0e6',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-636c3018-cee0-4a70-a708-1d835edbf3d4',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-636c3018-cee0-4a70-a708-1d835edbf3d4',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-636c3018-cee0-4a70-a708-1d835edbf3d4',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-636c3018-cee0-4a70-a708-1d835edbf3d4',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-644d4d19-c6d6-423a-bb59-c992222b71ff',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-644d4d19-c6d6-423a-bb59-c992222b71ff',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-644d4d19-c6d6-423a-bb59-c992222b71ff',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-644d4d19-c6d6-423a-bb59-c992222b71ff',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3f5ac750-89a8-44f5-a797-7c4eb351bebb',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3f5ac750-89a8-44f5-a797-7c4eb351bebb',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3f5ac750-89a8-44f5-a797-7c4eb351bebb',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3f5ac750-89a8-44f5-a797-7c4eb351bebb',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-4db30e6d-34db-4ebf-bdf4-56e981a9ac80',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-4db30e6d-34db-4ebf-bdf4-56e981a9ac80',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-4db30e6d-34db-4ebf-bdf4-56e981a9ac80',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-4db30e6d-34db-4ebf-bdf4-56e981a9ac80',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-277b60a4-50bc-494c-9808-27c254f90f93',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-277b60a4-50bc-494c-9808-27c254f90f93',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-277b60a4-50bc-494c-9808-27c254f90f93',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-277b60a4-50bc-494c-9808-27c254f90f93',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-8262b1a8-0959-45a7-9d56-cdcfe8a7ffe2',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-8262b1a8-0959-45a7-9d56-cdcfe8a7ffe2',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-8262b1a8-0959-45a7-9d56-cdcfe8a7ffe2',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-8262b1a8-0959-45a7-9d56-cdcfe8a7ffe2',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-6aa15bde-4671-46ee-b7a4-a5a395d07b5a',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-6aa15bde-4671-46ee-b7a4-a5a395d07b5a',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-6aa15bde-4671-46ee-b7a4-a5a395d07b5a',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-6aa15bde-4671-46ee-b7a4-a5a395d07b5a',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d0b4eb67-0800-4251-8c87-7dfafa978bbf',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d0b4eb67-0800-4251-8c87-7dfafa978bbf',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d0b4eb67-0800-4251-8c87-7dfafa978bbf',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d0b4eb67-0800-4251-8c87-7dfafa978bbf',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-4a5669ae-ca2a-4505-9d56-a7fedea51fcc',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-4a5669ae-ca2a-4505-9d56-a7fedea51fcc',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-4a5669ae-ca2a-4505-9d56-a7fedea51fcc',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-4a5669ae-ca2a-4505-9d56-a7fedea51fcc',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-c5623229-1728-4a37-891d-03746a848754',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-c5623229-1728-4a37-891d-03746a848754',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-c5623229-1728-4a37-891d-03746a848754',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-c5623229-1728-4a37-891d-03746a848754',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-23c43bae-49bf-4c39-8885-5a1a0d5497e2',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-23c43bae-49bf-4c39-8885-5a1a0d5497e2',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-23c43bae-49bf-4c39-8885-5a1a0d5497e2',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-23c43bae-49bf-4c39-8885-5a1a0d5497e2',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d651be59-5975-4682-b3bc-6aa339e6310f',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d651be59-5975-4682-b3bc-6aa339e6310f',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d651be59-5975-4682-b3bc-6aa339e6310f',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-d651be59-5975-4682-b3bc-6aa339e6310f',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-293cd97c-a286-441b-bb45-b4db36f706e8',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-293cd97c-a286-441b-bb45-b4db36f706e8',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-293cd97c-a286-441b-bb45-b4db36f706e8',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-293cd97c-a286-441b-bb45-b4db36f706e8',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-32fdf0e4-60ff-48fb-a4ab-8e7be9124360',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-32fdf0e4-60ff-48fb-a4ab-8e7be9124360',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-32fdf0e4-60ff-48fb-a4ab-8e7be9124360',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-32fdf0e4-60ff-48fb-a4ab-8e7be9124360',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-41ea1c40-c9da-4d9d-8d10-dc9b93035c54',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-41ea1c40-c9da-4d9d-8d10-dc9b93035c54',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-41ea1c40-c9da-4d9d-8d10-dc9b93035c54',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-41ea1c40-c9da-4d9d-8d10-dc9b93035c54',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a5424187-c84b-4e73-b927-07a83760a284',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a5424187-c84b-4e73-b927-07a83760a284',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a5424187-c84b-4e73-b927-07a83760a284',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a5424187-c84b-4e73-b927-07a83760a284',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f145a22a-76a6-4dcb-806d-c48fe5307b5a',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f145a22a-76a6-4dcb-806d-c48fe5307b5a',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f145a22a-76a6-4dcb-806d-c48fe5307b5a',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f145a22a-76a6-4dcb-806d-c48fe5307b5a',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-602cb9f6-4484-4620-8435-f50a03d6861a',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-602cb9f6-4484-4620-8435-f50a03d6861a',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-602cb9f6-4484-4620-8435-f50a03d6861a',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-602cb9f6-4484-4620-8435-f50a03d6861a',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-7a5ad754-b7c1-4f49-bfb1-c58a36fad5eb',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-7a5ad754-b7c1-4f49-bfb1-c58a36fad5eb',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-7a5ad754-b7c1-4f49-bfb1-c58a36fad5eb',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-7a5ad754-b7c1-4f49-bfb1-c58a36fad5eb',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-81ab56d2-9770-4900-ad57-82abefcd9372',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-81ab56d2-9770-4900-ad57-82abefcd9372',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-81ab56d2-9770-4900-ad57-82abefcd9372',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-81ab56d2-9770-4900-ad57-82abefcd9372',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-23639150-fc42-4e45-9995-c45a3ad61ebc',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-23639150-fc42-4e45-9995-c45a3ad61ebc',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-23639150-fc42-4e45-9995-c45a3ad61ebc',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-23639150-fc42-4e45-9995-c45a3ad61ebc',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a4912e14-32f5-40fe-9f84-ea6fe960b523',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a4912e14-32f5-40fe-9f84-ea6fe960b523',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a4912e14-32f5-40fe-9f84-ea6fe960b523',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a4912e14-32f5-40fe-9f84-ea6fe960b523',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a3dce9e3-9df2-4d64-8c79-131e64557f7e',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a3dce9e3-9df2-4d64-8c79-131e64557f7e',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a3dce9e3-9df2-4d64-8c79-131e64557f7e',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-a3dce9e3-9df2-4d64-8c79-131e64557f7e',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-4801b9a7-c47a-4fcd-9f45-6af0d0e89f94',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-4801b9a7-c47a-4fcd-9f45-6af0d0e89f94',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-4801b9a7-c47a-4fcd-9f45-6af0d0e89f94',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-4801b9a7-c47a-4fcd-9f45-6af0d0e89f94',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f5f53d67-e71a-4922-adc1-101bf5565e8f',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f5f53d67-e71a-4922-adc1-101bf5565e8f',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f5f53d67-e71a-4922-adc1-101bf5565e8f',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f5f53d67-e71a-4922-adc1-101bf5565e8f',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0638833c-570b-44ea-bc17-bc2ce9a97074',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0638833c-570b-44ea-bc17-bc2ce9a97074',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0638833c-570b-44ea-bc17-bc2ce9a97074',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0638833c-570b-44ea-bc17-bc2ce9a97074',
+#   stage: 'public-verification',
+#   status: 'PUBLISHED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/final.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-c33f7e18-9e13-4b2a-b1aa-144da675c3ea',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-c33f7e18-9e13-4b2a-b1aa-144da675c3ea',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/large.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-c33f7e18-9e13-4b2a-b1aa-144da675c3ea',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/large.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-c33f7e18-9e13-4b2a-b1aa-144da675c3ea',
+#   stage: 'public-verification',
+#   status: 'PUBLISHED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/large.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-99645bfb-fe1a-4dde-8e03-5617b3132bc9',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-99645bfb-fe1a-4dde-8e03-5617b3132bc9',
+#   stage: 'png',
+#   status: 'VERIFY_FAILED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-477446ed-e740-4024-a2c3-e9b274035886',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-477446ed-e740-4024-a2c3-e9b274035886',
+#   stage: 'initial-public',
+#   status: 'VERIFY_FAILED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-b349e87a-37fc-46b3-87d7-c6a4ff35ea67',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-b349e87a-37fc-46b3-87d7-c6a4ff35ea67',
+#   stage: 'pre-login',
+#   status: 'FORM_CHANGED',
+#   errorCode: 'FORM_CHANGED',
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-44db8f36-2aaa-4198-a433-1b1b1a5f2b0a',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-44db8f36-2aaa-4198-a433-1b1b1a5f2b0a',
+#   stage: 'login-submit',
+#   status: 'VERIFY_FAILED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-e7a8db3a-4b8f-4935-abe3-5cae0247561e',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-e7a8db3a-4b8f-4935-abe3-5cae0247561e',
+#   stage: 'editor-before-upload',
+#   status: 'AUTH_FAILED',
+#   errorCode: 'AUTH_FAILED',
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f721f8b5-d3ac-490a-82fa-ceeff32ce9a8',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-f721f8b5-d3ac-490a-82fa-ceeff32ce9a8',
+#   stage: 'upload',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'CMS_RESPONSE_CONTRACT_UNVERIFIED',
+#   finalImagePath: null,
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-86ba6c61-e2a7-4d5b-af05-a53a77c6f0c0',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-86ba6c61-e2a7-4d5b-af05-a53a77c6f0c0',
+#   stage: 'upload',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'UPLOAD_FAILED',
+#   finalImagePath: null,
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-cdacbe34-0539-4ab9-a59c-3b3e4241bf4a',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-cdacbe34-0539-4ab9-a59c-3b3e4241bf4a',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-cdacbe34-0539-4ab9-a59c-3b3e4241bf4a',
+#   stage: 'submit-prepare',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'FORM_CHANGED',
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-be424773-f594-4ecc-b563-e87a299b9162',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-be424773-f594-4ecc-b563-e87a299b9162',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-be424773-f594-4ecc-b563-e87a299b9162',
+#   stage: 'submit',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'MANUAL_CHECK_REQUIRED',
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-594256fc-cbee-488d-802e-e5deee9f8cc2',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-594256fc-cbee-488d-802e-e5deee9f8cc2',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-594256fc-cbee-488d-802e-e5deee9f8cc2',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-594256fc-cbee-488d-802e-e5deee9f8cc2',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/jinan.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-68fdf198-d8b0-4102-87bc-3ef65bbb1f93',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-68fdf198-d8b0-4102-87bc-3ef65bbb1f93',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/ambiguous.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-68fdf198-d8b0-4102-87bc-3ef65bbb1f93',
+#   stage: 'submit',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'MANUAL_CHECK_REQUIRED',
+#   finalImagePath: '/uploads/2026/ambiguous.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0af4c8b0-8fed-458c-9a6d-ae7b6e9da9bc',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0af4c8b0-8fed-458c-9a6d-ae7b6e9da9bc',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/ambiguous.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0af4c8b0-8fed-458c-9a6d-ae7b6e9da9bc',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/ambiguous.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0af4c8b0-8fed-458c-9a6d-ae7b6e9da9bc',
+#   stage: 'public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/ambiguous.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-44c31e2c-8ece-477b-af89-bd76673429f0',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-44c31e2c-8ece-477b-af89-bd76673429f0',
+#   stage: 'prior-ambiguous-public-verification',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/saved.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-44c31e2c-8ece-477b-af89-bd76673429f0',
+#   stage: 'prior-ambiguous-public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/saved.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ada300eb-9158-4ad8-99e6-8d3bb66b8fbe',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ada300eb-9158-4ad8-99e6-8d3bb66b8fbe',
+#   stage: 'prior-ambiguous-public-verification',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/saved.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-ada300eb-9158-4ad8-99e6-8d3bb66b8fbe',
+#   stage: 'prior-ambiguous-public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'VERIFY_FAILED',
+#   finalImagePath: '/uploads/2026/saved.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-06b1a9fb-21d4-46fa-a775-2d9ab312db96',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-06b1a9fb-21d4-46fa-a775-2d9ab312db96',
+#   stage: 'upload',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'MANUAL_CHECK_REQUIRED',
+#   finalImagePath: null,
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-cbe90279-ddb4-4d47-8572-f63f5af519c1',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-cbe90279-ddb4-4d47-8572-f63f5af519c1',
+#   stage: 'prior-ambiguous-public-verification',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-cbe90279-ddb4-4d47-8572-f63f5af519c1',
+#   stage: 'prior-ambiguous-public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-fa118143-9e9a-44c0-89c3-037fec3ccce8',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-fa118143-9e9a-44c0-89c3-037fec3ccce8',
+#   stage: 'upload',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'UPLOAD_FAILED',
+#   finalImagePath: null,
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-995011e0-5de3-4a76-ad5d-78741543b95c',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-995011e0-5de3-4a76-ad5d-78741543b95c',
+#   stage: 'prior-ambiguous-public-verification',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-995011e0-5de3-4a76-ad5d-78741543b95c',
+#   stage: 'prior-ambiguous-public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0c9bae24-7040-433b-b8a3-9ffea00437cb',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-0c9bae24-7040-433b-b8a3-9ffea00437cb',
+#   stage: 'upload',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: 'CMS_RESPONSE_CONTRACT_UNVERIFIED',
+#   finalImagePath: null,
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-81ed5f37-6ae6-4ec3-bc00-76e26efcfee1',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-81ed5f37-6ae6-4ec3-bc00-76e26efcfee1',
+#   stage: 'prior-ambiguous-public-verification',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-81ed5f37-6ae6-4ec3-bc00-76e26efcfee1',
+#   stage: 'prior-ambiguous-public-verification',
+#   status: 'MANUAL_CHECK_REQUIRED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-eccae456-d2cf-48d6-a4fc-864204738267',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-eccae456-d2cf-48d6-a4fc-864204738267',
+#   stage: 'upload-prepare',
+#   status: 'FORM_CHANGED',
+#   errorCode: 'FORM_CHANGED',
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-e53547f3-838c-4c47-b1ef-10c84ab227e5',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-e53547f3-838c-4c47-b1ef-10c84ab227e5',
+#   stage: 'upload',
+#   status: 'UPLOAD_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/valid-after-invalid.png',
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-e53547f3-838c-4c47-b1ef-10c84ab227e5',
+#   stage: 'submit',
+#   status: 'SUBMIT_SUCCEEDED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/valid-after-invalid.png',
+#   orphanUploadRisk: true
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-e53547f3-838c-4c47-b1ef-10c84ab227e5',
+#   stage: 'public-verification',
+#   status: 'PUBLISHED',
+#   errorCode: null,
+#   finalImagePath: '/uploads/2026/valid-after-invalid.png',
+#   orphanUploadRisk: false
+# }
+# Subtest: A. config exposes only public endpoints and env-name strings; result constants are complete
+ok 19 - A. config exposes only public endpoints and env-name strings; result constants are complete
+  ---
+  duration_ms: 0.943125
+  type: 'test'
+  ...
+# Subtest: M1. concurrent publish rejects second invocation before PNG, credentials, or transport
+ok 20 - M1. concurrent publish rejects second invocation before PNG, credentials, or transport
+  ---
+  duration_ms: 133.077
+  type: 'test'
+  ...
+# Subtest: M1b. production module exposes no coordinator reset or factory hooks
+ok 21 - M1b. production module exposes no coordinator reset or factory hooks
+  ---
+  duration_ms: 1.354542
+  type: 'test'
+  ...
+# Subtest: B. parser accepts a fresh exact CMS editor form and returns a fresh field map
+ok 22 - B. parser accepts a fresh exact CMS editor form and returns a fresh field map
+  ---
+  duration_ms: 0.723791
+  type: 'test'
+  ...
+# Subtest: C. parser fails closed on changed form contracts and allows unknown hidden fields only
+ok 23 - C. parser fails closed on changed form contracts and allows unknown hidden fields only
+  ---
+  duration_ms: 2.606666
+  type: 'test'
+  ...
+# Subtest: C2. login parser accepts only the exact safe login contract and never exposes credential values
+ok 24 - C2. login parser accepts only the exact safe login contract and never exposes credential values
+  ---
+  duration_ms: 0.648833
+  type: 'test'
+  ...
+# Subtest: C2b. form parsers ignore fake forms and controls in excluded or attribute contexts
+ok 25 - C2b. form parsers ignore fake forms and controls in excluded or attribute contexts
+  ---
+  duration_ms: 0.654042
+  type: 'test'
+  ...
+# Subtest: C2c. loginOnly diagnostic succeeds after login landing only and never touches publish URLs
+ok 26 - C2c. loginOnly diagnostic succeeds after login landing only and never touches publish URLs
+  ---
+  duration_ms: 0.304917
+  type: 'test'
+  ...
+# Subtest: C2c1. login POST matches same-origin form request contract
+ok 27 - C2c1. login POST matches same-origin form request contract
+  ---
+  duration_ms: 1.075625
+  type: 'test'
+  ...
+# Subtest: C2d. loginOnly diagnostic reads credentials only from runtime env and sends one POST maximum
+ok 28 - C2d. loginOnly diagnostic reads credentials only from runtime env and sends one POST maximum
+  ---
+  duration_ms: 1.646791
+  type: 'test'
+  ...
+# Subtest: C2d0. loginOnly diagnostic treats missing runtime credentials as VERIFY_FAILED without transport
+ok 29 - C2d0. loginOnly diagnostic treats missing runtime credentials as VERIFY_FAILED without transport
+  ---
+  duration_ms: 0.349208
+  type: 'test'
+  ...
+# Subtest: C2e. loginOnly diagnostic failures keep safe reason provenance and perform no mutations
+ok 30 - C2e. loginOnly diagnostic failures keep safe reason provenance and perform no mutations
+  ---
+  duration_ms: 1.972541
+  type: 'test'
+  ...
+# Subtest: C2f. loginOnly diagnostic ignores adversarial transport code spoofing and throwing getters
+ok 31 - C2f. loginOnly diagnostic ignores adversarial transport code spoofing and throwing getters
+  ---
+  duration_ms: 0.155458
+  type: 'test'
+  ...
+# Subtest: C3. editor parser allows same endpoint absent, empty, relative, or absolute action only
+ok 32 - C3. editor parser allows same endpoint absent, empty, relative, or absolute action only
+  ---
+  duration_ms: 0.366
+  type: 'test'
+  ...
+# Subtest: C4. parser fails closed on duplicate attributes case-insensitively without last-write wins
+ok 33 - C4. parser fails closed on duplicate attributes case-insensitively without last-write wins
+  ---
+  duration_ms: 0.193417
+  type: 'test'
+  ...
+# Subtest: C5. form parser requires complete strict attribute sequencing
+ok 34 - C5. form parser requires complete strict attribute sequencing
+  ---
+  duration_ms: 0.4215
+  type: 'test'
+  ...
+# Subtest: C6. parser keeps boolean attribute lookahead from consuming following attribute whitespace
+ok 35 - C6. parser keeps boolean attribute lookahead from consuming following attribute whitespace
+  ---
+  duration_ms: 0.229791
+  type: 'test'
+  ...
+# Subtest: D. submit request validates final upload path without filename-target assumptions
+ok 36 - D. submit request validates final upload path without filename-target assumptions
+  ---
+  duration_ms: 0.133708
+  type: 'test'
+  ...
+# Subtest: D2. submit request replaces one proven timetable image collection with one composite image
+ok 37 - D2. submit request replaces one proven timetable image collection with one composite image
+  ---
+  duration_ms: 4.377792
+  type: 'test'
+  ...
+# Subtest: D2a. submit request replaces real production anchored timetable images and preserves prefix bytes
+ok 38 - D2a. submit request replaces real production anchored timetable images and preserves prefix bytes
+  ---
+  duration_ms: 1.273167
+  type: 'test'
+  ...
+# Subtest: D2a0. submit request rejects staff photo near-miss with weak timetable wording
+ok 39 - D2a0. submit request rejects staff photo near-miss with weak timetable wording
+  ---
+  duration_ms: 0.309875
+  type: 'test'
+  ...
+# Subtest: D2a0r. submit request rejects exact reviewer staff prose and image structure
+ok 40 - D2a0r. submit request rejects exact reviewer staff prose and image structure
+  ---
+  duration_ms: 0.564917
+  type: 'test'
+  ...
+# Subtest: D2a0b. submit request requires every stable timetable prefix phrase
+ok 41 - D2a0b. submit request requires every stable timetable prefix phrase
+  ---
+  duration_ms: 0.773375
+  type: 'test'
+  ...
+# Subtest: D2a0c. submit request accepts only confirmed timetable visible-text grammar
+ok 42 - D2a0c. submit request accepts only confirmed timetable visible-text grammar
+  ---
+  duration_ms: 3.439792
+  type: 'test'
+  ...
+# Subtest: D2a0d. submit request rejects timetable visible-text grammar near misses
+ok 43 - D2a0d. submit request rejects timetable visible-text grammar near misses
+  ---
+  duration_ms: 0.878833
+  type: 'test'
+  ...
+# Subtest: D2a1. legacy existing timetable image source validation rejects dangerous ambiguity
+ok 44 - D2a1. legacy existing timetable image source validation rejects dangerous ambiguity
+  ---
+  duration_ms: 3.980167
+  type: 'test'
+  ...
+# Subtest: D2b. submit request rejects unrelated unique two-image gallery without the timetable envelope
+ok 45 - D2b. submit request rejects unrelated unique two-image gallery without the timetable envelope
+  ---
+  duration_ms: 0.130083
+  type: 'test'
+  ...
+# Subtest: D2c. submit request replaces one previously migrated anchored composite image with a later composite image
+ok 46 - D2c. submit request replaces one previously migrated anchored composite image with a later composite image
+  ---
+  duration_ms: 0.234042
+  type: 'test'
+  ...
+# Subtest: D3. submit request rejects zero, multiple, and malformed timetable collections
+ok 47 - D3. submit request rejects zero, multiple, and malformed timetable collections
+  ---
+  duration_ms: 4.309542
+  type: 'test'
+  ...
+# Subtest: D4. submit request rejects old image residue outside the proven collection
+ok 48 - D4. submit request rejects old image residue outside the proven collection
+  ---
+  duration_ms: 0.213875
+  type: 'test'
+  ...
+# Subtest: D4b. submit request rejects percent-encoded old image residue outside the proven collection
+ok 49 - D4b. submit request rejects percent-encoded old image residue outside the proven collection
+  ---
+  duration_ms: 0.18625
+  type: 'test'
+  ...
+# Subtest: D4c. submit request rejects old image residue in all source contexts before mutation
+ok 50 - D4c. submit request rejects old image residue in all source contexts before mutation
+  ---
+  duration_ms: 7.630291
+  type: 'test'
+  ...
+# Subtest: D4d. submit request preserves unrelated image references while rejecting only legacy identities
+ok 51 - D4d. submit request preserves unrelated image references while rejecting only legacy identities
+  ---
+  duration_ms: 0.172708
+  type: 'test'
+  ...
+# Subtest: D5. parser decodes supported numeric entities and fails closed on unknown entity tokens
+ok 52 - D5. parser decodes supported numeric entities and fails closed on unknown entity tokens
+  ---
+  duration_ms: 3.382125
+  type: 'test'
+  ...
+# Subtest: E. upload request builds exact QuickUpload descriptor with PNG metadata
+ok 53 - E. upload request builds exact QuickUpload descriptor with PNG metadata
+  ---
+  duration_ms: 0.4125
+  type: 'test'
+  ...
+# Subtest: F. upload response parser verifies one complete CKEditor callback and fails closed
+ok 54 - F. upload response parser verifies one complete CKEditor callback and fails closed
+  ---
+  duration_ms: 0.761875
+  type: 'test'
+  ...
+# Subtest: F2. submit response parser verifies exact safe redirect contract and fails closed
+ok 55 - F2. submit response parser verifies exact safe redirect contract and fails closed
+  ---
+  duration_ms: 0.175167
+  type: 'test'
+  ...
+# Subtest: G/H. offline preflight logs in read-only, parses protected editor, prepares only, and sanitizes output
+ok 56 - G/H. offline preflight logs in read-only, parses protected editor, prepares only, and sanitizes output
+  ---
+  duration_ms: 8.904292
+  type: 'test'
+  ...
+# Subtest: G2. preflight without finalImageUrl completes read-only checks and does not prepare submit
+ok 57 - G2. preflight without finalImageUrl completes read-only checks and does not prepare submit
+  ---
+  duration_ms: 10.118709
+  type: 'test'
+  ...
+# Subtest: G2b. preflight ingests manual login cookie and lets explicit editor GET prove auth
+ok 58 - G2b. preflight ingests manual login cookie and lets explicit editor GET prove auth
+  ---
+  duration_ms: 9.9335
+  type: 'test'
+  ...
+# Subtest: G2b1. preflight follows exact login success landing before editor and carries rotated PHPSESSID
+ok 59 - G2b1. preflight follows exact login success landing before editor and carries rotated PHPSESSID
+  ---
+  duration_ms: 6.161833
+  type: 'test'
+  ...
+# Subtest: G2b1a. preflight fail-closes explicit login landing drift before editor or mutations
+ok 60 - G2b1a. preflight fail-closes explicit login landing drift before editor or mutations
+  ---
+  duration_ms: 50.303084
+  type: 'test'
+  ...
+# Subtest: G2b1b. preflight fail-closes present empty login landing Location before editor or mutations
+ok 61 - G2b1b. preflight fail-closes present empty login landing Location before editor or mutations
+  ---
+  duration_ms: 58.309916
+  type: 'test'
+  ...
+# Subtest: G2b2. preflight classifies manual editor redirect to login as auth failure
+ok 62 - G2b2. preflight classifies manual editor redirect to login as auth failure
+  ---
+  duration_ms: 21.096583
+  type: 'test'
+  ...
+# Subtest: G2b3. preflight accepts only exact editor 200 without redirect Location as authenticated
+ok 63 - G2b3. preflight accepts only exact editor 200 without redirect Location as authenticated
+  ---
+  duration_ms: 11.349834
+  type: 'test'
+  ...
+# Subtest: G2b4. preflight fail-closes unsafe or ambiguous editor redirects
+ok 64 - G2b4. preflight fail-closes unsafe or ambiguous editor redirects
+  ---
+  duration_ms: 90.214041
+  type: 'test'
+  ...
+# Subtest: G2c. preflight rejects unsafe login POST Location before landing, editor, or mutations
+ok 65 - G2c. preflight rejects unsafe login POST Location before landing, editor, or mutations
+  ---
+  duration_ms: 100.144375
+  type: 'test'
+  ...
+# Subtest: G2c1. preflight fail-closes login POST responses without explicit finalUrl before landing or mutations
+ok 66 - G2c1. preflight fail-closes login POST responses without explicit finalUrl before landing or mutations
+  ---
+  duration_ms: 13.220583
+  type: 'test'
+  ...
+# Subtest: G2c2. preflight fail-closes login landing responses without explicit finalUrl before editor or mutations
+ok 67 - G2c2. preflight fail-closes login landing responses without explicit finalUrl before editor or mutations
+  ---
+  duration_ms: 14.334875
+  type: 'test'
+  ...
+# Subtest: G2c2a. publish login-submit does not log unallowlisted transport errorCode text
+ok 68 - G2c2a. publish login-submit does not log unallowlisted transport errorCode text
+  ---
+  duration_ms: 5.868917
+  type: 'test'
+  ...
+# Subtest: G2c2b. publish login-submit does not trust allowlisted transport errorCode spoofing
+ok 69 - G2c2b. publish login-submit does not trust allowlisted transport errorCode spoofing
+  ---
+  duration_ms: 4.87225
+  type: 'test'
+  ...
+# Subtest: G2c2c. publish login-submit handles transport errorCode getter that throws
+ok 70 - G2c2c. publish login-submit handles transport errorCode getter that throws
+  ---
+  duration_ms: 5.604333
+  type: 'test'
+  ...
+# Subtest: G2c2d. publish login-submit handles thrown object errorCode getter that throws
+ok 71 - G2c2d. publish login-submit handles thrown object errorCode getter that throws
+  ---
+  duration_ms: 4.593
+  type: 'test'
+  ...
+# Subtest: G2c3. publish login POST diagnostics use exact safe reason codes and deterministic precedence
+ok 72 - G2c3. publish login POST diagnostics use exact safe reason codes and deterministic precedence
+  ---
+  duration_ms: 18.256667
+  type: 'test'
+  ...
+# Subtest: G2c4. publish login landing diagnostics use exact safe reason codes and deterministic precedence
+ok 73 - G2c4. publish login landing diagnostics use exact safe reason codes and deterministic precedence
+  ---
+  duration_ms: 13.08375
+  type: 'test'
+  ...
+# Subtest: G2d. login POST response validator allows only exact evidenced success contract
+ok 74 - G2d. login POST response validator allows only exact evidenced success contract
+  ---
+  duration_ms: 0.246083
+  type: 'test'
+  ...
+# Subtest: G3. preflightPublish export is the fail-closed safe preflight alias
+ok 75 - G3. preflightPublish export is the fail-closed safe preflight alias
+  ---
+  duration_ms: 4.176125
+  type: 'test'
+  ...
+# Subtest: G. preflight fail-closes auth, verification, and form failures
+ok 76 - G. preflight fail-closes auth, verification, and form failures
+  ---
+  duration_ms: 12.740584
+  type: 'test'
+  ...
+# Subtest: G6. preflight classifies only structurally exact login form credential rejection as AUTH_FAILED
+ok 77 - G6. preflight classifies only structurally exact login form credential rejection as AUTH_FAILED
+  ---
+  duration_ms: 18.122042
+  type: 'test'
+  ...
+# Subtest: G6a. preflight fail-closes exact login-form credential rejection with present empty Location
+ok 78 - G6a. preflight fail-closes exact login-form credential rejection with present empty Location
+  ---
+  duration_ms: 22.902166
+  type: 'test'
+  ...
+# Subtest: G4. preflight validates login GET form before sending credentials
+ok 79 - G4. preflight validates login GET form before sending credentials
+  ---
+  duration_ms: 4.288625
+  type: 'test'
+  ...
+# Subtest: G5. preflight rejects structurally anchored non-timetable staff gallery before credentials
+ok 80 - G5. preflight rejects structurally anchored non-timetable staff gallery before credentials
+  ---
+  duration_ms: 5.611791
+  type: 'test'
+  ...
+# Subtest: M. publish pipeline gate-disabled returns unverified before credentials or transport
+ok 81 - M. publish pipeline gate-disabled returns unverified before credentials or transport
+  ---
+  duration_ms: 0.61175
+  type: 'test'
+  ...
+# Subtest: M2. publish pipeline succeeds only after verified upload, submit redirect, and fresh public match
+ok 82 - M2. publish pipeline succeeds only after verified upload, submit redirect, and fresh public match
+  ---
+  duration_ms: 16.90325
+  type: 'test'
+  ...
+# Subtest: M2a. publish pipeline preserves percent-encoded QuickUpload path through public verification
+ok 83 - M2a. publish pipeline preserves percent-encoded QuickUpload path through public verification
+  ---
+  duration_ms: 13.316792
+  type: 'test'
+  ...
+# Subtest: M2b. publish pipeline performs post-submit public verification anonymously
+ok 84 - M2b. publish pipeline performs post-submit public verification anonymously
+  ---
+  duration_ms: 10.83375
+  type: 'test'
+  ...
+# Subtest: M2b2. post-submit final image GET does not inherit anonymous public page cookies
+ok 85 - M2b2. post-submit final image GET does not inherit anonymous public page cookies
+  ---
+  duration_ms: 16.538375
+  type: 'test'
+  ...
+# Subtest: M2g. post-submit public verification rejects altered percent encodings and hidden or duplicate final paths
+ok 86 - M2g. post-submit public verification rejects altered percent encodings and hidden or duplicate final paths
+  ---
+  duration_ms: 42.882
+  type: 'test'
+  ...
+# Subtest: M2c. publish pipeline blocks mutation when editor drifts from initial public baseline before upload
+ok 87 - M2c. publish pipeline blocks mutation when editor drifts from initial public baseline before upload
+  ---
+  duration_ms: 9.160708
+  type: 'test'
+  ...
+# Subtest: M2d. publish pipeline blocks submit when fresh editor drifts after upload
+ok 88 - M2d. publish pipeline blocks submit when fresh editor drifts after upload
+  ---
+  duration_ms: 9.201625
+  type: 'test'
+  ...
+# Subtest: M2e. publish pipeline requires the complete editor note to occur exactly once in initial public baseline
+ok 89 - M2e. publish pipeline requires the complete editor note to occur exactly once in initial public baseline
+  ---
+  duration_ms: 14.496
+  type: 'test'
+  ...
+# Subtest: M2f. post-submit public verification rejects any extra content in the replacement range
+ok 90 - M2f. post-submit public verification rejects any extra content in the replacement range
+  ---
+  duration_ms: 50.117
+  type: 'test'
+  ...
+# Subtest: M2e. post-submit verification rejects public page drift, old residue, and ambiguous final images
+ok 91 - M2e. post-submit verification rejects public page drift, old residue, and ambiguous final images
+  ---
+  duration_ms: 62.883
+  type: 'test'
+  ...
+# Subtest: M2e2. post-submit verification rejects encoded legacy residue outside replacement
+ok 92 - M2e2. post-submit verification rejects encoded legacy residue outside replacement
+  ---
+  duration_ms: 9.550666
+  type: 'test'
+  ...
+# Subtest: M2e3. post-submit verification rejects entity and multi-encoded legacy residue outside replacement
+ok 93 - M2e3. post-submit verification rejects entity and multi-encoded legacy residue outside replacement
+  ---
+  duration_ms: 16.48325
+  type: 'test'
+  ...
+# Subtest: M2e4. post-submit verification rejects old image residue in all public source contexts
+ok 94 - M2e4. post-submit verification rejects old image residue in all public source contexts
+  ---
+  duration_ms: 98.149584
+  type: 'test'
+  ...
+# Subtest: M2e5. post-submit verification rejects numeric slash entities and 1-8 layer percent residue
+ok 95 - M2e5. post-submit verification rejects numeric slash entities and 1-8 layer percent residue
+  ---
+  duration_ms: 75.567167
+  type: 'test'
+  ...
+# Subtest: M2f. post-submit verification rejects uploaded image resource contract failures
+ok 96 - M2f. post-submit verification rejects uploaded image resource contract failures
+  ---
+  duration_ms: 44.951083
+  type: 'test'
+  ...
+# Subtest: M2f2. post-submit image resource verification accepts valid PNG up to publish contract limit
+ok 97 - M2f2. post-submit image resource verification accepts valid PNG up to publish contract limit
+  ---
+  duration_ms: 22.411
+  type: 'test'
+  ...
+# Subtest: M2f3. default transport post-submit image resource verification accepts valid PNG above HTML body limit
+ok 98 - M2f3. default transport post-submit image resource verification accepts valid PNG above HTML body limit
+  ---
+  duration_ms: 29.888291
+  type: 'test'
+  ...
+# Subtest: M3. publish pipeline stops at each failed phase and never retries mutations
+ok 99 - M3. publish pipeline stops at each failed phase and never retries mutations
+  ---
+  duration_ms: 38.1255
+  type: 'test'
+  ...
+# Subtest: M4. publish pipeline exhausts bounded public verification GET retries safely
+ok 100 - M4. publish pipeline exhausts bounded public verification GET retries safely
+  ---
+  duration_ms: 4.896834
+  type: 'test'
+  ...
+# Subtest: M4b. post-submit public verification delay failures retain ambiguity and block mutation retry
+ok 101 - M4b. post-submit public verification delay failures retain ambiguity and block mutation retry
+  ---
+  duration_ms: 9.802417
+  type: 'test'
+  ...
+# Subtest: M5. post-upload fresh editor failure records and reuses one final image path without re-upload
+ok 102 - M5. post-upload fresh editor failure records and reuses one final image path without re-upload
+  ---
+  duration_ms: 4.39025
+  type: 'test'
+  ...
+# Subtest: M6. submit ambiguity and verification failure require manual check with orphan risk and no mutation retry
+ok 103 - M6. submit ambiguity and verification failure require manual check with orphan risk and no mutation retry
+  ---
+  duration_ms: 9.462834
+  type: 'test'
+  ...
+# Subtest: M7. unresolved ambiguous prior state does anonymous public check before credentials or mutation
+ok 104 - M7. unresolved ambiguous prior state does anonymous public check before credentials or mutation
+  ---
+  duration_ms: 9.416625
+  type: 'test'
+  ...
+# Subtest: M7d. prior ambiguous recovery final image GET does not inherit anonymous public page cookies
+ok 105 - M7d. prior ambiguous recovery final image GET does not inherit anonymous public page cookies
+  ---
+  duration_ms: 8.37225
+  type: 'test'
+  ...
+# Subtest: M7c. ambiguous prior state returns manual check when proven image GET throws before credentials or mutation
+ok 106 - M7c. ambiguous prior state returns manual check when proven image GET throws before credentials or mutation
+  ---
+  duration_ms: 4.873292
+  type: 'test'
+  ...
+# Subtest: M7b. options.coordinator cannot bypass retained ambiguous state
+ok 107 - M7b. options.coordinator cannot bypass retained ambiguous state
+  ---
+  duration_ms: 4.7545
+  type: 'test'
+  ...
+# Subtest: M8. unknown upload-response loss reports orphan risk and blocks runtime-local mutation retry
+ok 108 - M8. unknown upload-response loss reports orphan risk and blocks runtime-local mutation retry
+  ---
+  duration_ms: 4.398834
+  type: 'test'
+  ...
+# Subtest: M8b. dispatched upload failure responses become ambiguous and block re-upload
+ok 109 - M8b. dispatched upload failure responses become ambiguous and block re-upload
+  ---
+  duration_ms: 8.778417
+  type: 'test'
+  ...
+# Subtest: M8c. pre-dispatch upload request validation fails closed without orphan state
+ok 110 - M8c. pre-dispatch upload request validation fails closed without orphan state
+  ---
+  duration_ms: 12.204
+  type: 'test'
+  ...
+# Subtest: M9. structured logs are allowlisted and logger failures are harmless
+ok 111 - M9. structured logs are allowlisted and logger failures are harmless
+  ---
+  duration_ms: 4.690208
+  type: 'test'
+  ...
+# Subtest: M9b. async logger rejections are swallowed without changing publish flow
+ok 112 - M9b. async logger rejections are swallowed without changing publish flow
+  ---
+  duration_ms: 13.624
+  type: 'test'
+  ...
+# Subtest: I. pure retry/idempotency and public-current inspection model
+ok 113 - I. pure retry/idempotency and public-current inspection model
+  ---
+  duration_ms: 0.187
+  type: 'test'
+  ...
+# Subtest: I2. public-current inspection requires one visible exact image src match only
+ok 114 - I2. public-current inspection requires one visible exact image src match only
+  ---
+  duration_ms: 0.142291
+  type: 'test'
+  ...
+# Subtest: I3. public-current inspection returns unverified on duplicate or malformed img attributes
+ok 115 - I3. public-current inspection returns unverified on duplicate or malformed img attributes
+  ---
+  duration_ms: 0.061
+  type: 'test'
+  ...
+# Subtest: I4. public-current inspection fails closed for unclosed or malformed excluded HTML contexts
+ok 116 - I4. public-current inspection fails closed for unclosed or malformed excluded HTML contexts
+  ---
+  duration_ms: 0.086208
+  type: 'test'
+  ...
+# Subtest: I5. public-current inspection ignores excluded and attribute-contained img text
+ok 117 - I5. public-current inspection ignores excluded and attribute-contained img text
+  ---
+  duration_ms: 0.057541
+  type: 'test'
+  ...
+# Subtest: I6. public-current inspection fail-closes ordinary HTML nesting and accepts balanced and void tags
+ok 118 - I6. public-current inspection fail-closes ordinary HTML nesting and accepts balanced and void tags
+  ---
+  duration_ms: 0.105167
+  type: 'test'
+  ...
+# Subtest: I7. public-current inspection fail-closes hidden target images on self or inherited ancestors
+ok 119 - I7. public-current inspection fail-closes hidden target images on self or inherited ancestors
+  ---
+  duration_ms: 0.506125
+  type: 'test'
+  ...
+# Subtest: K. cookie jar scopes Path, Secure, expiry, deletion, and same-name ordering
+ok 120 - K. cookie jar scopes Path, Secure, expiry, deletion, and same-name ordering
+  ---
+  duration_ms: 0.067583
+  type: 'test'
+  ...
+# Subtest: L. default fetch transport never follows redirects and returns Location plus Set-Cookie values
+ok 121 - L. default fetch transport never follows redirects and returns Location plus Set-Cookie values
+  ---
+  duration_ms: 0.25075
+  type: 'test'
+  ...
+# Subtest: L1b. default fetch transport can return bounded binary response bytes
+ok 122 - L1b. default fetch transport can return bounded binary response bytes
+  ---
+  duration_ms: 0.135791
+  type: 'test'
+  ...
+# Subtest: L1c. default fetch transport streams split binary bytes within the body limit
+ok 123 - L1c. default fetch transport streams split binary bytes within the body limit
+  ---
+  duration_ms: 0.094708
+  type: 'test'
+  ...
+# Subtest: L1d. default fetch transport cancels oversized streaming binary response immediately
+ok 124 - L1d. default fetch transport cancels oversized streaming binary response immediately
+  ---
+  duration_ms: 0.124625
+  type: 'test'
+  ...
+# Subtest: L1e. default fetch transport requires bounded Content-Length before binary arrayBuffer fallback
+ok 125 - L1e. default fetch transport requires bounded Content-Length before binary arrayBuffer fallback
+  ---
+  duration_ms: 0.257125
+  type: 'test'
+  ...
+# Subtest: L2. default fetch transport streams split UTF-8 safely within the body limit
+ok 126 - L2. default fetch transport streams split UTF-8 safely within the body limit
+  ---
+  duration_ms: 0.139209
+  type: 'test'
+  ...
+# Subtest: L3. default fetch transport cancels streaming responses immediately above max bytes
+ok 127 - L3. default fetch transport cancels streaming responses immediately above max bytes
+  ---
+  duration_ms: 0.091708
+  type: 'test'
+  ...
+# Subtest: L4. default fetch transport without a web stream requires bounded Content-Length
+ok 128 - L4. default fetch transport without a web stream requires bounded Content-Length
+  ---
+  duration_ms: 0.144416
+  type: 'test'
+  ...
+# Subtest: L5. default fetch transport validates body limit and timeout options
+ok 129 - L5. default fetch transport validates body limit and timeout options
+  ---
+  duration_ms: 0.084959
+  type: 'test'
+  ...
+# Subtest: J. rollback plan is explicitly unsupported and non-mutating
+ok 130 - J. rollback plan is explicitly unsupported and non-mutating
+  ---
+  duration_ms: 0.022542
+  type: 'test'
+  ...
+# Subtest: accepts only YYYY-MM month keys
+ok 131 - accepts only YYYY-MM month keys
+  ---
+  duration_ms: 1.261416
+  type: 'test'
+  ...
+# Subtest: infers Gregorian month key from ROC and Gregorian titles
+ok 132 - infers Gregorian month key from ROC and Gregorian titles
+  ---
+  duration_ms: 0.200709
+  type: 'test'
+  ...
+# Subtest: blocks an obvious month/title mismatch
+ok 133 - blocks an obvious month/title mismatch
+  ---
+  duration_ms: 0.091959
+  type: 'test'
+  ...
+# Subtest: does not invent a mismatch for an unparseable title
+ok 134 - does not invent a mismatch for an unparseable title
+  ---
+  duration_ms: 0.079583
+  type: 'test'
+  ...
+# Subtest: validates the minimal existing schedule data shape
+ok 135 - validates the minimal existing schedule data shape
+  ---
+  duration_ms: 0.049834
+  type: 'test'
+  ...
+# Subtest: initial month uses browser local September date, never April title or remembered month
+ok 136 - initial month uses browser local September date, never April title or remembered month
+  ---
+  duration_ms: 0.929791
+  type: 'test'
+  ...
+# Subtest: local calendar getters determine the month, not UTC date
+ok 137 - local calendar getters determine the month, not UTC date
+  ---
+  duration_ms: 0.391666
+  type: 'test'
+  ...
+# Subtest: initial month does not access localStorage or parse the initial title
+ok 138 - initial month does not access localStorage or parse the initial title
+  ---
+  duration_ms: 0.122958
+  type: 'test'
+  ...
+# Subtest: localStorage write failure does not crash
+ok 139 - localStorage write failure does not crash
+  ---
+  duration_ms: 0.659208
+  type: 'test'
+  ...
+# Subtest: invalid month is never written to localStorage
+ok 140 - invalid month is never written to localStorage
+  ---
+  duration_ms: 1.594458
+  type: 'test'
+  ...
+# Subtest: only successful found loads remember the month
+ok 141 - only successful found loads remember the month
+  ---
+  duration_ms: 0.389166
+  type: 'test'
+  ...
+# Subtest: only successful saves remember the month
+ok 142 - only successful saves remember the month
+  ---
+  duration_ms: 0.161083
+  type: 'test'
+  ...
+# Subtest: Apps Script save uses ScriptLock and releases it
+ok 143 - Apps Script save uses ScriptLock and releases it
+  ---
+  duration_ms: 0.357041
+  type: 'test'
+  ...
+# Subtest: Apps Script schema stays minimal and keyed by month_key
+ok 144 - Apps Script schema stays minimal and keyed by month_key
+  ---
+  duration_ms: 0.227375
+  type: 'test'
+  ...
+# Subtest: Apps Script normalizes legacy date month cells and forces new month keys to text
+ok 145 - Apps Script normalizes legacy date month cells and forces new month keys to text
+  ---
+  duration_ms: 0.309708
+  type: 'test'
+  ...
+# Subtest: Apps Script rejects direct GET access and requires server secret for POST
+ok 146 - Apps Script rejects direct GET access and requires server secret for POST
+  ---
+  duration_ms: 0.162708
+  type: 'test'
+  ...
+# Subtest: Vercel proxy requires signed session and keeps server secret out of browser config
+ok 147 - Vercel proxy requires signed session and keeps server secret out of browser config
+  ---
+  duration_ms: 1.296833
+  type: 'test'
+  ...
+# Subtest: shared-password login establishes a server session before marking browser authenticated
+ok 148 - shared-password login establishes a server session before marking browser authenticated
+  ---
+  duration_ms: 0.154875
+  type: 'test'
+  ...
+# Subtest: front end auto-loads on authenticated App mount and retains manual controls
+ok 149 - front end auto-loads on authenticated App mount and retains manual controls
+  ---
+  duration_ms: 0.376417
+  type: 'test'
+  ...
+# Subtest: front end remembers month only after successful load or save responses
+ok 150 - front end remembers month only after successful load or save responses
+  ---
+  duration_ms: 2.378041
+  type: 'test'
+  ...
+# Subtest: preview and PNG capture invariants remain present
+ok 151 - preview and PNG capture invariants remain present
+  ---
+  duration_ms: 0.368292
+  type: 'test'
+  ...
+# Subtest: mount load applies the saved current-month data instead of April initial data
+ok 152 - mount load applies the saved current-month data instead of April initial data
+  ---
+  duration_ms: 8.896834
+  type: 'test'
+  ...
+# Subtest: missing current month leaves no April facts and never requests April
+ok 153 - missing current month leaves no April facts and never requests April
+  ---
+  duration_ms: 0.927666
+  type: 'test'
+  ...
+# Subtest: manual Load still uses the selected month and preserves data on missing response
+ok 154 - manual Load still uses the selected month and preserves data on missing response
+  ---
+  duration_ms: 1.277959
+  type: 'test'
+  ...
+# Subtest: 401 remains a failure without fallback or applying a response body
+ok 155 - 401 remains a failure without fallback or applying a response body
+  ---
+  duration_ms: 0.9975
+  type: 'test'
+  ...
+# Subtest: a late initial response cannot overwrite data from a newer manual load
+ok 156 - a late initial response cannot overwrite data from a newer manual load
+  ---
+  duration_ms: 2.274584
+  type: 'test'
+  ...
+# Subtest: logout/unmount invalidates the pending automatic load
+ok 157 - logout/unmount invalidates the pending automatic load
+  ---
+  duration_ms: 1.14175
+  type: 'test'
+  ...
+# Subtest: logging in again mounts a new current-month load rather than restoring April
+ok 158 - logging in again mounts a new current-month load rather than restoring April
+  ---
+  duration_ms: 2.403542
+  type: 'test'
+  ...
+# Subtest: an April payload returned for the current month is rejected
+ok 159 - an April payload returned for the current month is rejected
+  ---
+  duration_ms: 1.242958
+  type: 'test'
+  ...
+# Subtest: manual month selection cancels the pending automatic response without auto-loading another month
+ok 160 - manual month selection cancels the pending automatic response without auto-loading another month
+  ---
+  duration_ms: 2.133208
+  type: 'test'
+  ...
+# Subtest: distinct scoped capability binds operation, session, executor, purpose and expiry
+ok 161 - distinct scoped capability binds operation, session, executor, purpose and expiry
+  ---
+  duration_ms: 3.424666
+  type: 'test'
+  ...
+# Subtest: endpoint default off and production denied independently of IMAGE/FLOW; shared session alone insufficient
+ok 162 - endpoint default off and production denied independently of IMAGE/FLOW; shared session alone insufficient
+  ---
+  duration_ms: 1.584833
+  type: 'test'
+  ...
+# Subtest: prepare validates full PNG and hash, pins approved source, transports once and never retries on response loss
+ok 163 - prepare validates full PNG and hash, pins approved source, transports once and never retries on response loss
+  ---
+  duration_ms: 64.528083
+  type: 'test'
+  ...
+# Subtest: strict origin, duplicate keys, content type, limit, authority separation and no response internals
+ok 164 - strict origin, duplicate keys, content type, limit, authority separation and no response internals
+  ---
+  duration_ms: 2.240084
+  type: 'test'
+  ...
+# Subtest: incomplete upstream approval fails closed and known validation rejection remains specific
+ok 165 - incomplete upstream approval fails closed and known validation rejection remains specific
+  ---
+  duration_ms: 0.750041
+  type: 'test'
+  ...
+# Subtest: operator enrollment is unprivileged; pinned metadata, lifetime, origin and explicit production gate govern issuance
+ok 166 - operator enrollment is unprivileged; pinned metadata, lifetime, origin and explicit production gate govern issuance
+  ---
+  duration_ms: 0.895208
+  type: 'test'
+  ...
+# Subtest: strict nested JSON, malformed lengths, spoofed hosts and browser capability injection never dispatch
+ok 167 - strict nested JSON, malformed lengths, spoofed hosts and browser capability injection never dispatch
+  ---
+  duration_ms: 0.381084
+  type: 'test'
+  ...
+# Subtest: authenticated Apps Script dispatcher default off, separate authority and exact runtime/configured pins before writes
+ok 168 - authenticated Apps Script dispatcher default off, separate authority and exact runtime/configured pins before writes
+  ---
+  duration_ms: 18.803625
+  type: 'test'
+  ...
+# Subtest: prepare durable, concurrent dispatch locked out, duplicate and response loss reconcile read-only by operation ID
+ok 169 - prepare durable, concurrent dispatch locked out, duplicate and response loss reconcile read-only by operation ID
+  ---
+  duration_ms: 19.513667
+  type: 'test'
+  ...
+# Subtest: real wrapper journal/Drive fault {"failWrite":1}
+ok 170 - real wrapper journal/Drive fault {"failWrite":1}
+  ---
+  duration_ms: 9.440125
+  type: 'test'
+  ...
+# Subtest: real wrapper journal/Drive fault {"failFlush":1}
+ok 171 - real wrapper journal/Drive fault {"failFlush":1}
+  ---
+  duration_ms: 6.311167
+  type: 'test'
+  ...
+# Subtest: real wrapper journal/Drive fault {"failWrite":2}
+ok 172 - real wrapper journal/Drive fault {"failWrite":2}
+  ---
+  duration_ms: 5.854208
+  type: 'test'
+  ...
+# Subtest: real wrapper journal/Drive fault {"failFlush":2}
+ok 173 - real wrapper journal/Drive fault {"failFlush":2}
+  ---
+  duration_ms: 5.920584
+  type: 'test'
+  ...
+# Subtest: real wrapper journal/Drive fault {"orphan":true}
+ok 174 - real wrapper journal/Drive fault {"orphan":true}
+  ---
+  duration_ms: 8.843583
+  type: 'test'
+  ...
+# Subtest: readonly missing/partial/duplicate journal and absent schedule never bootstrap or repair
+ok 175 - readonly missing/partial/duplicate journal and absent schedule never bootstrap or repair
+  ---
+  duration_ms: 1.731875
+  type: 'test'
+  ...
+# Subtest: schedule equality, PNG tamper and stale baseline prevent all staging
+ok 176 - schedule equality, PNG tamper and stale baseline prevent all staging
+  ---
+  duration_ms: 14.878083
+  type: 'test'
+  ...
+# Subtest: raw JSON __proto__ saved-fact mismatch rejects both directions without writes or staging on retry
+ok 177 - raw JSON __proto__ saved-fact mismatch rejects both directions without writes or staging on retry
+  ---
+  duration_ms: 80.378583
+  type: 'test'
+  ...
+# Subtest: raw JSON __proto__ changed retries bind the digest with no new writes or restaging
+ok 178 - raw JSON __proto__ changed retries bind the digest with no new writes or restaging
+  ---
+  duration_ms: 217.947875
+  type: 'test'
+  ...
+# Subtest: raw JSON __proto__ canonical objects retain own data recursively without prototype mutation
+ok 179 - raw JSON __proto__ canonical objects retain own data recursively without prototype mutation
+  ---
+  duration_ms: 0.996125
+  type: 'test'
+  ...
+# Subtest: all pins agree; cross-session recovery, expired capabilities and unsigned scope fail without writes
+ok 180 - all pins agree; cross-session recovery, expired capabilities and unsigned scope fail without writes
+  ---
+  duration_ms: 3.713708
+  type: 'test'
+  ...
+# Subtest: actual endpoint-to-Apps-Script transport: lost prepared response recovers without another write
+ok 181 - actual endpoint-to-Apps-Script transport: lost prepared response recovers without another write
+  ---
+  duration_ms: 44.781791
+  type: 'test'
+  ...
+# Subtest: service URL is not invocation attestation and does not replace signed endpoint or PNG checks
+ok 182 - service URL is not invocation attestation and does not replace signed endpoint or PNG checks
+  ---
+  duration_ms: 12.792125
+  type: 'test'
+  ...
+# Subtest: write-side signed scope still requires independent approval metadata before any journal write
+ok 183 - write-side signed scope still requires independent approval metadata before any journal write
+  ---
+  duration_ms: 2.84675
+  type: 'test'
+  ...
+# Subtest: authenticated synthetic enrollment -> owner metadata -> issuance -> prepare loss -> expired read-only recovery
+ok 184 - authenticated synthetic enrollment -> owner metadata -> issuance -> prepare loss -> expired read-only recovery
+  ---
+  duration_ms: 18.934166
+  type: 'test'
+  ...
+# Subtest: approval revocation or expiry immediately before persistence/staging leaves no new blob
+ok 185 - approval revocation or expiry immediately before persistence/staging leaves no new blob
+  ---
+  duration_ms: 3.81825
+  type: 'test'
+  ...
+# Subtest: actual prepare wrapper accepts empty pointer A1 without pointer writes
+ok 186 - actual prepare wrapper accepts empty pointer A1 without pointer writes
+  ---
+  duration_ms: 3.581958
+  type: 'test'
+  ...
+# Subtest: actual prepare wrapper mirrors normal pointer falsy and JSON String coercion semantics
+ok 187 - actual prepare wrapper mirrors normal pointer falsy and JSON String coercion semantics
+  ---
+  duration_ms: 34.579709
+  type: 'test'
+  ...
+# Subtest: actual prepare wrapper preserves existing nonzero pointer and checks exact baseline
+ok 188 - actual prepare wrapper preserves existing nonzero pointer and checks exact baseline
+  ---
+  duration_ms: 5.986125
+  type: 'test'
+  ...
+# Subtest: actual prepare wrapper malformed or missing pointer fails closed without any writes
+ok 189 - actual prepare wrapper malformed or missing pointer fails closed without any writes
+  ---
+  duration_ms: 84.080542
+  type: 'test'
+  ...
+# Subtest: intent durable before stage; duplicate prepare and lost response recover one immutable approval
+ok 190 - intent durable before stage; duplicate prepare and lost response recover one immutable approval
+  ---
+  duration_ms: 2.251042
+  type: 'test'
+  ...
+# Subtest: fail closed beforeIntent
+ok 191 - fail closed beforeIntent
+  ---
+  duration_ms: 0.155875
+  type: 'test'
+  ...
+# Subtest: fail closed ambiguousIntent
+ok 192 - fail closed ambiguousIntent
+  ---
+  duration_ms: 0.074292
+  type: 'test'
+  ...
+# Subtest: fail closed afterStage
+ok 193 - fail closed afterStage
+  ---
+  duration_ms: 1.172792
+  type: 'test'
+  ...
+# Subtest: fail closed orphan
+ok 194 - fail closed orphan
+  ---
+  duration_ms: 0.319125
+  type: 'test'
+  ...
+# Subtest: fail closed verify
+ok 195 - fail closed verify
+  ---
+  duration_ms: 0.237792
+  type: 'test'
+  ...
+# Subtest: readonly absent/partial journal; binding and changed retry rejected; expiry never mutates
+ok 196 - readonly absent/partial journal; binding and changed retry rejected; expiry never mutates
+  ---
+  duration_ms: 1.138167
+  type: 'test'
+  ...
+# Subtest: normal confirm rejects validation purpose even if a validation journal were accidentally supplied
+ok 197 - normal confirm rejects validation purpose even if a validation journal were accidentally supplied
+  ---
+  duration_ms: 0.776166
+  type: 'test'
+  ...
+# Subtest: partially persisted PREPARED records never claim a complete approval
+ok 198 - partially persisted PREPARED records never claim a complete approval
+  ---
+  duration_ms: 0.90475
+  type: 'test'
+  ...
+# Subtest: intent/final readback ambiguity never restages; final persisted record recovers read only
+ok 199 - intent/final readback ambiguity never restages; final persisted record recovers read only
+  ---
+  duration_ms: 0.912208
+  type: 'test'
+  ...
+# Subtest: R4 real exported production handler -> doPost -> prepare wrapper succeeds without invocation attestor
+ok 200 - R4 real exported production handler -> doPost -> prepare wrapper succeeds without invocation attestor
+  ---
+  duration_ms: 61.469583
+  type: 'test'
+  ...
+# Subtest: R4 real wrappers reject project before any write
+ok 201 - R4 real wrappers reject project before any write
+  ---
+  duration_ms: 14.17
+  type: 'test'
+  ...
+# Subtest: R4 real wrappers reject ledgerProperty before any write
+ok 202 - R4 real wrappers reject ledgerProperty before any write
+  ---
+  duration_ms: 21.479833
+  type: 'test'
+  ...
+# Subtest: R4 real wrappers reject formalAsLedger before any write
+ok 203 - R4 real wrappers reject formalAsLedger before any write
+  ---
+  duration_ms: 19.37625
+  type: 'test'
+  ...
+# Subtest: R4 real wrappers reject folderProperty before any write
+ok 204 - R4 real wrappers reject folderProperty before any write
+  ---
+  duration_ms: 20.402625
+  type: 'test'
+  ...
+# Subtest: R4 real wrappers reject deploymentProperty before any write
+ok 205 - R4 real wrappers reject deploymentProperty before any write
+  ---
+  duration_ms: 29.162292
+  type: 'test'
+  ...
+# Subtest: R4 real wrappers reject openedLedger before any write
+ok 206 - R4 real wrappers reject openedLedger before any write
+  ---
+  duration_ms: 27.373916
+  type: 'test'
+  ...
+# Subtest: R4 real wrappers reject openedFolder before any write
+ok 207 - R4 real wrappers reject openedFolder before any write
+  ---
+  duration_ms: 34.209416
+  type: 'test'
+  ...
+# Subtest: R4 real wrappers reject issuance before any write
+ok 208 - R4 real wrappers reject issuance before any write
+  ---
+  duration_ms: 10.526625
+  type: 'test'
+  ...
+# Subtest: R4 unknown runtime ScriptApp fails closed
+ok 209 - R4 unknown runtime ScriptApp fails closed
+  ---
+  duration_ms: 19.992
+  type: 'test'
+  ...
+# Subtest: R4 unknown runtime PropertiesService fails closed
+ok 210 - R4 unknown runtime PropertiesService fails closed
+  ---
+  duration_ms: 28.450958
+  type: 'test'
+  ...
+# Subtest: R4 unknown runtime SpreadsheetApp fails closed
+ok 211 - R4 unknown runtime SpreadsheetApp fails closed
+  ---
+  duration_ms: 16.898083
+  type: 'test'
+  ...
+# Subtest: R4 unknown runtime DriveApp fails closed
+ok 212 - R4 unknown runtime DriveApp fails closed
+  ---
+  duration_ms: 22.06075
+  type: 'test'
+  ...
+# Subtest: R4 unknown runtime LockService fails closed
+ok 213 - R4 unknown runtime LockService fails closed
+  ---
+  duration_ms: 13.616084
+  type: 'test'
+  ...
+# Subtest: R4 actual opened formal workbook identity and isolation checked before writes
+ok 214 - R4 actual opened formal workbook identity and isolation checked before writes
+  ---
+  duration_ms: 40.326083
+  type: 'test'
+  ...
+# Subtest: R4 signed capability binding rejected {"deploymentEndpoint":"https://script.google.com/macros/s/AKfycbz5OXGNDZJWEj2-W1g-1r_SISPjYYcI-7gsUsivt3Rx7-zY6AzpQqqZTIFROVKMU1eh3w/dev"}
+ok 215 - R4 signed capability binding rejected {"deploymentEndpoint":"https://script.google.com/macros/s/AKfycbz5OXGNDZJWEj2-W1g-1r_SISPjYYcI-7gsUsivt3Rx7-zY6AzpQqqZTIFROVKMU1eh3w/dev"}
+  ---
+  duration_ms: 12.877084
+  type: 'test'
+  ...
+# Subtest: R4 signed capability binding rejected {"deploymentEndpoint":"https://script.google.com/macros/s/alias/exec"}
+ok 216 - R4 signed capability binding rejected {"deploymentEndpoint":"https://script.google.com/macros/s/alias/exec"}
+  ---
+  duration_ms: 13.339459
+  type: 'test'
+  ...
+# Subtest: R4 signed capability binding rejected {}
+ok 217 - R4 signed capability binding rejected {}
+  ---
+  duration_ms: 11.389041
+  type: 'test'
+  ...
+# Subtest: R4 signed capability binding rejected {"executorId":"other"}
+ok 218 - R4 signed capability binding rejected {"executorId":"other"}
+  ---
+  duration_ms: 13.056916
+  type: 'test'
+  ...
+# Subtest: R4 signed capability binding rejected {"purpose":"publish"}
+ok 219 - R4 signed capability binding rejected {"purpose":"publish"}
+  ---
+  duration_ms: 10.9225
+  type: 'test'
+  ...
+# Subtest: R4 signed capability binding rejected {"operationId":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"}
+ok 220 - R4 signed capability binding rejected {"operationId":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"}
+  ---
+  duration_ms: 14.099459
+  type: 'test'
+  ...
+# Subtest: R4 signed capability binding rejected {"session":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
+ok 221 - R4 signed capability binding rejected {"session":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
+  ---
+  duration_ms: 12.015125
+  type: 'test'
+  ...
+# Subtest: R4 signed capability binding rejected {"exp":1}
+ok 222 - R4 signed capability binding rejected {"exp":1}
+  ---
+  duration_ms: 11.902917
+  type: 'test'
+  ...
+# Subtest: R4 forged transport and authority rejected by real doPost
+ok 223 - R4 forged transport and authority rejected by real doPost
+  ---
+  duration_ms: 21.256167
+  type: 'test'
+  ...
+# Subtest: R4 fake attestation fields/env cannot grant scope or override fixed destination
+ok 224 - R4 fake attestation fields/env cannot grant scope or override fixed destination
+  ---
+  duration_ms: 17.574459
+  type: 'test'
+  ...
+# Subtest: R4 successful Google response redirect uses one credential-free GET through actual wrappers
+ok 225 - R4 successful Google response redirect uses one credential-free GET through actual wrappers
+  ---
+  duration_ms: 15.800583
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 307 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic&lib=synthetic
+ok 226 - R4 unsafe redirect rejected without credential replay 307 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic&lib=synthetic
+  ---
+  duration_ms: 10.037958
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 308 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic&lib=synthetic
+ok 227 - R4 unsafe redirect rejected without credential replay 308 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic&lib=synthetic
+  ---
+  duration_ms: 9.816333
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 301 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic&lib=synthetic
+ok 228 - R4 unsafe redirect rejected without credential replay 301 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic&lib=synthetic
+  ---
+  duration_ms: 9.8385
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 302 https://evil.invalid/macros/echo
+ok 229 - R4 unsafe redirect rejected without credential replay 302 https://evil.invalid/macros/echo
+  ---
+  duration_ms: 9.645667
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 302 http://script.googleusercontent.com/macros/echo
+ok 230 - R4 unsafe redirect rejected without credential replay 302 http://script.googleusercontent.com/macros/echo
+  ---
+  duration_ms: 11.757792
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 302 https://script.googleusercontent.com.evil.invalid/macros/echo
+ok 231 - R4 unsafe redirect rejected without credential replay 302 https://script.googleusercontent.com.evil.invalid/macros/echo
+  ---
+  duration_ms: 12.125625
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 302 https://user:pass@script.googleusercontent.com/macros/echo
+ok 232 - R4 unsafe redirect rejected without credential replay 302 https://user:pass@script.googleusercontent.com/macros/echo
+  ---
+  duration_ms: 11.7765
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 302 https://script.googleusercontent.com:444/macros/echo
+ok 233 - R4 unsafe redirect rejected without credential replay 302 https://script.googleusercontent.com:444/macros/echo
+  ---
+  duration_ms: 11.751125
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 302 https://script.googleusercontent.com/other
+ok 234 - R4 unsafe redirect rejected without credential replay 302 https://script.googleusercontent.com/other
+  ---
+  duration_ms: 11.350375
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 302 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic&lib=synthetic\#fragment
+ok 235 - R4 unsafe redirect rejected without credential replay 302 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic&lib=synthetic\#fragment
+  ---
+  duration_ms: 10.200292
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 302 /macros/echo
+ok 236 - R4 unsafe redirect rejected without credential replay 302 /macros/echo
+  ---
+  duration_ms: 10.649
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 302 https://script.google.com/macros/s/AKfycbz5OXGNDZJWEj2-W1g-1r_SISPjYYcI-7gsUsivt3Rx7-zY6AzpQqqZTIFROVKMU1eh3w/exec
+ok 237 - R4 unsafe redirect rejected without credential replay 302 https://script.google.com/macros/s/AKfycbz5OXGNDZJWEj2-W1g-1r_SISPjYYcI-7gsUsivt3Rx7-zY6AzpQqqZTIFROVKMU1eh3w/exec
+  ---
+  duration_ms: 10.980958
+  type: 'test'
+  ...
+# Subtest: R4 unsafe redirect rejected without credential replay 302 null
+ok 238 - R4 unsafe redirect rejected without credential replay 302 null
+  ---
+  duration_ms: 9.902041
+  type: 'test'
+  ...
+# Subtest: R4 redirect chain bounded and response loss never retries POST
+ok 239 - R4 redirect chain bounded and response loss never retries POST
+  ---
+  duration_ms: 17.263833
+  type: 'test'
+  ...
+# Subtest: R4 exported production route remains off without explicit opt-in
+ok 240 - R4 exported production route remains off without explicit opt-in
+  ---
+  duration_ms: 1.9455
+  type: 'test'
+  ...
+# Subtest: R4 invalid or oversized response remains ambiguous without retry
+ok 241 - R4 invalid or oversized response remains ambiguous without retry
+  ---
+  duration_ms: 29.728084
+  type: 'test'
+  ...
+# Subtest: accepts exact 2160x3840 RGBA PNG data URL and returns PNG metadata
+ok 242 - accepts exact 2160x3840 RGBA PNG data URL and returns PNG metadata
+  ---
+  duration_ms: 102.484208
+  type: 'test'
+  ...
+# Subtest: rejects wrong data URL type, wrong dimensions, oversize data, and non-canonical base64
+ok 243 - rejects wrong data URL type, wrong dimensions, oversize data, and non-canonical base64
+  ---
+  duration_ms: 75.8725
+  type: 'test'
+  ...
+# Subtest: rejects structurally invalid PNG chunks that previously reached IHDR-only acceptance
+ok 244 - rejects structurally invalid PNG chunks that previously reached IHDR-only acceptance
+  ---
+  duration_ms: 17.597875
+  type: 'test'
+  ...
+# Subtest: rejects PNG chunk types with lowercase reserved third byte even when CRC is valid
+ok 245 - rejects PNG chunk types with lowercase reserved third byte even when CRC is valid
+  ---
+  duration_ms: 0.338625
+  type: 'test'
+  ...
+# Subtest: rejects PLTE chunks with more than 256 palette entries
+ok 246 - rejects PLTE chunks with more than 256 palette entries
+  ---
+  duration_ms: 0.743084
+  type: 'test'
+  ...
+# Subtest: rejects invalid PNG pixel streams and nonconsecutive IDAT chunks
+ok 247 - rejects invalid PNG pixel streams and nonconsecutive IDAT chunks
+  ---
+  duration_ms: 254.080792
+  type: 'test'
+  ...
+# Subtest: publish channel model exposes the Jinan website channel
+ok 248 - publish channel model exposes the Jinan website channel
+  ---
+  duration_ms: 0.942709
+  type: 'test'
+  ...
+# Subtest: no selected channel cannot be confirmed
+ok 249 - no selected channel cannot be confirmed
+  ---
+  duration_ms: 0.110834
+  type: 'test'
+  ...
+# Subtest: Jinan website can be confirmed with Jinan-first output
+ok 250 - Jinan website can be confirmed with Jinan-first output
+  ---
+  duration_ms: 0.053792
+  type: 'test'
+  ...
+# Subtest: Jinan website blocks Yian-first output with a clear warning
+ok 251 - Jinan website blocks Yian-first output with a clear warning
+  ---
+  duration_ms: 0.09175
+  type: 'test'
+  ...
+# Subtest: job IDs unique, immutable snapshot, source SHA and complete baseline
+ok 252 - job IDs unique, immutable snapshot, source SHA and complete baseline
+  ---
+  duration_ms: 16.906166
+  type: 'test'
+  ...
+# Subtest: reject wrong/multiple channels, clinic, missing confirmation and invalid PNG
+ok 253 - reject wrong/multiple channels, clinic, missing confirmation and invalid PNG
+  ---
+  duration_ms: 0.982792
+  type: 'test'
+  ...
+# Subtest: actual confirm sends prepared approval through same-origin API, no JSON download
+ok 254 - actual confirm sends prepared approval through same-origin API, no JSON download
+  ---
+  duration_ms: 0.733917
+  type: 'test'
+  ...
+# Subtest: actual preparation handler stages automatically, blocks unsaved facts, and does not confirm
+ok 255 - actual preparation handler stages automatically, blocks unsaved facts, and does not confirm
+  ---
+  duration_ms: 6.541375
+  type: 'test'
+  ...
+# Subtest: socket-free real harness routes: empty GET, auth, methods, host and static allowlist
+ok 256 - socket-free real harness routes: empty GET, auth, methods, host and static allowlist
+  ---
+  duration_ms: 20.096042
+  type: 'test'
+  ...
+# Subtest: factory defaults and incomplete configuration fail closed without transport calls
+ok 257 - factory defaults and incomplete configuration fail closed without transport calls
+  ---
+  duration_ms: 1.085416
+  type: 'test'
+  ...
+# Subtest: real factory composes saved facts, page binding, transport, hash, CAS and dropped response reconciliation
+ok 258 - real factory composes saved facts, page binding, transport, hash, CAS and dropped response reconciliation
+  ---
+  duration_ms: 95.347
+  type: 'test'
+  ...
+# Subtest: page drift blocks mutation even with correct own-route image; configuration drift cannot adopt approval
+ok 259 - page drift blocks mutation even with correct own-route image; configuration drift cannot adopt approval
+  ---
+  duration_ms: 38.696917
+  type: 'test'
+  ...
+# Subtest: strict target verification rejects wrong src, duplicate image, base, srcset, redirects, MIME and bytes drift
+ok 260 - strict target verification rejects wrong src, duplicate image, base, srcset, redirects, MIME and bytes drift
+  ---
+  duration_ms: 1.576833
+  type: 'test'
+  ...
+# Subtest: fixed image handler refuses bytes inconsistent with pointer hash
+ok 261 - fixed image handler refuses bytes inconsistent with pointer hash
+  ---
+  duration_ms: 0.526792
+  type: 'test'
+  ...
+# Subtest: approval identity uses same last-cookie-wins decoding as authenticated session
+ok 262 - approval identity uses same last-cookie-wins decoding as authenticated session
+  ---
+  duration_ms: 0.259208
+  type: 'test'
+  ...
+# Subtest: bounded upstream reader rejects declared and streamed overflow
+ok 263 - bounded upstream reader rejects declared and streamed overflow
+  ---
+  duration_ms: 0.432917
+  type: 'test'
+  ...
+# Subtest: reconciliation rejects pointer version drift even if approved bytes and identity remain
+ok 264 - reconciliation rejects pointer version drift even if approved bytes and identity remain
+  ---
+  duration_ms: 155.387667
+  type: 'test'
+  ...
+# Subtest: baseline hash and stored target drift cannot move pointer
+ok 265 - baseline hash and stored target drift cannot move pointer
+  ---
+  duration_ms: 198.119791
+  type: 'test'
+  ...
+# Subtest: real image route preserves bytes with invalid/incomplete flow config while flow stays disabled
+ok 266 - real image route preserves bytes with invalid/incomplete flow config while flow stays disabled
+  ---
+  duration_ms: 54.37275
+  type: 'test'
+  ...
+# Subtest: confirm INVALID_PNG is pre-mutation; ambiguous prior intent never returns safe-clear code
+ok 267 - confirm INVALID_PNG is pre-mutation; ambiguous prior intent never returns safe-clear code
+  ---
+  duration_ms: 129.496375
+  type: 'test'
+  ...
+# Subtest: unrelated page edits preserve approval and byte verification
+ok 268 - unrelated page edits preserve approval and byte verification
+  ---
+  duration_ms: 45.142958
+  type: 'test'
+  ...
+# Subtest: public verifier enforces overflow, redirect, no-store, and exact bytes
+ok 269 - public verifier enforces overflow, redirect, no-store, and exact bytes
+  ---
+  duration_ms: 0.509333
+  type: 'test'
+  ...
+# Subtest: frozen local harness legacy pin remains strict and cannot enable production verifier
+ok 270 - frozen local harness legacy pin remains strict and cannot enable production verifier
+  ---
+  duration_ms: 0.300375
+  type: 'test'
+  ...
+# Subtest: anonymous image handler repeated concurrent reads return exact bytes and freshness headers
+ok 271 - anonymous image handler repeated concurrent reads return exact bytes and freshness headers
+  ---
+  duration_ms: 67.6095
+  type: 'test'
+  ...
+# Subtest: image 503 classification: early failures make zero upstream calls; downstream failures are 404
+ok 272 - image 503 classification: early failures make zero upstream calls; downstream failures are 404
+  ---
+  duration_ms: 2.657667
+  type: 'test'
+  ...
+# jinanCmsPublish {
+#   attemptId: 'jinan-3fd658ba-f1d7-4ab0-8108-44b20e39540c',
+#   stage: 'start',
+#   status: 'STARTED',
+#   errorCode: null,
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# jinanCmsPublish {
+#   attemptId: 'jinan-3fd658ba-f1d7-4ab0-8108-44b20e39540c',
+#   stage: 'gate',
+#   status: 'CMS_RESPONSE_CONTRACT_UNVERIFIED',
+#   errorCode: 'CMS_RESPONSE_CONTRACT_UNVERIFIED',
+#   finalImagePath: null,
+#   orphanUploadRisk: false
+# }
+# Subtest: publish POST requires an authenticated signed session before invoking adapter
+ok 273 - publish POST requires an authenticated signed session before invoking adapter
+  ---
+  duration_ms: 0.6225
+  type: 'test'
+  ...
+# Subtest: diagnostic loginOnly requires authentication before invoking diagnostic adapter
+ok 274 - diagnostic loginOnly requires authentication before invoking diagnostic adapter
+  ---
+  duration_ms: 0.114458
+  type: 'test'
+  ...
+# Subtest: publish POST treats malformed session cookies as unauthenticated without invoking adapter
+ok 275 - publish POST treats malformed session cookies as unauthenticated without invoking adapter
+  ---
+  duration_ms: 80.147292
+  type: 'test'
+  ...
+# Subtest: publish requires auth before method and rejects authenticated non-POST without adapter
+ok 276 - publish requires auth before method and rejects authenticated non-POST without adapter
+  ---
+  duration_ms: 0.920583
+  type: 'test'
+  ...
+# Subtest: diagnostic loginOnly accepts only the exact body and rejects request credentials before adapter
+ok 277 - diagnostic loginOnly accepts only the exact body and rejects request credentials before adapter
+  ---
+  duration_ms: 2.403458
+  type: 'test'
+  ...
+# Subtest: diagnostic loginOnly invokes only diagnostic adapter while normal publish still invokes only normal adapter
+ok 278 - diagnostic loginOnly invokes only diagnostic adapter while normal publish still invokes only normal adapter
+  ---
+  duration_ms: 16.177791
+  type: 'test'
+  ...
+# Subtest: diagnostic loginOnly route safely maps spoofed or throwing adapter results to VERIFY_FAILED
+ok 279 - diagnostic loginOnly route safely maps spoofed or throwing adapter results to VERIFY_FAILED
+  ---
+  duration_ms: 0.2935
+  type: 'test'
+  ...
+# Subtest: diagnostic loginOnly snapshots stateful result getters once without leaking second values
+ok 280 - diagnostic loginOnly snapshots stateful result getters once without leaking second values
+  ---
+  duration_ms: 0.10925
+  type: 'test'
+  ...
+# Subtest: publish POST rejects malformed JSON string body without throwing or logging request body
+ok 281 - publish POST rejects malformed JSON string body without throwing or logging request body
+  ---
+  duration_ms: 0.264959
+  type: 'test'
+  ...
+# Subtest: publish POST fails closed on invalid action, title, and channel selections before adapter
+ok 282 - publish POST fails closed on invalid action, title, and channel selections before adapter
+  ---
+  duration_ms: 0.840583
+  type: 'test'
+  ...
+# Subtest: publish POST rejects non-plain bodies, duplicate keys, missing keys, and extra trust-boundary fields before PNG parsing
+ok 283 - publish POST rejects non-plain bodies, duplicate keys, missing keys, and extra trust-boundary fields before PNG parsing
+  ---
+  duration_ms: 2.103583
+  type: 'test'
+  ...
+# Subtest: publish POST validates exact field semantics before invoking adapter
+ok 284 - publish POST validates exact field semantics before invoking adapter
+  ---
+  duration_ms: 1.454958
+  type: 'test'
+  ...
+# Subtest: publish POST requires at least one selected channel before invoking adapter
+ok 285 - publish POST requires at least one selected channel before invoking adapter
+  ---
+  duration_ms: 0.231
+  type: 'test'
+  ...
+# Subtest: publish POST requires Jinan as primary clinic and preserves submitted value
+ok 286 - publish POST requires Jinan as primary clinic and preserves submitted value
+  ---
+  duration_ms: 0.161334
+  type: 'test'
+  ...
+# Subtest: publish POST sends a new frozen sanitized adapter payload with only allowed keys
+ok 287 - publish POST sends a new frozen sanitized adapter payload with only allowed keys
+  ---
+  duration_ms: 8.579459
+  type: 'test'
+  ...
+# Subtest: publish POST rejects malformed or non-PNG data URL before invoking adapter
+ok 288 - publish POST rejects malformed or non-PNG data URL before invoking adapter
+  ---
+  duration_ms: 0.229209
+  type: 'test'
+  ...
+# Subtest: publish POST catches adapter exceptions as generic VERIFY_FAILED without leaking details
+ok 289 - publish POST catches adapter exceptions as generic VERIFY_FAILED without leaking details
+  ---
+  duration_ms: 14.318833
+  type: 'test'
+  ...
+# Subtest: publish POST fail-closes when CMS response contract is unverified
+ok 290 - publish POST fail-closes when CMS response contract is unverified
+  ---
+  duration_ms: 10.601917
+  type: 'test'
+  ...
+# Subtest: publish POST maps adapter statuses without exposing adapter fields or PNG data
+ok 291 - publish POST maps adapter statuses without exposing adapter fields or PNG data
+  ---
+  duration_ms: 138.646292
+  type: 'test'
+  ...
+# Subtest: publish POST maps real pipeline concurrent admission lock through route without duplicate mutation work
+ok 292 - publish POST maps real pipeline concurrent admission lock through route without duplicate mutation work
+  ---
+  duration_ms: 33.328625
+  type: 'test'
+  ...
+# Subtest: default publish handler lazy-requires real publish pipeline and stays disabled with zero network by default
+ok 293 - default publish handler lazy-requires real publish pipeline and stays disabled with zero network by default
+  ---
+  duration_ms: 11.962375
+  type: 'test'
+  ...
+# Subtest: browser-served source files do not expose Jinan CMS credential boundaries
+ok 294 - browser-served source files do not expose Jinan CMS credential boundaries
+  ---
+  duration_ms: 1.265125
+  type: 'test'
+  ...
+# Subtest: public handler delegates pointer and op to inert provider and preserves legacy validation
+ok 295 - public handler delegates pointer and op to inert provider and preserves legacy validation
+  ---
+  duration_ms: 8.309208
+  type: 'test'
+  ...
+# Subtest: default disabled makes zero calls
+ok 296 - default disabled makes zero calls
+  ---
+  duration_ms: 0.751375
+  type: 'test'
+  ...
+# Subtest: prepare never changes pointer; session/nonce theft, tamper, save equality and size rejected
+ok 297 - prepare never changes pointer; session/nonce theft, tamper, save equality and size rejected
+  ---
+  duration_ms: 73.415417
+  type: 'test'
+  ...
+# Subtest: independent instances concurrent confirms CAS once, duplicates reconcile
+ok 298 - independent instances concurrent confirms CAS once, duplicates reconcile
+  ---
+  duration_ms: 102.538958
+  type: 'test'
+  ...
+# Subtest: restart reconciliation: dropResponse
+ok 299 - restart reconciliation: dropResponse
+  ---
+  duration_ms: 47.6265
+  type: 'test'
+  ...
+# Subtest: restart reconciliation: afterPointer
+ok 300 - restart reconciliation: afterPointer
+  ---
+  duration_ms: 67.772084
+  type: 'test'
+  ...
+# Subtest: restart reconciliation: beforePointer
+ok 301 - restart reconciliation: beforePointer
+  ---
+  duration_ms: 165.067458
+  type: 'test'
+  ...
+# Subtest: restart reconciliation: cache
+ok 302 - restart reconciliation: cache
+  ---
+  duration_ms: 133.31025
+  type: 'test'
+  ...
+# Subtest: localhost HTTP auth, save, prepare, confirm, public image, limits
+ok 303 - localhost HTTP auth, save, prepare, confirm, public image, limits # SKIP Sandbox prohibits localhost listener (EPERM); HTTP acceptance remains unverified
+  ---
+  duration_ms: 5.420542
+  type: 'test'
+  ...
+# Subtest: Apps Script VM transport actually persists Drive blob / journal / pointer under lock
+ok 304 - Apps Script VM transport actually persists Drive blob / journal / pointer under lock
+  ---
+  duration_ms: 28.06075
+  type: 'test'
+  ...
+# Subtest: in-process publish API uses same contract and redacts journal/provider fields
+ok 305 - in-process publish API uses same contract and redacts journal/provider fields
+  ---
+  duration_ms: 74.519083
+  type: 'test'
+  ...
+# Subtest: Apps Script transaction engine stays byte identical to tested Node engine
+ok 306 - Apps Script transaction engine stays byte identical to tested Node engine
+  ---
+  duration_ms: 0.155542
+  type: 'test'
+  ...
+# Subtest: actual process death after pointer persistence: restart reads journal without reacquiring abandoned write lock
+ok 307 - actual process death after pointer persistence: restart reads journal without reacquiring abandoned write lock
+  ---
+  duration_ms: 66.346667
+  type: 'test'
+  ...
+# Subtest: local latency and repeated confirms preserve exact bytes and one blob/version
+ok 308 - local latency and repeated confirms preserve exact bytes and one blob/version
+  ---
+  duration_ms: 80.12125
+  type: 'test'
+  ...
+# Subtest: transient first engine write has no effects; confirm fault reconciles without retry
+ok 309 - transient first engine write has no effects; confirm fault reconciles without retry
+  ---
+  duration_ms: 173.762417
+  type: 'test'
+  ...
+# Subtest: AbortError confirm remains ambiguous and reconciliation does not mutate
+ok 310 - AbortError confirm remains ambiguous and reconciliation does not mutate
+  ---
+  duration_ms: 144.323542
+  type: 'test'
+  ...
+# Subtest: HTTP harness never supplies simulation faults
+ok 311 - HTTP harness never supplies simulation faults
+  ---
+  duration_ms: 0.30025
+  type: 'test'
+  ...
+# Subtest: production transport deadline actually aborts delayed fetch using VM-only short clock
+ok 312 - production transport deadline actually aborts delayed fetch using VM-only short clock
+  ---
+  duration_ms: 6.7145
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: unset
+ok 313 - Apps Script independent ledger fails closed: unset
+  ---
+  duration_ms: 1.412042
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: null property
+ok 314 - Apps Script independent ledger fails closed: null property
+  ---
+  duration_ms: 1.127792
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: empty
+ok 315 - Apps Script independent ledger fails closed: empty
+  ---
+  duration_ms: 0.972458
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: blank
+ok 316 - Apps Script independent ledger fails closed: blank
+  ---
+  duration_ms: 0.968375
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: nonstring property
+ok 317 - Apps Script independent ledger fails closed: nonstring property
+  ---
+  duration_ms: 0.988459
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: same schedule
+ok 318 - Apps Script independent ledger fails closed: same schedule
+  ---
+  duration_ms: 0.98025
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: null active
+ok 319 - Apps Script independent ledger fails closed: null active
+  ---
+  duration_ms: 0.968375
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: active throws
+ok 320 - Apps Script independent ledger fails closed: active throws
+  ---
+  duration_ms: 0.97675
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: active ID throws
+ok 321 - Apps Script independent ledger fails closed: active ID throws
+  ---
+  duration_ms: 0.966334
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: active missing getId
+ok 322 - Apps Script independent ledger fails closed: active missing getId
+  ---
+  duration_ms: 1.184583
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: active identity undefined
+ok 323 - Apps Script independent ledger fails closed: active identity undefined
+  ---
+  duration_ms: 1.017792
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: active identity null
+ok 324 - Apps Script independent ledger fails closed: active identity null
+  ---
+  duration_ms: 1.264292
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: active identity ""
+ok 325 - Apps Script independent ledger fails closed: active identity ""
+  ---
+  duration_ms: 0.986167
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: active identity " \\t"
+ok 326 - Apps Script independent ledger fails closed: active identity " \\t"
+  ---
+  duration_ms: 0.959041
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: active identity 123
+ok 327 - Apps Script independent ledger fails closed: active identity 123
+  ---
+  duration_ms: 0.979584
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: active identity {}
+ok 328 - Apps Script independent ledger fails closed: active identity {}
+  ---
+  duration_ms: 0.983209
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: trimmed same active
+ok 329 - Apps Script independent ledger fails closed: trimmed same active
+  ---
+  duration_ms: 0.988709
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: inaccessible ledger
+ok 330 - Apps Script independent ledger fails closed: inaccessible ledger
+  ---
+  duration_ms: 0.979375
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: null ledger
+ok 331 - Apps Script independent ledger fails closed: null ledger
+  ---
+  duration_ms: 1.002041
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: ledger missing getId
+ok 332 - Apps Script independent ledger fails closed: ledger missing getId
+  ---
+  duration_ms: 1.578667
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: ledger ID throws
+ok 333 - Apps Script independent ledger fails closed: ledger ID throws
+  ---
+  duration_ms: 1.275417
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: opened identity undefined
+ok 334 - Apps Script independent ledger fails closed: opened identity undefined
+  ---
+  duration_ms: 1.25975
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: opened identity null
+ok 335 - Apps Script independent ledger fails closed: opened identity null
+  ---
+  duration_ms: 1.241292
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: opened identity ""
+ok 336 - Apps Script independent ledger fails closed: opened identity ""
+  ---
+  duration_ms: 1.850625
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: opened identity " \\t"
+ok 337 - Apps Script independent ledger fails closed: opened identity " \\t"
+  ---
+  duration_ms: 1.229334
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: opened identity 123
+ok 338 - Apps Script independent ledger fails closed: opened identity 123
+  ---
+  duration_ms: 1.22325
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: opened identity {}
+ok 339 - Apps Script independent ledger fails closed: opened identity {}
+  ---
+  duration_ms: 1.223875
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: opened identity "other"
+ok 340 - Apps Script independent ledger fails closed: opened identity "other"
+  ---
+  duration_ms: 1.240333
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger fails closed: opened identity " ledger "
+ok 341 - Apps Script independent ledger fails closed: opened identity " ledger "
+  ---
+  duration_ms: 1.210042
+  type: 'test'
+  ...
+# Subtest: Apps Script disabled and denied lock perform zero workbook or Drive access
+ok 342 - Apps Script disabled and denied lock perform zero workbook or Drive access
+  ---
+  duration_ms: 0.522292
+  type: 'test'
+  ...
+# Subtest: Apps Script independent ledger CAS, nonce, duplicate, reconcile and journal-only blob reads
+ok 343 - Apps Script independent ledger CAS, nonce, duplicate, reconcile and journal-only blob reads
+  ---
+  duration_ms: 4.263416
+  type: 'test'
+  ...
+# Subtest: Apps Script releases lock after ledger.sheet failure
+ok 344 - Apps Script releases lock after ledger.sheet failure
+  ---
+  duration_ms: 0.433625
+  type: 'test'
+  ...
+# Subtest: Apps Script releases lock after ledger.insert failure
+ok 345 - Apps Script releases lock after ledger.insert failure
+  ---
+  duration_ms: 0.391958
+  type: 'test'
+  ...
+# Subtest: Apps Script releases lock after ledger.range failure
+ok 346 - Apps Script releases lock after ledger.range failure
+  ---
+  duration_ms: 0.394584
+  type: 'test'
+  ...
+# Subtest: Apps Script releases lock after drive.folder failure
+ok 347 - Apps Script releases lock after drive.folder failure
+  ---
+  duration_ms: 1.815542
+  type: 'test'
+  ...
+# Subtest: Apps Script releases lock after drive.create failure
+ok 348 - Apps Script releases lock after drive.create failure
+  ---
+  duration_ms: 1.329834
+  type: 'test'
+  ...
+# Subtest: Apps Script releases lock after drive.read failure
+ok 349 - Apps Script releases lock after drive.read failure
+  ---
+  duration_ms: 1.320959
+  type: 'test'
+  ...
+# Subtest: Apps Script releases lock after ledger.write failure
+ok 350 - Apps Script releases lock after ledger.write failure
+  ---
+  duration_ms: 1.643667
+  type: 'test'
+  ...
+# Subtest: Apps Script releases lock after flush failure
+ok 351 - Apps Script releases lock after flush failure
+  ---
+  duration_ms: 1.990709
+  type: 'test'
+  ...
+# Subtest: deployed Code.gs and PublishStore.gs together Save/Load without ledger property
+ok 352 - deployed Code.gs and PublishStore.gs together Save/Load without ledger property
+  ---
+  duration_ms: 2.686584
+  type: 'test'
+  ...
+# Subtest: Apps Script ledger preserves MUTATING intent after pointer failure; reconciliation never retries
+ok 353 - Apps Script ledger preserves MUTATING intent after pointer failure; reconciliation never retries
+  ---
+  duration_ms: 2.051708
+  type: 'test'
+  ...
+# Subtest: public reads never initialize sheets: 
+ok 354 - public reads never initialize sheets: 
+  ---
+  duration_ms: 1.686667
+  type: 'test'
+  ...
+# Subtest: public reads never initialize sheets: PublishPointer
+ok 355 - public reads never initialize sheets: PublishPointer
+  ---
+  duration_ms: 1.960292
+  type: 'test'
+  ...
+# Subtest: public reads never initialize sheets: ConsumedNonces
+ok 356 - public reads never initialize sheets: ConsumedNonces
+  ---
+  duration_ms: 1.632667
+  type: 'test'
+  ...
+# Subtest: public reads never initialize sheets: PublishPointer,ConsumedNonces
+ok 357 - public reads never initialize sheets: PublishPointer,ConsumedNonces
+  ---
+  duration_ms: 1.662416
+  type: 'test'
+  ...
+# Subtest: public reads preserve populated pointer and journal and fail closed on read errors
+ok 358 - public reads preserve populated pointer and journal and fail closed on read errors
+  ---
+  duration_ms: 2.563333
+  type: 'test'
+  ...
+# Subtest: anonymous image GET through GAS VM never creates resources on empty or populated ledger
+ok 359 - anonymous image GET through GAS VM never creates resources on empty or populated ledger
+  ---
+  duration_ms: 5.324792
+  type: 'test'
+  ...
+# Subtest: malformed pointer and journal reads fail closed without repair writes
+ok 360 - malformed pointer and journal reads fail closed without repair writes
+  ---
+  duration_ms: 4.080209
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates announcement and footer
+ok 361 - target fingerprint tolerates announcement and footer
+  ---
+  duration_ms: 2.045625
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates unrelated picture
+ok 362 - target fingerprint tolerates unrelated picture
+  ---
+  duration_ms: 2.659542
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates unrelated template svg
+ok 363 - target fingerprint tolerates unrelated template svg
+  ---
+  duration_ms: 0.22675
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates comment false target
+ok 364 - target fingerprint tolerates comment false target
+  ---
+  duration_ms: 0.172375
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates raw text false targets
+ok 365 - target fingerprint tolerates raw text false targets
+  ---
+  duration_ms: 0.4675
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates attribute semantics
+ok 366 - target fingerprint tolerates attribute semantics
+  ---
+  duration_ms: 0.168875
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates unquoted URL
+ok 367 - target fingerprint tolerates unquoted URL
+  ---
+  duration_ms: 0.29875
+  type: 'test'
+  ...
+# Subtest: target scanner rejects target removal
+ok 368 - target scanner rejects target removal
+  ---
+  duration_ms: 0.432166
+  type: 'test'
+  ...
+# Subtest: target scanner rejects changed src
+ok 369 - target scanner rejects changed src
+  ---
+  duration_ms: 0.524709
+  type: 'test'
+  ...
+# Subtest: target scanner rejects duplicate
+ok 370 - target scanner rejects duplicate
+  ---
+  duration_ms: 0.711625
+  type: 'test'
+  ...
+# Subtest: target scanner rejects duplicate attribute
+ok 371 - target scanner rejects duplicate attribute
+  ---
+  duration_ms: 0.226917
+  type: 'test'
+  ...
+# Subtest: target scanner rejects base
+ok 372 - target scanner rejects base
+  ---
+  duration_ms: 0.134709
+  type: 'test'
+  ...
+# Subtest: target scanner rejects picture target
+ok 373 - target scanner rejects picture target
+  ---
+  duration_ms: 0.068583
+  type: 'test'
+  ...
+# Subtest: target scanner rejects template target
+ok 374 - target scanner rejects template target
+  ---
+  duration_ms: 0.0535
+  type: 'test'
+  ...
+# Subtest: target scanner rejects svg target
+ok 375 - target scanner rejects svg target
+  ---
+  duration_ms: 0.046041
+  type: 'test'
+  ...
+# Subtest: target scanner rejects noscript target
+ok 376 - target scanner rejects noscript target
+  ---
+  duration_ms: 0.502958
+  type: 'test'
+  ...
+# Subtest: target scanner rejects srcset
+ok 377 - target scanner rejects srcset
+  ---
+  duration_ms: 0.305
+  type: 'test'
+  ...
+# Subtest: target scanner rejects other source aliases target
+ok 378 - target scanner rejects other source aliases target
+  ---
+  duration_ms: 0.266708
+  type: 'test'
+  ...
+# Subtest: target scanner rejects data src
+ok 379 - target scanner rejects data src
+  ---
+  duration_ms: 0.126
+  type: 'test'
+  ...
+# Subtest: target scanner rejects event
+ok 380 - target scanner rejects event
+  ---
+  duration_ms: 0.10375
+  type: 'test'
+  ...
+# Subtest: target scanner rejects usemap
+ok 381 - target scanner rejects usemap
+  ---
+  duration_ms: 0.097459
+  type: 'test'
+  ...
+# Subtest: target scanner rejects encoded style url
+ok 382 - target scanner rejects encoded style url
+  ---
+  duration_ms: 0.1225
+  type: 'test'
+  ...
+# Subtest: target scanner rejects escaped style
+ok 383 - target scanner rejects escaped style
+  ---
+  duration_ms: 0.160416
+  type: 'test'
+  ...
+# Subtest: target scanner rejects unbalanced
+ok 384 - target scanner rejects unbalanced
+  ---
+  duration_ms: 0.195292
+  type: 'test'
+  ...
+# Subtest: target scanner rejects misnested p
+ok 385 - target scanner rejects misnested p
+  ---
+  duration_ms: 0.111542
+  type: 'test'
+  ...
+# Subtest: target scanner rejects implicit tbody
+ok 386 - target scanner rejects implicit tbody
+  ---
+  duration_ms: 0.109542
+  type: 'test'
+  ...
+# Subtest: target scanner rejects foster parenting
+ok 387 - target scanner rejects foster parenting
+  ---
+  duration_ms: 0.09675
+  type: 'test'
+  ...
+# Subtest: target scanner rejects nested button
+ok 388 - target scanner rejects nested button
+  ---
+  duration_ms: 0.12375
+  type: 'test'
+  ...
+# Subtest: target scanner rejects quoted greater than
+ok 389 - target scanner rejects quoted greater than
+  ---
+  duration_ms: 0.0775
+  type: 'test'
+  ...
+# Subtest: target scanner rejects unknown entity
+ok 390 - target scanner rejects unknown entity
+  ---
+  duration_ms: 0.125875
+  type: 'test'
+  ...
+# Subtest: target scanner rejects raw target only
+ok 391 - target scanner rejects raw target only
+  ---
+  duration_ms: 0.267834
+  type: 'test'
+  ...
+# Subtest: target scanner rejects comment target only
+ok 392 - target scanner rejects comment target only
+  ---
+  duration_ms: 0.150167
+  type: 'test'
+  ...
+# Subtest: target scanner rejects script escaped state
+ok 393 - target scanner rejects script escaped state
+  ---
+  duration_ms: 0.164666
+  type: 'test'
+  ...
+# Subtest: target scanner rejects ancestor hidden
+ok 394 - target scanner rejects ancestor hidden
+  ---
+  duration_ms: 0.096584
+  type: 'test'
+  ...
+# Subtest: target scanner rejects unclosed quote
+ok 395 - target scanner rejects unclosed quote
+  ---
+  duration_ms: 0.294916
+  type: 'test'
+  ...
+# Subtest: fingerprint changes on moved context
+ok 396 - fingerprint changes on moved context
+  ---
+  duration_ms: 0.427375
+  type: 'test'
+  ...
+# Subtest: fingerprint changes on changed style whitespace string
+ok 397 - fingerprint changes on changed style whitespace string
+  ---
+  duration_ms: 0.240167
+  type: 'test'
+  ...
+# Subtest: fingerprint changes on ancestor style
+ok 398 - fingerprint changes on ancestor style
+  ---
+  duration_ms: 0.134542
+  type: 'test'
+  ...
+# Subtest: additional browser repair ambiguity rejected
+ok 399 - additional browser repair ambiguity rejected
+  ---
+  duration_ms: 0.185625
+  type: 'test'
+  ...
+# Subtest: additional browser repair ambiguity rejected
+ok 400 - additional browser repair ambiguity rejected
+  ---
+  duration_ms: 0.086958
+  type: 'test'
+  ...
+# Subtest: additional browser repair ambiguity rejected
+ok 401 - additional browser repair ambiguity rejected
+  ---
+  duration_ms: 0.062333
+  type: 'test'
+  ...
+# Subtest: additional browser repair ambiguity rejected
+ok 402 - additional browser repair ambiguity rejected
+  ---
+  duration_ms: 0.054083
+  type: 'test'
+  ...
+# Subtest: non-ASCII class whitespace is significant
+ok 403 - non-ASCII class whitespace is significant
+  ---
+  duration_ms: 0.068334
+  type: 'test'
+  ...
+# Subtest: semantic normalization ambiguity fails closed
+ok 404 - semantic normalization ambiguity fails closed
+  ---
+  duration_ms: 0.062875
+  type: 'test'
+  ...
+# Subtest: semantic normalization ambiguity fails closed
+ok 405 - semantic normalization ambiguity fails closed
+  ---
+  duration_ms: 0.055584
+  type: 'test'
+  ...
+# Subtest: semantic normalization ambiguity fails closed
+ok 406 - semantic normalization ambiguity fails closed
+  ---
+  duration_ms: 0.039792
+  type: 'test'
+  ...
+# Subtest: semantic normalization ambiguity fails closed
+ok 407 - semantic normalization ambiguity fails closed
+  ---
+  duration_ms: 0.030458
+  type: 'test'
+  ...
+# Subtest: common semantic ancestor attributes are supported and pinned
+ok 408 - common semantic ancestor attributes are supported and pinned
+  ---
+  duration_ms: 0.264917
+  type: 'test'
+  ...
+# Subtest: document mode is pinned and ambiguous doctypes rejected
+ok 409 - document mode is pinned and ambiguous doctypes rejected
+  ---
+  duration_ms: 0.158875
+  type: 'test'
+  ...
+# Subtest: publish response redirect 302 shares deadline and strips credentials
+ok 410 - publish response redirect 302 shares deadline and strips credentials
+  ---
+  duration_ms: 15.399917
+  type: 'test'
+  ...
+# Subtest: publish response redirect 303 shares deadline and strips credentials
+ok 411 - publish response redirect 303 shares deadline and strips credentials
+  ---
+  duration_ms: 0.305667
+  type: 'test'
+  ...
+# Subtest: publish refuses unsafe redirect 301 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic
+ok 412 - publish refuses unsafe redirect 301 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic
+  ---
+  duration_ms: 0.23375
+  type: 'test'
+  ...
+# Subtest: publish refuses unsafe redirect 307 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic
+ok 413 - publish refuses unsafe redirect 307 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic
+  ---
+  duration_ms: 0.139834
+  type: 'test'
+  ...
+# Subtest: publish refuses unsafe redirect 308 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic
+ok 414 - publish refuses unsafe redirect 308 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic
+  ---
+  duration_ms: 0.0705
+  type: 'test'
+  ...
+# Subtest: publish refuses unsafe redirect 302 null
+ok 415 - publish refuses unsafe redirect 302 null
+  ---
+  duration_ms: 0.07325
+  type: 'test'
+  ...
+# Subtest: publish refuses unsafe redirect 302 /macros/echo
+ok 416 - publish refuses unsafe redirect 302 /macros/echo
+  ---
+  duration_ms: 0.13775
+  type: 'test'
+  ...
+# Subtest: publish refuses unsafe redirect 302 http://script.googleusercontent.com/macros/echo
+ok 417 - publish refuses unsafe redirect 302 http://script.googleusercontent.com/macros/echo
+  ---
+  duration_ms: 0.104292
+  type: 'test'
+  ...
+# Subtest: publish refuses unsafe redirect 302 https://script.googleusercontent.com.evil.invalid/macros/echo
+ok 418 - publish refuses unsafe redirect 302 https://script.googleusercontent.com.evil.invalid/macros/echo
+  ---
+  duration_ms: 0.391792
+  type: 'test'
+  ...
+# Subtest: publish refuses unsafe redirect 302 https://user:pass@script.googleusercontent.com/macros/echo
+ok 419 - publish refuses unsafe redirect 302 https://user:pass@script.googleusercontent.com/macros/echo
+  ---
+  duration_ms: 0.350541
+  type: 'test'
+  ...
+# Subtest: publish refuses unsafe redirect 302 https://script.googleusercontent.com:444/macros/echo
+ok 420 - publish refuses unsafe redirect 302 https://script.googleusercontent.com:444/macros/echo
+  ---
+  duration_ms: 0.162542
+  type: 'test'
+  ...
+# Subtest: publish refuses unsafe redirect 302 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic\#x
+ok 421 - publish refuses unsafe redirect 302 https://script.googleusercontent.com/macros/echo?user_content_key=synthetic\#x
+  ---
+  duration_ms: 0.135167
+  type: 'test'
+  ...
+# Subtest: publish refuses unsafe redirect 302 https://script.googleusercontent.com/other
+ok 422 - publish refuses unsafe redirect 302 https://script.googleusercontent.com/other
+  ---
+  duration_ms: 0.063125
+  type: 'test'
+  ...
+# Subtest: publish refuses unsafe redirect 302 https://script.google.com/macros/s/synthetic/exec
+ok 423 - publish refuses unsafe redirect 302 https://script.google.com/macros/s/synthetic/exec
+  ---
+  duration_ms: 0.066
+  type: 'test'
+  ...
+# Subtest: publish redirect chain never retries a write
+ok 424 - publish redirect chain never retries a write
+  ---
+  duration_ms: 0.109083
+  type: 'test'
+  ...
+# Subtest: publish redirect lost never retries a write
+ok 425 - publish redirect lost never retries a write
+  ---
+  duration_ms: 0.0565
+  type: 'test'
+  ...
+# Subtest: publish redirect timeout never retries a write
+ok 426 - publish redirect timeout never retries a write
+  ---
+  duration_ms: 0.049583
+  type: 'test'
+  ...
+# Subtest: redirect response fetch consumes the same overall 25s deadline
+ok 427 - redirect response fetch consumes the same overall 25s deadline
+  ---
+  duration_ms: 22.616708
+  type: 'test'
+  ...
+# Subtest: publish confirmation UI source contracts are wired end-to-end
+ok 428 - publish confirmation UI source contracts are wired end-to-end
+  ---
+  duration_ms: 4.754292
+  type: 'test'
+  ...
+# Subtest: publish confirmation has synchronous duplicate-submission ref guard before side effects
+ok 429 - publish confirmation has synchronous duplicate-submission ref guard before side effects
+  ---
+  duration_ms: 0.610458
+  type: 'test'
+  ...
+# Subtest: publish failure status mapping is fixed allowlist and never renders arbitrary server or exception text
+ok 430 - publish failure status mapping is fixed allowlist and never renders arbitrary server or exception text
+  ---
+  duration_ms: 2.304208
+  type: 'test'
+  ...
+# Subtest: publish PNG helper uses current preview capture without download side effects
+ok 431 - publish PNG helper uses current preview capture without download side effects
+  ---
+  duration_ms: 0.767875
+  type: 'test'
+  ...
+# Subtest: existing Download button contract remains intact
+ok 432 - existing Download button contract remains intact
+  ---
+  duration_ms: 0.359625
+  type: 'test'
+  ...
+# Subtest: publish dialog has visible close control and modal keyboard focus lifecycle
+ok 433 - publish dialog has visible close control and modal keyboard focus lifecycle
+  ---
+  duration_ms: 0.482917
+  type: 'test'
+  ...
+# Subtest: real publish failure mapper accepts string codes and safe object fallback
+ok 434 - real publish failure mapper accepts string codes and safe object fallback
+  ---
+  duration_ms: 0.615375
+  type: 'test'
+  ...
+# Subtest: actual confirm handler clears pre-mutation INVALID_PNG but retains ambiguous pending binding
+ok 435 - actual confirm handler clears pre-mutation INVALID_PNG but retains ambiguous pending binding
+  ---
+  duration_ms: 0.880541
+  type: 'test'
+  ...
+# Subtest: schedule proxy rejects unauthenticated load without contacting Apps Script
+ok 436 - schedule proxy rejects unauthenticated load without contacting Apps Script
+  ---
+  duration_ms: 2.875625
+  type: 'test'
+  ...
+# Subtest: authenticated load forwards month and server-only secret to Apps Script
+ok 437 - authenticated load forwards month and server-only secret to Apps Script
+  ---
+  duration_ms: 2.081917
+  type: 'test'
+  ...
+# Subtest: authenticated save forwards schedule data and returns Apps Script result
+ok 438 - authenticated save forwards schedule data and returns Apps Script result
+  ---
+  duration_ms: 1.265
+  type: 'test'
+  ...
+# Subtest: signed session token verifies before expiry and fails after expiry
+ok 439 - signed session token verifies before expiry and fails after expiry
+  ---
+  duration_ms: 0.700792
+  type: 'test'
+  ...
+# Subtest: tampered signed session token is rejected
+ok 440 - tampered signed session token is rejected
+  ---
+  duration_ms: 1.268542
+  type: 'test'
+  ...
+# Subtest: session cookie is HttpOnly, Secure and SameSite Strict
+ok 441 - session cookie is HttpOnly, Secure and SameSite Strict
+  ---
+  duration_ms: 0.320917
+  type: 'test'
+  ...
+# Subtest: offline exact two-image group becomes one responsive combined poster; surrounding bytes unchanged
+ok 442 - offline exact two-image group becomes one responsive combined poster; surrounding bytes unchanged
+  ---
+  duration_ms: 1.115334
+  type: 'test'
+  ...
+# Subtest: offline fixture rejects drift: month
+ok 443 - offline fixture rejects drift: month
+  ---
+  duration_ms: 0.218667
+  type: 'test'
+  ...
+# Subtest: offline fixture rejects drift: slot
+ok 444 - offline fixture rejects drift: slot
+  ---
+  duration_ms: 0.046833
+  type: 'test'
+  ...
+# Subtest: offline fixture rejects drift: order
+ok 445 - offline fixture rejects drift: order
+  ---
+  duration_ms: 0.04225
+  type: 'test'
+  ...
+# Subtest: offline fixture rejects drift: duplicate
+ok 446 - offline fixture rejects drift: duplicate
+  ---
+  duration_ms: 0.089292
+  type: 'test'
+  ...
+# Subtest: offline fixture rejects drift: notice
+ok 447 - offline fixture rejects drift: notice
+  ---
+  duration_ms: 0.03975
+  type: 'test'
+  ...
+# Subtest: offline fixture rejects drift: already transformed
+ok 448 - offline fixture rejects drift: already transformed
+  ---
+  duration_ms: 0.117458
+  type: 'test'
+  ...
+# Subtest: browser schedule config uses same-origin Vercel proxy and exposes no server secret
+ok 449 - browser schedule config uses same-origin Vercel proxy and exposes no server secret
+  ---
+  duration_ms: 0.981709
+  type: 'test'
+  ...
+# Subtest: Vercel schedule proxy requires signed session and forwards server secret only on server
+ok 450 - Vercel schedule proxy requires signed session and forwards server secret only on server
+  ---
+  duration_ms: 0.173458
+  type: 'test'
+  ...
+# Subtest: Apps Script blocks direct GET and requires server secret for POST
+ok 451 - Apps Script blocks direct GET and requires server secret for POST
+  ---
+  duration_ms: 0.13225
+  type: 'test'
+  ...
+# Subtest: server secret is referenced only by server-side integration code
+ok 452 - server secret is referenced only by server-side integration code
+  ---
+  duration_ms: 1.150042
+  type: 'test'
+  ...
+# Subtest: browser and server login use the same password digest
+ok 453 - browser and server login use the same password digest
+  ---
+  duration_ms: 0.285375
+  type: 'test'
+  ...
+1..453
+# tests 453
+# suites 0
+# pass 452
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 1538.687375

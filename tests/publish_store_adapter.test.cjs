@@ -16,7 +16,7 @@ test('localhost HTTP auth, save, prepare, confirm, public image, limits',async t
 function appsScriptHarness(options={}) {
  const crypto=require('node:crypto'),events=[],files=new Map();let locked=false;
  const props={PUBLISH_STORE_ENABLED:'true',PUBLISH_SPREADSHEET_ID:' ledger ',PUBLISH_FOLDER_ID:'folder',CLINIC_SERVER_SECRET:'synthetic-test-only',...options.props};
- function touch(label,write=false){events.push(label);if(write)assert.ok(locked,label);if(options.failAt===label)throw Error('injected');}
+ function touch(label,write=false){events.push(label);if(write){assert.ok(locked,label);if(options.denyWrites)throw Error('READ_ATTEMPTED_WRITE');}if(options.failAt===label)throw Error('injected');}
  function workbook(id,label){
   const sheets=new Map();
   function sheet(){const rows=[];return {rows,
@@ -39,7 +39,7 @@ function appsScriptHarness(options={}) {
   LockService:{getScriptLock:()=>({tryLock(ms){events.push('lock');assert.equal(ms,10000);assert.equal(locked,false);locked=options.lockAvailable!==false;return locked;},hasLock:()=>locked,releaseLock(){assert.ok(locked);events.push('release');locked=false;}})},
   SpreadsheetApp:{getActiveSpreadsheet(){touch('active');return Object.hasOwn(options,'active')?options.active:schedule;},openById(id){touch('open');assert.ok(locked);assert.equal(id,'ledger');return Object.hasOwn(options,'opened')?options.opened:ledger;},flush(){touch('flush',true);}},
   Utilities:{getUuid:()=>crypto.randomUUID(),DigestAlgorithm:{SHA_256:'sha256'},computeDigest:(_,b)=>[...crypto.createHash('sha256').update(Buffer.from(b)).digest()],base64Decode:s=>[...Buffer.from(s,'base64')],base64Encode:b=>Buffer.from(b).toString('base64'),newBlob:b=>({getBytes:()=>b})},
-  DriveApp:{getFolderById(id){touch('drive.folder',true);assert.equal(id,'folder');return {createFile(b){touch('drive.create',true);const id=crypto.randomUUID();files.set(id,b);return {getId:()=>id};}};},getFileById(id){touch('drive.read',true);return {getBlob:()=>files.get(id)};}},json_:x=>x
+  DriveApp:{getFolderById(id){touch('drive.folder',true);assert.equal(id,'folder');return {createFile(b){touch('drive.create',true);const id=crypto.randomUUID();files.set(id,b);return {getId:()=>id};}};},getFileById(id){touch('drive.read');return {getBlob:()=>files.get(id)};}},json_:x=>x
  };
  vm.createContext(ctx);vm.runInContext(fs.readFileSync('apps-script/PublishStore.gs','utf8'),ctx);
  vm.runInContext(fs.readFileSync('apps-script/Code.gs','utf8'),ctx);ctx.json_=x=>x;
@@ -227,4 +227,52 @@ test('Apps Script ledger preserves MUTATING intent after pointer failure; reconc
  const writes=h.events.filter(e=>e.endsWith('.write')).length;
  for(const op of ['reconcile','confirm']){const r=h.call(op,vmBinding(p)).result;assert.equal(r.job.status,'MUTATING');assert.equal(r.pointer.pointerVersion,0);}
  assert.equal(h.events.filter(e=>e.endsWith('.write')).length,writes);assert.equal(h.files.size,1);
+});
+
+// Read contract: absent pointer is an empty baseline; absent journal cannot serve a blob.
+for(const present of [[],['PublishPointer'],['ConsumedNonces'],['PublishPointer','ConsumedNonces']])test('public reads never initialize sheets: '+present.join(','),()=>{
+ const h=appsScriptHarness();
+ vmPrepare(h);
+ for(const name of [...h.ledger.sheets.keys()])if(!present.includes(name))h.ledger.sheets.delete(name);
+ h.events.length=0;h.options.denyWrites=true;
+ const p=h.call('pointer');assert.equal(p.ok,true);assert.equal(p.result.pointerVersion,0);
+ assert.equal(h.call('blob',{blobId:'unknown'}).error,'STORE_UNAVAILABLE');
+ assert.ok(!h.events.some(e=>/insert|write|flush|drive.create|drive.folder/.test(e)),h.events.join(','));
+ assert.deepEqual([...h.ledger.sheets.keys()],present);assert.equal(h.isLocked(),false);
+});
+test('public reads preserve populated pointer and journal and fail closed on read errors',()=>{
+ const h=appsScriptHarness(),p=vmPrepare(h),r=h.call('confirm',vmBinding(p)).result;
+ const before=JSON.stringify([...h.ledger.sheets].map(([n,s])=>[n,s.rows]));
+ h.options.denyWrites=true;h.events.length=0;
+ assert.equal(h.call('pointer').result.pngSha256,r.pointer.pngSha256);
+ assert.equal(h.call('blob',{blobId:r.job.blobId}).result.base64,fixture.png.toString('base64'));
+ for(const [op,failAt] of [['pointer','ledger.sheet'],['pointer','ledger.range'],['blob','ledger.dataRange'],['blob','drive.read']]){
+  h.options.failAt=failAt;assert.equal(h.call(op,{blobId:r.job.blobId}).error,'STORE_UNAVAILABLE');assert.equal(h.isLocked(),false);
+ }
+ assert.equal(JSON.stringify([...h.ledger.sheets].map(([n,s])=>[n,s.rows])),before);
+ assert.ok(!h.events.some(e=>/insert|write|flush|drive.create|drive.folder/.test(e)));
+});
+
+test('anonymous image GET through GAS VM never creates resources on empty or populated ledger',async()=>{
+ const {createImageHandler}=require('../api/publish-image');
+ for(const populated of [false,true]){
+  const h=appsScriptHarness();if(populated){const p=vmPrepare(h);h.call('confirm',vmBinding(p));}
+  h.options.denyWrites=true;h.events.length=0;
+  const store=createAppsScriptTransport({enabled:true,url:'https://synthetic.invalid',secret:'synthetic-test-only',fetchImpl:async(_,o)=>Response.json(h.post(JSON.parse(o.body)))});
+  let body;const res={statusCode:200,setHeader(){},end:b=>body=b};
+  await createImageHandler({store})({method:'GET'},res);
+  assert.equal(res.statusCode,populated?200:404);
+  if(populated)assert.deepEqual(body,fixture.png);else {assert.equal(body,undefined);assert.equal(h.ledger.sheets.size,0);assert.equal(h.files.size,0);}
+  assert.ok(!h.events.some(e=>/insert|write|flush|drive.create|drive.folder/.test(e)),h.events.join(','));
+ }
+});
+test('malformed pointer and journal reads fail closed without repair writes',()=>{
+ for(const op of ['pointer','blob']){
+  const h=appsScriptHarness(),p=vmPrepare(h),r=h.call('confirm',vmBinding(p)).result;
+  if(op==='pointer')h.ledger.sheets.get('PublishPointer').rows[0][0]='malformed';
+  else h.ledger.sheets.get('ConsumedNonces').rows[0][1]='malformed';
+  h.options.denyWrites=true;h.events.length=0;
+  assert.equal(h.call(op,{blobId:r.job.blobId}).error,'STORE_UNAVAILABLE');assert.equal(h.isLocked(),false);
+  assert.ok(!h.events.some(e=>/insert|write|flush|drive.create|drive.folder/.test(e)));
+ }
 });

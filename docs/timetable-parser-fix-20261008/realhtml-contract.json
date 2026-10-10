@@ -1,0 +1,96 @@
+{
+  "baselineSha256": "6eca7c113577973e4831a6dc224e8a09ec952fd51613a66d0f82f82d71c45001",
+  "baselineBytes": 22098,
+  "pageUrl": "https://www.tainanrehab.com/time.html",
+  "imageUrl": "https://clinic-timetable-output.vercel.app/api/publish-image",
+  "start": 15261,
+  "end": 15435,
+  "groupSha256": "0db0f748f9944522b40bce81c5970609cacc1caab7c7ccd6131014588c2cf583",
+  "groupBytes": 174,
+  "prefixSha256": "b63f8bbb0fc8d9ba427303da7181ff24a6dd6c0a51356910b152a99158ef15c0",
+  "suffixSha256": "fba488e646b7afd98025cca247e51a5185a3731d5439e2120141c05085047c0b",
+  "replacement": "<img alt=\"\" src=\"https://clinic-timetable-output.vercel.app/api/publish-image\" style=\"max-width:100%;height:auto;\" />",
+  "proposalSha256": "bbef52891183ba520c2b68a59d98661e585c97d99029f33badb3496a0366b2ef",
+  "proposalBytes": 22041,
+  "third": {
+    "start": 15435,
+    "end": 15576,
+    "sha256": "6b3dff7413d7b25ade9636e70169a73a6c9be392fb8130a4acd5eedd7d0ce814",
+    "raw": "<img alt=\"\" src=\"/upload/&amp;#27589;&amp;#23433;&amp;#35386;&amp;#25152;10&amp;#26376;&amp;#38272;&amp;#35386;&amp;#34920;_page-0001.jpg\" />",
+    "role": "UNKNOWN"
+  },
+  "pendingThreeTagSpan": {
+    "start": 15261,
+    "end": 15576,
+    "sha256": "e3c87bce79f61da6c681eff6641a71a8f26ddafa46b2c34f119e451ac18e5304",
+    "status": "DOCUMENTATION ONLY; explicit third disposition approval required"
+  },
+  "images": [
+    {
+      "start": 2360,
+      "end": 2412,
+      "sha256": "b12b8c1a7b3b5c4baf132d772f3d146c7b0b0262e0321ca81041d43b7a98d18e",
+      "raw": "<img src=\"img/logo.png\" alt=\"晉安復健科診所\">"
+    },
+    {
+      "start": 8828,
+      "end": 8871,
+      "sha256": "a319e03a212052052b3f55a1bbec4bc824e0a87073518210c42c780cf1908f19",
+      "raw": "<img src=\"img/logo.png\" alt=\"Multipurpose\">"
+    },
+    {
+      "start": 13764,
+      "end": 13798,
+      "sha256": "c2733dca4760dc1585a822bfa73bfce04a0e7afda05a5669ad8f3cd7d91fcd4e",
+      "raw": "<img src=\"img/icon-2.png\" alt=\"\"/>"
+    },
+    {
+      "start": 14783,
+      "end": 14833,
+      "sha256": "6b383d32c23db9b1968f084e42c80a68c94d11a3bb2584940b16bbeda6a5d57e",
+      "raw": "<img alt=\"\" src=\"/img/icon-next.svg\" width=\"25\" />"
+    },
+    {
+      "start": 15261,
+      "end": 15339,
+      "sha256": "84caa80ac51e35495e729cd95fb7c27c20147b3588f1f3dd14f7d6606dca48e3",
+      "raw": "<img alt=\"\" src=\"/upload/晉安復健科診所10月門診表_page-0001.jpg\" />"
+    },
+    {
+      "start": 15366,
+      "end": 15435,
+      "sha256": "17797bd2bad238bf9c6c8e364c011cd9c2eb9fb24dd5dd3c2d5b1d73ad5316a0",
+      "raw": "<img alt=\"\" src=\"/upload/毅安診所10月門診表_page-0001.jpg\" />"
+    },
+    {
+      "start": 15435,
+      "end": 15576,
+      "sha256": "6b3dff7413d7b25ade9636e70169a73a6c9be392fb8130a4acd5eedd7d0ce814",
+      "raw": "<img alt=\"\" src=\"/upload/&amp;#27589;&amp;#23433;&amp;#35386;&amp;#25152;10&amp;#26376;&amp;#38272;&amp;#35386;&amp;#34920;_page-0001.jpg\" />"
+    },
+    {
+      "start": 20299,
+      "end": 20334,
+      "sha256": "23897d76f7eff09bf20db3aff92681bfae371abf67d192bc87dc63b6d60ce4be",
+      "raw": "<img src=\"img/icon-fb.svg\" alt=\"\"/>"
+    },
+    {
+      "start": 20387,
+      "end": 20424,
+      "sha256": "ee8b735951600ff6610c3a38c87845c5690a00350ee4abca84087bd556fa4ce3",
+      "raw": "<img src=\"img/icon-line.svg\" alt=\"\"/>"
+    },
+    {
+      "start": 20507,
+      "end": 20547,
+      "sha256": "1023f19bf002d533fcd362538981643aee55c42cd02045b26568b51a3adf6cf4",
+      "raw": "<img src=\"img/icon-youtube.svg\" alt=\"\"/>"
+    },
+    {
+      "start": 20866,
+      "end": 20923,
+      "sha256": "377b56f39d292b282269c3e6f6be98d659a9bab7b7bd07eb305de0f88928ae94",
+      "raw": "<img src=\"img/logo-down.png\" alt=\"晉安復健科診所\">"
+    }
+  ]
+}

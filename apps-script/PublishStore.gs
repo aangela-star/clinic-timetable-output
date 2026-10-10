@@ -50,9 +50,12 @@ function publishRequest_(body) {
     const book=SpreadsheetApp.openById(ledgerId);
     const openedId=book&&book.getId();
     if(typeof openedId!=='string'||!openedId.trim()||openedId!==ledgerId)throw Error('STORE_UNAVAILABLE');
-    function sheet(name) {return book.getSheetByName(name)||book.insertSheet(name);}
+    // Public reads must never initialize ledger resources. Missing pointer means
+    // an empty baseline; missing journal means no blob is available.
+    const readOnly=body.op==='pointer'||body.op==='blob';
+    function sheet(name) {return book.getSheetByName(name)||(readOnly?null:book.insertSheet(name));}
     const pointers=sheet('PublishPointer'), jobs=sheet('ConsumedNonces');
-    function readPointer(){const v=pointers.getRange(1,1).getValue();return v?JSON.parse(v):{pointerVersion:0,pointerEtag:'empty',targetPointerId:'jinan-website/current'};}
+    function readPointer(){const v=pointers?pointers.getRange(1,1).getValue():null;return v?JSON.parse(v):{pointerVersion:0,pointerEtag:'empty',targetPointerId:'jinan-website/current'};}
     function jobRow(id){const rows=jobs.getDataRange().getValues();for(let i=0;i<rows.length;i++)if(rows[i][0]===id)return i+1;return 0;}
     function digest(bytes){return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,bytes).map(b=>('0'+((b+256)%256).toString(16)).slice(-2)).join('');}
     function blob(id){return DriveApp.getFileById(id).getBlob().getBytes();}
@@ -67,6 +70,7 @@ function publishRequest_(body) {
       savePointer:p=>{pointers.getRange(1,1).setValue(JSON.stringify(p));SpreadsheetApp.flush();}
     };
     if(body.op==='blob') {
+      if(!jobs)throw Error('NOT_FOUND');
       // Only known journal blobs can be served; never arbitrary Drive files.
       const rows=jobs.getDataRange().getValues();
       if(!rows.some(r=>r[1]&&JSON.parse(r[1]).blobId===body.input.blobId))throw Error('NOT_FOUND');

@@ -186,7 +186,7 @@
                                         <span style={{ color: '#f59e0b' }}>🔺</span> 門診異動
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        {clinic.changes.map((item, i) => (
+                                        {clinic.changes.filter(item => item.trim() !== "").map((item, i) => (
                                             <div key={i} style={{ fontSize: '24px', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'baseline', gap: '12px' }}>
                                                 <span style={{ color: '#94a3b8' }}>•</span>
                                                 <span>{item}</span>
@@ -601,12 +601,12 @@
                                         {/* 已有異動清單 */}
                                         {clinic.changes.map((item, idx) => (
                                             <div key={idx} className="flex gap-2 mb-2">
-                                                <input className="flex-1 p-2 border rounded-lg text-xs bg-white outline-none" value={item} onChange={(e) => {
+                                                <input className="min-w-0 flex-1 p-2 border rounded-lg text-xs bg-white outline-none" value={item} onChange={(e) => {
                                                     const n = JSON.parse(JSON.stringify(data));
                                                     n.clinics[cIdx].changes[idx] = e.target.value;
                                                     setData(n);
                                                 }} />
-                                                <button onClick={() => { const n = JSON.parse(JSON.stringify(data)); n.clinics[cIdx].changes.splice(idx,1); setData(n); }} className="text-rose-500 hover:bg-rose-50 p-1 rounded"><i data-lucide="trash-2" className="w-4 h-4"></i></button>
+                                                <button type="button" onClick={() => { const n = JSON.parse(JSON.stringify(data)); n.clinics[cIdx].changes.splice(idx,1); setData(n); }} className="min-w-[44px] min-h-[44px] shrink-0 text-rose-500 hover:bg-rose-50 p-2 rounded">刪除</button>
                                             </div>
                                         ))}
                                         {/* 永遠顯示最後一行空白輸入框 */}

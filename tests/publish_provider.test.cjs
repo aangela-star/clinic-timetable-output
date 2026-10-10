@@ -28,7 +28,7 @@ test('factory defaults and incomplete configuration fail closed without transpor
   let calls=0;const p=createProvider({config:c,getSecret:()=> 'synthetic',fetchImpl:()=>{calls++;throw Error();}});
   assert.equal((await p.adapter.handle('pointer')).status,'CMS_RESPONSE_CONTRACT_UNVERIFIED');assert.equal(calls,0);assert.equal(Boolean(p.store),c.PUBLISH_IMAGE_ENABLED==='true');
  }
- const imageOnly=createProvider({config:{PUBLISH_IMAGE_ENABLED:'true'},getSecret:()=> 'synthetic',fetchImpl:async()=>{throw Error('synthetic unavailable');}});assert.ok(imageOnly.store);assert.deepEqual(await imageOnly.adapter.handle('pointer'),{status:'BASELINE',classification:'UNKNOWN'});
+ const imageOnly=createProvider({config:{PUBLISH_IMAGE_ENABLED:'true'},getSecret:()=> 'synthetic',fetchImpl:async()=>{throw Error('synthetic unavailable');}});assert.ok(imageOnly.store);assert.deepEqual(await imageOnly.adapter.handle('pointer'),{status:'BASELINE',classification:'UNKNOWN',reason:'HTTP_TRANSPORT_ERROR'});
 });
 test('real factory composes saved facts, page binding, transport, hash, CAS and dropped response reconciliation',async()=>{
  const s=setup(),p=await prepare(s);assert.equal(p.status,'PREPARED');assert.equal((await s.store.call('pointer')).pointerVersion,0);

@@ -312,7 +312,7 @@ test('pointer diagnostic rejects malformed sentinels, conflicts and unsafe basel
  for(const pointer of invalid){
   assert.deepEqual(classifyPointerBaseline(pointer),unknown);
   const adapter=createPointerOnlyAdapter({store:{call:async(op)=>{assert.equal(op,'pointer');calls++;return pointer;},bytes:()=>assert.fail('unexpected bytes')}});
-  const result=await adapter.handle('pointer');assert.deepEqual(result,unknown);
+  const result=await adapter.handle('pointer');assert.deepEqual(result,{...unknown,reason:'POINTER_SHAPE_INVALID'});
   assert.equal(JSON.stringify(result).includes(canary),false);
  }
  assert.equal(calls,invalid.length);assert.equal(getterCalls,0);

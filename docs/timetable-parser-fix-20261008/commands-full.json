@@ -1,0 +1,42 @@
+{
+  "node-full": {
+    "command": [
+      "/Users/iaiangela/.local/bin/node",
+      "--test",
+      "tests/apps_script_schedule_behavior.test.cjs",
+      "tests/auth_gate.test.cjs",
+      "tests/clinic_order.test.cjs",
+      "tests/jinan_cms.test.cjs",
+      "tests/monthly_schedule_save_load.test.cjs",
+      "tests/prepare_validation.test.cjs",
+      "tests/prepare_validation_apps_script.test.cjs",
+      "tests/prepare_validation_engine.test.cjs",
+      "tests/prepare_validation_wrappers.test.cjs",
+      "tests/publish_contract.test.cjs",
+      "tests/publish_core.test.cjs",
+      "tests/publish_job.test.cjs",
+      "tests/publish_mock_routes.test.cjs",
+      "tests/publish_provider.test.cjs",
+      "tests/publish_route.test.cjs",
+      "tests/publish_store_adapter.test.cjs",
+      "tests/publish_target.test.cjs",
+      "tests/publish_transport_redirect.test.cjs",
+      "tests/publish_ui.test.cjs",
+      "tests/schedule_proxy.test.cjs",
+      "tests/server_session.test.cjs",
+      "tests/timetable_image_fixture.test.cjs",
+      "tests/timetable_parser_realhtml.test.cjs",
+      "tests/vercel_preview_contract.test.cjs"
+    ],
+    "exit_code": 0
+  },
+  "python-full": {
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-B",
+      "/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/docs/timetable-parser-fix-20261008/run-offline.py",
+      "--python-child"
+    ],
+    "exit_code": 0
+  }
+}

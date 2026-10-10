@@ -1,0 +1,75 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const out=path.join(__dirname,'../docs/timetable-realhtml-local-20261008');
+const {contract:c,sha,proposeTwoOnly}=require(path.join(out,'realhtml-contract.cjs'));
+const {targetFingerprint:f}=require('../lib/publish-target');
+const raw=fs.readFileSync(path.join(out,'real-public.html'));
+const proposal=fs.readFileSync(path.join(out,'proposal-two-preserve-third.NOT-APPROVABLE.html'));
+const images=[...raw.toString('utf8').matchAll(/<img\b[^>]*>/g)].map(m=>m[0]);
+const uploads=images.filter(s=>s.includes('/upload/'));
+const drift=b=>assert.throws(()=>proposeTwoOnly(b),/^Error: REALHTML_BASELINE_DRIFT$/);
+const mutate=(a,b)=>{assert.ok(raw.includes(Buffer.from(a)));return Buffer.from(raw.toString('utf8').replace(a,b));};
+test('recovered real bytes and exact ordered raw tags pinned independently',()=>{
+ assert.equal(raw.length,22098);assert.equal(sha(raw),'6eca7c113577973e4831a6dc224e8a09ec952fd51613a66d0f82f82d71c45001');
+ assert.equal(uploads.length,3);assert.match(uploads[0],/晉安復健科診所10月/);assert.match(uploads[1],/毅安診所10月/);assert.equal(uploads[2],c.third.raw);
+ assert.equal(c.start,15261);assert.equal(c.end,15435);
+ assert.equal(sha(raw.subarray(c.start,c.end)),'0db0f748f9944522b40bce81c5970609cacc1caab7c7ccd6131014588c2cf583');
+ assert.deepEqual(raw.subarray(c.start,c.end),fs.readFileSync(path.join(out,'selected-two.raw.html')));
+ assert.equal(raw.subarray(c.start,c.end).toString().replace(uploads[0],'').replace(uploads[1],''),'<br />\r\n\t<br />\r\n\t<br />\r\n\t');
+ for(const m of c.images){assert.equal(sha(raw.subarray(m.start,m.end)),m.sha256);assert.equal(raw.subarray(m.start,m.end).toString(),m.raw);}
+});
+test('two-only offline proposal preserves every outside byte and unresolved third',()=>{
+ assert.deepEqual(proposeTwoOnly(raw),proposal);assert.equal(sha(proposal),c.proposalSha256);
+ const n=Buffer.byteLength(c.replacement);
+ assert.deepEqual(proposal.subarray(0,c.start),raw.subarray(0,c.start));
+ assert.deepEqual(proposal.subarray(c.start+n),raw.subarray(c.end));
+ assert.deepEqual(proposal.subarray(c.start+n,c.start+n+c.third.end-c.third.start),fs.readFileSync(path.join(out,'third-unresolved.raw.html')));
+ const after=[...proposal.toString().matchAll(/<img\b[^>]*>/g)].map(m=>m[0]);
+ assert.deepEqual(after,images.flatMap(s=>s===uploads[0]?[c.replacement]:s===uploads[1]?[]:[s]));
+ assert.equal(after.filter(s=>s.includes(c.imageUrl)).length,1);
+ assert.equal(c.third.role,'UNKNOWN');
+});
+for(const [name,a,b] of [
+ ['clinic order',uploads[0],uploads[1]],['first image month','晉安復健科診所10月','晉安復健科診所11月'],
+ ['second image month','毅安診所10月','毅安診所11月'],['heading month','１１５年10月','１１５年11月'],
+ ['SEO title month','115年10月','115年11月'],['third entity spelling','&amp;#27589;','&#27589;'],
+ ['missing third',uploads[2],''],['extra group image',uploads[1],uploads[1]+'<img src="/extra.jpg" />'],
+ ['duplicate target group',uploads[0],uploads[0]+uploads[0]],['unrelated logo','img/logo.png','img/other.png'],
+ ['intervening breaks',uploads[0]+'<br />',uploads[0]],['newline normalization','\r\n','\n'],
+ ['unrelated appended image','</body>','<img src="/extra.jpg" /></body>']
+])test('real contract fails closed: '+name,()=>drift(mutate(a,b)));
+test('actual swap, full month drift, truncated body, and repeat apply fail closed',()=>{
+ drift(Buffer.from(raw.toString().replace(uploads[0],'SWAP').replace(uploads[1],uploads[0]).replace('SWAP',uploads[1])));
+ drift(Buffer.from(raw.toString().replaceAll('10月','11月')));drift(raw.subarray(0,-1));drift(proposal);
+});
+test('unmodified targetFingerprint rejects unwired real page and full-page proposal',()=>{
+ for(const bytes of [raw,proposal]) assert.throws(()=>f(bytes.toString(),c.pageUrl,c.imageUrl),/^Error: PUBLIC_BASELINE_DRIFT$/);
+});
+const target=c.replacement;
+const nested='<ul><li><ul><li></li></ul></li></ul>';
+test('minimal balanced nested li reproduces scanner rejection; flat and single-item controls pass',()=>{
+ assert.throws(()=>f(nested+target,c.pageUrl,c.imageUrl),/^Error: PUBLIC_BASELINE_DRIFT$/);
+ for(const nav of ['', '<ul><li></li></ul>', '<ul><li></li><li></li></ul>'])assert.match(f(nav+target,c.pageUrl,c.imageUrl),/^[a-f0-9]{64}$/);
+});
+test('exact first real navigation fragment rejects while its inner single list passes',()=>{
+ const text=raw.toString();const start=text.indexOf('<li class="lavel-1 with--drop slide-dropdown">');
+ const end=text.indexOf('</ul>',start)+5;const nav=text.slice(start,text.indexOf('</li>',end)+5);
+ assert.ok(nav.includes('<li><a href="news1.html">'));
+ assert.throws(()=>f(nav+target,c.pageUrl,c.imageUrl),/^Error: PUBLIC_BASELINE_DRIFT$/);
+ const inner=nav.slice(nav.indexOf('<ul'),nav.indexOf('</ul>')+5);
+ assert.match(f(inner+target,c.pageUrl,c.imageUrl),/^[a-f0-9]{64}$/);
+});
+test('real conditional comment is the first full-page blocker; nested li is independently blocked',()=>{
+ const text=raw.toString(),start=text.indexOf('<!--[if lt IE 9]>'),end=text.indexOf('-->',start)+3;
+ assert.ok(start>=0&&end>start);const comment=text.slice(start,end);
+ assert.ok(comment.includes('<![endif]'));
+ const rejectedAt=(html,line)=>assert.throws(()=>f(html,c.pageUrl,c.imageUrl),e=>e.message==='PUBLIC_BASELINE_DRIFT'&&e.stack.includes('publish-target.js:'+line+':'));
+ rejectedAt(proposal.toString(),35);rejectedAt(comment+target,35);
+ rejectedAt('<!--<![endif]-->'+target,35);
+ assert.match(f('<!-- ordinary -->'+target,c.pageUrl,c.imageUrl),/^[a-f0-9]{64}$/);
+ // Diagnostic derivative in memory only: no proposed template/parser modification.
+ rejectedAt(proposal.toString().replace(comment,''),42);
+ rejectedAt('<script async src="/local.js"></script>'+target,42);
+ assert.match(f('<script async="" src="/local.js"></script>'+target,c.pageUrl,c.imageUrl),/^[a-f0-9]{64}$/);
+ rejectedAt(nested+target,63);
+});

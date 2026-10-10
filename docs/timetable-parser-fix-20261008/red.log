@@ -1,0 +1,732 @@
+TAP version 13
+# Subtest: target fingerprint tolerates announcement and footer
+ok 1 - target fingerprint tolerates announcement and footer
+  ---
+  duration_ms: 1.081334
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates unrelated picture
+ok 2 - target fingerprint tolerates unrelated picture
+  ---
+  duration_ms: 0.226458
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates unrelated template svg
+ok 3 - target fingerprint tolerates unrelated template svg
+  ---
+  duration_ms: 0.095
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates comment false target
+ok 4 - target fingerprint tolerates comment false target
+  ---
+  duration_ms: 0.074834
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates raw text false targets
+ok 5 - target fingerprint tolerates raw text false targets
+  ---
+  duration_ms: 0.18275
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates attribute semantics
+ok 6 - target fingerprint tolerates attribute semantics
+  ---
+  duration_ms: 0.057459
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates unquoted URL
+ok 7 - target fingerprint tolerates unquoted URL
+  ---
+  duration_ms: 0.097541
+  type: 'test'
+  ...
+# Subtest: target scanner rejects target removal
+ok 8 - target scanner rejects target removal
+  ---
+  duration_ms: 0.153958
+  type: 'test'
+  ...
+# Subtest: target scanner rejects changed src
+ok 9 - target scanner rejects changed src
+  ---
+  duration_ms: 0.215584
+  type: 'test'
+  ...
+# Subtest: target scanner rejects duplicate
+ok 10 - target scanner rejects duplicate
+  ---
+  duration_ms: 0.533875
+  type: 'test'
+  ...
+# Subtest: target scanner rejects duplicate attribute
+ok 11 - target scanner rejects duplicate attribute
+  ---
+  duration_ms: 0.098
+  type: 'test'
+  ...
+# Subtest: target scanner rejects base
+ok 12 - target scanner rejects base
+  ---
+  duration_ms: 0.067958
+  type: 'test'
+  ...
+# Subtest: target scanner rejects picture target
+ok 13 - target scanner rejects picture target
+  ---
+  duration_ms: 0.045292
+  type: 'test'
+  ...
+# Subtest: target scanner rejects template target
+ok 14 - target scanner rejects template target
+  ---
+  duration_ms: 0.040417
+  type: 'test'
+  ...
+# Subtest: target scanner rejects svg target
+ok 15 - target scanner rejects svg target
+  ---
+  duration_ms: 0.034
+  type: 'test'
+  ...
+# Subtest: target scanner rejects noscript target
+ok 16 - target scanner rejects noscript target
+  ---
+  duration_ms: 0.029417
+  type: 'test'
+  ...
+# Subtest: target scanner rejects srcset
+ok 17 - target scanner rejects srcset
+  ---
+  duration_ms: 0.063791
+  type: 'test'
+  ...
+# Subtest: target scanner rejects other source aliases target
+ok 18 - target scanner rejects other source aliases target
+  ---
+  duration_ms: 0.047292
+  type: 'test'
+  ...
+# Subtest: target scanner rejects data src
+ok 19 - target scanner rejects data src
+  ---
+  duration_ms: 0.039291
+  type: 'test'
+  ...
+# Subtest: target scanner rejects event
+ok 20 - target scanner rejects event
+  ---
+  duration_ms: 0.037041
+  type: 'test'
+  ...
+# Subtest: target scanner rejects usemap
+ok 21 - target scanner rejects usemap
+  ---
+  duration_ms: 0.036166
+  type: 'test'
+  ...
+# Subtest: target scanner rejects encoded style url
+ok 22 - target scanner rejects encoded style url
+  ---
+  duration_ms: 0.038708
+  type: 'test'
+  ...
+# Subtest: target scanner rejects escaped style
+ok 23 - target scanner rejects escaped style
+  ---
+  duration_ms: 0.035958
+  type: 'test'
+  ...
+# Subtest: target scanner rejects unbalanced
+ok 24 - target scanner rejects unbalanced
+  ---
+  duration_ms: 0.041417
+  type: 'test'
+  ...
+# Subtest: target scanner rejects misnested p
+ok 25 - target scanner rejects misnested p
+  ---
+  duration_ms: 0.033917
+  type: 'test'
+  ...
+# Subtest: target scanner rejects implicit tbody
+ok 26 - target scanner rejects implicit tbody
+  ---
+  duration_ms: 0.031958
+  type: 'test'
+  ...
+# Subtest: target scanner rejects foster parenting
+ok 27 - target scanner rejects foster parenting
+  ---
+  duration_ms: 0.037458
+  type: 'test'
+  ...
+# Subtest: target scanner rejects nested button
+ok 28 - target scanner rejects nested button
+  ---
+  duration_ms: 0.039458
+  type: 'test'
+  ...
+# Subtest: target scanner rejects quoted greater than
+ok 29 - target scanner rejects quoted greater than
+  ---
+  duration_ms: 0.0345
+  type: 'test'
+  ...
+# Subtest: target scanner rejects unknown entity
+ok 30 - target scanner rejects unknown entity
+  ---
+  duration_ms: 0.041375
+  type: 'test'
+  ...
+# Subtest: target scanner rejects raw target only
+ok 31 - target scanner rejects raw target only
+  ---
+  duration_ms: 0.070666
+  type: 'test'
+  ...
+# Subtest: target scanner rejects comment target only
+ok 32 - target scanner rejects comment target only
+  ---
+  duration_ms: 0.0465
+  type: 'test'
+  ...
+# Subtest: target scanner rejects script escaped state
+ok 33 - target scanner rejects script escaped state
+  ---
+  duration_ms: 0.04575
+  type: 'test'
+  ...
+# Subtest: target scanner rejects ancestor hidden
+ok 34 - target scanner rejects ancestor hidden
+  ---
+  duration_ms: 0.038
+  type: 'test'
+  ...
+# Subtest: target scanner rejects unclosed quote
+ok 35 - target scanner rejects unclosed quote
+  ---
+  duration_ms: 0.086292
+  type: 'test'
+  ...
+# Subtest: fingerprint changes on moved context
+ok 36 - fingerprint changes on moved context
+  ---
+  duration_ms: 0.109167
+  type: 'test'
+  ...
+# Subtest: fingerprint changes on changed style whitespace string
+ok 37 - fingerprint changes on changed style whitespace string
+  ---
+  duration_ms: 0.049041
+  type: 'test'
+  ...
+# Subtest: fingerprint changes on ancestor style
+ok 38 - fingerprint changes on ancestor style
+  ---
+  duration_ms: 0.0615
+  type: 'test'
+  ...
+# Subtest: additional browser repair ambiguity rejected
+ok 39 - additional browser repair ambiguity rejected
+  ---
+  duration_ms: 0.159583
+  type: 'test'
+  ...
+# Subtest: additional browser repair ambiguity rejected
+ok 40 - additional browser repair ambiguity rejected
+  ---
+  duration_ms: 0.052167
+  type: 'test'
+  ...
+# Subtest: additional browser repair ambiguity rejected
+ok 41 - additional browser repair ambiguity rejected
+  ---
+  duration_ms: 0.04925
+  type: 'test'
+  ...
+# Subtest: additional browser repair ambiguity rejected
+ok 42 - additional browser repair ambiguity rejected
+  ---
+  duration_ms: 0.045208
+  type: 'test'
+  ...
+# Subtest: non-ASCII class whitespace is significant
+ok 43 - non-ASCII class whitespace is significant
+  ---
+  duration_ms: 0.054458
+  type: 'test'
+  ...
+# Subtest: semantic normalization ambiguity fails closed
+ok 44 - semantic normalization ambiguity fails closed
+  ---
+  duration_ms: 0.066375
+  type: 'test'
+  ...
+# Subtest: semantic normalization ambiguity fails closed
+ok 45 - semantic normalization ambiguity fails closed
+  ---
+  duration_ms: 0.05325
+  type: 'test'
+  ...
+# Subtest: semantic normalization ambiguity fails closed
+ok 46 - semantic normalization ambiguity fails closed
+  ---
+  duration_ms: 0.035292
+  type: 'test'
+  ...
+# Subtest: semantic normalization ambiguity fails closed
+ok 47 - semantic normalization ambiguity fails closed
+  ---
+  duration_ms: 0.02725
+  type: 'test'
+  ...
+# Subtest: common semantic ancestor attributes are supported and pinned
+ok 48 - common semantic ancestor attributes are supported and pinned
+  ---
+  duration_ms: 0.314208
+  type: 'test'
+  ...
+# Subtest: document mode is pinned and ambiguous doctypes rejected
+ok 49 - document mode is pinned and ambiguous doctypes rejected
+  ---
+  duration_ms: 0.116333
+  type: 'test'
+  ...
+# Subtest: conditional comment text is inert
+not ok 50 - conditional comment text is inert
+  ---
+  duration_ms: 0.053709
+  type: 'test'
+  location: '/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:63:2'
+  failureType: 'testCodeFailure'
+  error: 'PUBLIC_BASELINE_DRIFT'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    fail (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:5:23)
+    targetFingerprint (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:35:113)
+    TestContext.<anonymous> (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:63:60)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: conditional comment text is inert
+not ok 51 - conditional comment text is inert
+  ---
+  duration_ms: 0.027708
+  type: 'test'
+  location: '/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:63:2'
+  failureType: 'testCodeFailure'
+  error: 'PUBLIC_BASELINE_DRIFT'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    fail (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:5:23)
+    targetFingerprint (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:35:113)
+    TestContext.<anonymous> (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:63:60)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: ambiguous or unterminated comment remains rejected
+ok 52 - ambiguous or unterminated comment remains rejected
+  ---
+  duration_ms: 0.033917
+  type: 'test'
+  ...
+# Subtest: ambiguous or unterminated comment remains rejected
+ok 53 - ambiguous or unterminated comment remains rejected
+  ---
+  duration_ms: 0.023208
+  type: 'test'
+  ...
+# Subtest: ambiguous or unterminated comment remains rejected
+ok 54 - ambiguous or unterminated comment remains rejected
+  ---
+  duration_ms: 0.022917
+  type: 'test'
+  ...
+# Subtest: boolean attribute whitespace: "async src=\\"/local.js\\""
+not ok 55 - boolean attribute whitespace: "async src=\\"/local.js\\""
+  ---
+  duration_ms: 0.0335
+  type: 'test'
+  location: '/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:67:2'
+  failureType: 'testCodeFailure'
+  error: 'PUBLIC_BASELINE_DRIFT'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    fail (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:5:23)
+    targetFingerprint (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:42:192)
+    TestContext.<anonymous> (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:67:79)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: boolean attribute whitespace: "async defer src=\\"/local.js\\""
+not ok 56 - boolean attribute whitespace: "async defer src=\\"/local.js\\""
+  ---
+  duration_ms: 0.027042
+  type: 'test'
+  location: '/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:67:2'
+  failureType: 'testCodeFailure'
+  error: 'PUBLIC_BASELINE_DRIFT'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    fail (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:5:23)
+    targetFingerprint (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:42:192)
+    TestContext.<anonymous> (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:67:79)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: boolean attribute whitespace: "async\\tdefer\\nsrc = \\"/local.js\\""
+not ok 57 - boolean attribute whitespace: "async\\tdefer\\nsrc = \\"/local.js\\""
+  ---
+  duration_ms: 0.026542
+  type: 'test'
+  location: '/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:67:2'
+  failureType: 'testCodeFailure'
+  error: 'PUBLIC_BASELINE_DRIFT'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    fail (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:5:23)
+    targetFingerprint (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:42:192)
+    TestContext.<anonymous> (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:67:79)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: boolean attribute whitespace: "async   "
+ok 58 - boolean attribute whitespace: "async   "
+  ---
+  duration_ms: 0.04475
+  type: 'test'
+  ...
+# Subtest: boolean attribute whitespace: "async"
+ok 59 - boolean attribute whitespace: "async"
+  ---
+  duration_ms: 0.041375
+  type: 'test'
+  ...
+# Subtest: boolean attribute and explicit empty value are equivalent
+not ok 60 - boolean attribute and explicit empty value are equivalent
+  ---
+  duration_ms: 0.032375
+  type: 'test'
+  location: '/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:68:1'
+  failureType: 'testCodeFailure'
+  error: 'PUBLIC_BASELINE_DRIFT'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    fail (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:5:23)
+    targetFingerprint (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:42:192)
+    TestContext.<anonymous> (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:68:83)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: boolean input attributes accept following separator
+not ok 61 - boolean input attributes accept following separator
+  ---
+  duration_ms: 0.031625
+  type: 'test'
+  location: '/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:70:2'
+  failureType: 'testCodeFailure'
+  error: 'PUBLIC_BASELINE_DRIFT'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    fail (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:5:23)
+    targetFingerprint (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:42:192)
+    TestContext.<anonymous> (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:70:78)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: boolean input attributes accept following separator
+ok 62 - boolean input attributes accept following separator
+  ---
+  duration_ms: 0.040875
+  type: 'test'
+  ...
+# Subtest: malformed attributes still reject
+ok 63 - malformed attributes still reject
+  ---
+  duration_ms: 0.032375
+  type: 'test'
+  ...
+# Subtest: malformed attributes still reject
+ok 64 - malformed attributes still reject
+  ---
+  duration_ms: 0.02475
+  type: 'test'
+  ...
+# Subtest: malformed attributes still reject
+ok 65 - malformed attributes still reject
+  ---
+  duration_ms: 0.024458
+  type: 'test'
+  ...
+# Subtest: nested ul list scope with three levels and siblings
+not ok 66 - nested ul list scope with three levels and siblings
+  ---
+  duration_ms: 0.041458
+  type: 'test'
+  location: '/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:74:2'
+  failureType: 'testCodeFailure'
+  error: 'PUBLIC_BASELINE_DRIFT'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    fail (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:5:23)
+    targetFingerprint (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:63:180)
+    TestContext.<anonymous> (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:76:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: nested ol list scope with three levels and siblings
+not ok 67 - nested ol list scope with three levels and siblings
+  ---
+  duration_ms: 0.073875
+  type: 'test'
+  location: '/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:74:2'
+  failureType: 'testCodeFailure'
+  error: 'PUBLIC_BASELINE_DRIFT'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    fail (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:5:23)
+    targetFingerprint (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:63:180)
+    TestContext.<anonymous> (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/publish_target.test.cjs:76:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <ul><li><li></li></li></ul>
+ok 68 - same-scope repair or unsupported tag still rejects: <ul><li><li></li></li></ul>
+  ---
+  duration_ms: 0.03675
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <ul><li><div><li></li></div></li></ul>
+ok 69 - same-scope repair or unsupported tag still rejects: <ul><li><div><li></li></div></li></ul>
+  ---
+  duration_ms: 0.029666
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <ul><li><ul><li><li></li></li></ul></li></ul>
+ok 70 - same-scope repair or unsupported tag still rejects: <ul><li><ul><li><li></li></li></ul></li></ul>
+  ---
+  duration_ms: 0.028208
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <ul><li><ul></ul><li></li></li></ul>
+ok 71 - same-scope repair or unsupported tag still rejects: <ul><li><ul></ul><li></li></li></ul>
+  ---
+  duration_ms: 0.026209
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <a><a></a></a>
+ok 72 - same-scope repair or unsupported tag still rejects: <a><a></a></a>
+  ---
+  duration_ms: 0.025042
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <form><form></form></form>
+ok 73 - same-scope repair or unsupported tag still rejects: <form><form></form></form>
+  ---
+  duration_ms: 0.026125
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <button><button></button></button>
+ok 74 - same-scope repair or unsupported tag still rejects: <button><button></button></button>
+  ---
+  duration_ms: 0.025666
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <dl><dt><dd></dd></dt></dl>
+ok 75 - same-scope repair or unsupported tag still rejects: <dl><dt><dd></dd></dt></dl>
+  ---
+  duration_ms: 0.02675
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <h1><h2></h2></h1>
+ok 76 - same-scope repair or unsupported tag still rejects: <h1><h2></h2></h1>
+  ---
+  duration_ms: 0.025916
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <option><option></option></option>
+ok 77 - same-scope repair or unsupported tag still rejects: <option><option></option></option>
+  ---
+  duration_ms: 0.026167
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <menu><li></li></menu>
+ok 78 - same-scope repair or unsupported tag still rejects: <menu><li></li></menu>
+  ---
+  duration_ms: 0.023416
+  type: 'test'
+  ...
+# Subtest: recovered real bytes and exact ordered raw tags pinned independently
+ok 79 - recovered real bytes and exact ordered raw tags pinned independently
+  ---
+  duration_ms: 0.998667
+  type: 'test'
+  ...
+# Subtest: two-only offline proposal preserves every outside byte and unresolved third
+ok 80 - two-only offline proposal preserves every outside byte and unresolved third
+  ---
+  duration_ms: 0.33325
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: clinic order
+ok 81 - real contract fails closed: clinic order
+  ---
+  duration_ms: 0.582542
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: first image month
+ok 82 - real contract fails closed: first image month
+  ---
+  duration_ms: 0.13925
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: second image month
+ok 83 - real contract fails closed: second image month
+  ---
+  duration_ms: 0.101459
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: heading month
+ok 84 - real contract fails closed: heading month
+  ---
+  duration_ms: 0.087333
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: SEO title month
+ok 85 - real contract fails closed: SEO title month
+  ---
+  duration_ms: 0.103083
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: third entity spelling
+ok 86 - real contract fails closed: third entity spelling
+  ---
+  duration_ms: 0.105791
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: missing third
+ok 87 - real contract fails closed: missing third
+  ---
+  duration_ms: 0.414375
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: extra group image
+ok 88 - real contract fails closed: extra group image
+  ---
+  duration_ms: 0.268209
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: duplicate target group
+ok 89 - real contract fails closed: duplicate target group
+  ---
+  duration_ms: 0.182459
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: unrelated logo
+ok 90 - real contract fails closed: unrelated logo
+  ---
+  duration_ms: 0.066583
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: intervening breaks
+ok 91 - real contract fails closed: intervening breaks
+  ---
+  duration_ms: 0.060916
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: newline normalization
+ok 92 - real contract fails closed: newline normalization
+  ---
+  duration_ms: 0.052208
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: unrelated appended image
+ok 93 - real contract fails closed: unrelated appended image
+  ---
+  duration_ms: 0.070125
+  type: 'test'
+  ...
+# Subtest: actual swap, full month drift, truncated body, and repeat apply fail closed
+ok 94 - actual swap, full month drift, truncated body, and repeat apply fail closed
+  ---
+  duration_ms: 0.136708
+  type: 'test'
+  ...
+# Subtest: real full-page three-image compatibility, singleton and byte preservation
+not ok 95 - real full-page three-image compatibility, singleton and byte preservation
+  ---
+  duration_ms: 0.872708
+  type: 'test'
+  location: '/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/timetable_parser_realhtml.test.cjs:50:1'
+  failureType: 'testCodeFailure'
+  error: 'PUBLIC_BASELINE_DRIFT'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    fail (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:5:23)
+    targetFingerprint (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/lib/publish-target.js:35:113)
+    TestContext.<anonymous> (/Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008/tests/timetable_parser_realhtml.test.cjs:58:20)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: raw unwired fixture still rejects with the production image URL
+ok 96 - raw unwired fixture still rejects with the production image URL
+  ---
+  duration_ms: 0.139875
+  type: 'test'
+  ...
+# Subtest: unapproved real proposals fail mock verification without an approved target hash
+ok 97 - unapproved real proposals fail mock verification without an approved target hash
+  ---
+  duration_ms: 11.115709
+  type: 'test'
+  ...
+1..97
+# tests 97
+# suites 0
+# pass 87
+# fail 10
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 51.419042

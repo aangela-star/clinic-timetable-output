@@ -826,3 +826,91 @@ test('public handler delegates pointer and op to inert provider and preserves le
   }
   assert.equal(legacyCalls,1);
 });
+
+test('pointer diagnostic authenticates before provider construction and reads exact empty sentinel', async () => {
+  const providerModule = require('../lib/publish-provider');
+  const realCreateProvider = providerModule.createProvider;
+  let constructions = 0;
+  const calls = [];
+  providerModule.createProvider = () => {
+    constructions++;
+    return realCreateProvider({
+      config: {PUBLISH_IMAGE_ENABLED:'true'},
+      getSecret: () => 'synthetic-pointer-only-secret',
+      fetchImpl: async (_, options) => {
+        const payload = JSON.parse(options.body);
+        calls.push(payload.op);
+        assert.equal(payload.action, 'publish');
+        assert.deepEqual(payload.input, {});
+        return Response.json({ok:true,result:{pointerVersion:0,pointerEtag:'empty',targetPointerId:'jinan-website/current'}});
+      },
+    });
+  };
+  try {
+    const handler = createHandler();
+    for (const cookie of ['', 'clinic_timetable_session=invalid']) {
+      const res = responseRecorder();
+      await handler({method:'GET',query:{pointer:'jinan-website'},headers:{cookie}}, res);
+      assert.equal(res.statusCode, 401);
+    }
+    assert.equal(constructions, 0);
+    assert.deepEqual(calls, []);
+    const res = responseRecorder();
+    await handler({method:'GET',query:{pointer:'jinan-website'},headers:{cookie:signedCookie()}}, res);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body, {ok:true,status:'BASELINE',classification:'VERIFIED_EMPTY'});
+    assert.equal(res.headers['Cache-Control'], 'no-store');
+    assert.equal(constructions, 1);
+    assert.deepEqual(calls, ['pointer']);
+  } finally {
+    providerModule.createProvider = realCreateProvider;
+  }
+});
+
+test('pointer diagnostic route returns a validated baseline or fixed UNKNOWN without canary leakage', async () => {
+  const providerModule = require('../lib/publish-provider');
+  const realCreateProvider = providerModule.createProvider;
+  const canary = 'SYNTHETIC_POINTER_PAYLOAD_CANARY';
+  const pointer = {pointerVersion:1,pointerEtag:'11111111-2222-4333-8444-555555555555',pngSha256:'a'.repeat(64),targetPointerId:'jinan-website/current',blobId:'synthetic-blob',approvalId:'22222222-2222-4333-8444-555555555555',nonce:'33333333-2222-4333-8444-555555555555'};
+  const calls = [], logged = [];
+  const originalError = console.error, originalLog = console.log;
+  let current = pointer;
+  providerModule.createProvider = () => realCreateProvider({
+    config:{PUBLISH_IMAGE_ENABLED:'true'},getSecret:()=> 'synthetic-pointer-only-secret',
+    fetchImpl:async (_,options)=>{
+      const payload=JSON.parse(options.body);calls.push(payload.op);
+      assert.equal(options.method,'POST');assert.equal(payload.action,'publish');assert.deepEqual(payload.input,{});
+      if(current instanceof Error)throw current;
+      return Response.json(current);
+    },
+  });
+  console.error = console.log = (...args) => logged.push(args.join(' '));
+  try {
+    const handler=createHandler(),headers={cookie:signedCookie(),host:'localhost','content-type':'application/json'};
+    const fixtures=[
+      [{ok:true,result:pointer},{ok:true,status:'BASELINE',baseline:{pointerVersion:1,pointerEtag:pointer.pointerEtag,pngSha256:pointer.pngSha256}}],
+      ...[new Error(canary),{ok:false,error:canary},{ok:true,result:{...pointer,pointerEtag:canary}},{ok:true,result:{...pointer,pngSha256:{secret:canary}}},{ok:true,result:{...pointer,targetPointerId:canary}},{ok:true,result:{pointerVersion:0,pointerEtag:'empty',targetPointerId:'jinan-website/current',secret:canary}}].map(value=>[value,{ok:true,status:'BASELINE',classification:'UNKNOWN'}]),
+    ];
+    for(const [value,expected] of fixtures){
+      current=value;const before=calls.length,res=responseRecorder();
+      await handler({method:'GET',query:{pointer:'jinan-website'},headers},res);
+      assert.equal(res.statusCode,200);assert.deepEqual(res.body,expected);
+      assert.equal(JSON.stringify(res.body).includes(canary),false);
+      assert.equal(res.headers['Cache-Control'],'no-store');assert.equal(calls.length,before+1);
+    }
+    const before=calls.length;
+    for(const op of ['prepare','confirm','reconcile','blob','bytes','unexpected']){
+      const res=responseRecorder();await handler({method:'POST',headers,body:{op,input:{}}},res);
+      assert.equal(res.statusCode,409);assert.deepEqual(res.body,{ok:false,error:'CMS_RESPONSE_CONTRACT_UNVERIFIED'});
+    }
+    for(const patch of [{origin:'https://other.invalid'},{'content-type':'text/plain'}]){
+      const res=responseRecorder();await handler({method:'POST',headers:{...headers,...patch},body:{op:'confirm',input:{}}},res);
+      assert.equal(res.statusCode,400);assert.equal(res.body.error,'INVALID_REQUEST');
+    }
+    const invalid=responseRecorder();await handler({method:'GET',query:{pointer:'unexpected'},headers},invalid);
+    assert.equal(invalid.statusCode,405);
+    assert.equal(calls.length,before);assert.ok(calls.every(op=>op==='pointer'));assert.deepEqual(logged,[]);
+  } finally {
+    providerModule.createProvider=realCreateProvider;console.error=originalError;console.log=originalLog;
+  }
+});

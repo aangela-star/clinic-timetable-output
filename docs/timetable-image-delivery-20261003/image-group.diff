@@ -1,0 +1,12 @@
+--- before.html
++++ candidate.html
+@@ -8,8 +8,7 @@
+ <p id="notice">SYNTHETIC NOTICE — 原公告需以正式備份逐字保留</p>
+ <p><a id="booking" href="#synthetic-booking">SYNTHETIC BOOKING LINK</a></p>
+ <div id="timetable-images">
+-<img src="/upload/未命名(1).png" alt="晉安門診表">
+-<img src="/upload/未命名1.png" alt="毅安門診表">
++<img src="https://clinic-timetable-output.vercel.app/api/publish-image" alt="晉安與毅安醫師門診表" width="2160" height="3840" style="display:block;width:100%;max-width:1080px;height:auto">
+ </div>
+ <footer>其他內容保留 — SYNTHETIC FOOTER</footer>
+ </main></body></html>

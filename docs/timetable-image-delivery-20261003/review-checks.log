@@ -1,0 +1,19 @@
+git diff --check exit 0
+## fix/timetable-image-delivery-20261003
+ M apps-script/PublishStore.gs
+ M lib/publish-store-adapter.js
+ M tests/publish_provider.test.cjs
+ M tests/publish_store_adapter.test.cjs
+?? docs/timetable-image-delivery-20261003/
+?? tests/publish_transport_redirect.test.cjs
+?? tests/timetable_image_fixture.test.cjs
+
+index.html: OK
+auth-gate.js: OK
+auth-config.js: OK
+schedule-save-load-core.js: OK
+schedule-api-config.js: OK
+api/auth.js: OK
+api/schedule.js: OK
+apps-script/Code.gs: OK
+lib/publish-store-engine.js: OK

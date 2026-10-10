@@ -12,7 +12,7 @@ function setup() {
  const fetchImpl=async(url,options)=>{
   calls.push({url,method:options.method});
   if(options.method==='GET')return new Response(url===pageUrl?state.html:await store.bytes((await store.call('pointer')).blobId),{headers:{'Content-Type':url===pageUrl?'text/html':'image/png'}});
-  const b=JSON.parse(options.body);assert.equal(b.secret,'synthetic-only-secret');assert.equal(options.redirect,'follow');assert.ok(options.signal);
+  const b=JSON.parse(options.body);assert.equal(b.secret,'synthetic-only-secret');assert.equal(options.redirect,'manual');assert.ok(options.signal);
   if(b.action==='load')return Response.json({ok:true,found:true,month:b.month,schemaVersion:1,data});
   const result=b.op==='blob'?{base64:(await store.bytes(b.input.blobId)).toString('base64')}:await store.call(b.op,b.input);
   if(b.op==='confirm'&&state.drop)throw Error('SYNTHETIC dropped response');
@@ -153,4 +153,28 @@ test('anonymous image handler repeated concurrent reads return exact bytes and f
   assert.equal(res.statusCode,200);assert.equal(headers['Cache-Control'],'no-store');assert.equal(headers['X-Content-Type-Options'],'nosniff');assert.equal(headers['Content-Type'],'image/png');assert.deepEqual(bytes,fixture.png);assert.equal(bytes.length,fixture.png.length);assert.equal(hash(bytes),hash(fixture.png));}
  await get();await Promise.all([get(),get(),get()]);
  s.store.faults.cache=true;let status;await handler({method:'GET'},{set statusCode(v){status=v;},setHeader(){},end(){}});assert.equal(status,404);
+});
+
+test('image 503 classification: early failures make zero upstream calls; downstream failures are 404',async()=>{
+ for(const kind of ['missing','false','TRUE',' true ','construction','gate-rejected','empty','bad-hash','success']){
+  let secrets=0,calls=0;
+  const early=['missing','false','TRUE',' true ','construction'].includes(kind);
+  const c={PUBLISH_IMAGE_ENABLED:kind==='missing'?undefined:['false','TRUE',' true '].includes(kind)?kind:'true',PUBLISH_FLOW_ENABLED:'false'};
+  const provider=()=>createProvider({config:c,getSecret:()=>{secrets++;if(kind==='construction')throw Error('SERVER_SECRET_NOT_CONFIGURED');return 'synthetic-only';},fetchImpl:async(_,o)=>{
+   calls++;const {op}=JSON.parse(o.body);
+   if(kind==='gate-rejected')return Response.json({ok:false,error:'CMS_RESPONSE_CONTRACT_UNVERIFIED'});
+   if(op==='pointer')return Response.json({ok:true,result:kind==='empty'?{pointerVersion:0,pointerEtag:'empty'}:{blobId:'synthetic',targetPointerId:'jinan-website/current',pngSha256:kind==='bad-hash'?'0'.repeat(64):hash(fixture.png)}});
+   if(kind==='empty')return Response.json({ok:false});
+   return Response.json({ok:true,result:{base64:fixture.png.toString('base64')}});
+  }});
+  const context={module:{exports:{}},require:n=>n==='../lib/publish-provider'?{createProvider:provider}:require(n)};
+  vm.runInNewContext(fs.readFileSync(require.resolve('../api/publish-image'),'utf8'),context);
+  let body;const headers={},res={statusCode:200,setHeader:(k,v)=>headers[k]=v,end:b=>body=b};
+  await context.module.exports({method:'GET'},res);
+  assert.equal(res.statusCode,early?503:kind==='success'?200:404,kind);
+  assert.equal(calls,early?0:kind==='gate-rejected'?1:2,kind);
+  assert.equal(secrets,early&&kind!=='construction'?0:1,kind);
+  assert.equal(headers['Cache-Control'],'no-store');assert.equal(headers['X-Content-Type-Options'],'nosniff');
+  if(kind==='success')assert.deepEqual(body,fixture.png);else assert.equal(body,undefined);
+ }
 });

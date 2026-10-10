@@ -57,3 +57,23 @@ test('document mode is pinned and ambiguous doctypes rejected',()=>{
  for(const prefix of ['<!DOCTYPE html\u00a0>','<!DOCTYPE html><!DOCTYPE html>'])assert.throws(()=>f(prefix+wrap(img),page,image));
  assert.throws(()=>f(wrap(img)+'<noscript>unrelated scripting-dependent content</noscript>',page,image));
 });
+
+// Real-page grammar regressions: no change to target/ancestor fingerprint semantics.
+for(const comment of ['<!--[if lt IE 9]><script src="/local.js"></script><![endif]-->','<!--<![endif]-->'])
+ test('conditional comment text is inert',()=>assert.equal(f(comment+wrap(img),page,image),pin));
+for(const comment of ['<!-- nested <!-- comment -->','<!-- bare -- comment -->','<!-- unterminated'])
+ test('ambiguous or unterminated comment remains rejected',()=>assert.throws(()=>f(comment+wrap(img),page,image),/PUBLIC_BASELINE_DRIFT/));
+for(const attrs of ['async src="/local.js"','async defer src="/local.js"','async\tdefer\nsrc = "/local.js"','async   ','async'])
+ test('boolean attribute whitespace: '+JSON.stringify(attrs),()=>assert.equal(f('<script '+attrs+'></script>'+wrap(img),page,image),pin));
+test('boolean attribute and explicit empty value are equivalent',()=>assert.equal(f('<script async src="/local.js"></script>'+wrap(img),page,image),f('<script async="" src="/local.js"></script>'+wrap(img),page,image)));
+for(const tag of ['<input disabled name="x">','<input disabled />'])
+ test('boolean input attributes accept following separator',()=>assert.equal(f(tag+wrap(img),page,image),pin));
+for(const tag of ['<script async=""src="/local.js"></script>','<input disabled disabled>','<input disabled name=>'])
+ test('malformed attributes still reject',()=>assert.throws(()=>f(tag+wrap(img),page,image),/PUBLIC_BASELINE_DRIFT/));
+for(const list of ['ul','ol'])
+ test('nested '+list+' list scope with three levels and siblings',()=>{
+  const nav='<'+list+'><li><div><'+list+'><li><'+list+'><li></li></'+list+'></li><li></li></'+list+'></div></li><li></li></'+list+'>';
+  assert.equal(f(nav+wrap(img),page,image),pin);
+ });
+for(const nav of ['<ul><li><li></li></li></ul>','<ul><li><div><li></li></div></li></ul>','<ul><li><ul><li><li></li></li></ul></li></ul>','<ul><li><ul></ul><li></li></li></ul>','<a><a></a></a>','<form><form></form></form>','<button><button></button></button>','<dl><dt><dd></dd></dt></dl>','<h1><h2></h2></h1>','<option><option></option></option>','<menu><li></li></menu>'])
+ test('same-scope repair or unsupported tag still rejects: '+nav,()=>assert.throws(()=>f(nav+wrap(img),page,image),/PUBLIC_BASELINE_DRIFT/));

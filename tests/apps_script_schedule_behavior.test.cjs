@@ -219,3 +219,21 @@ test('save lock timeout leaves all sheet rows unchanged', () => {
   assert.equal(harness.flushCalls, 0);
   assert.equal(harness.lockState.releaseCalls, 0);
 });
+
+test('exception arrays round-trip empty and legacy whitespace entries verbatim', () => {
+  for (const changes of [[], ['', ' \t\u3000', '  TEST FIRST  ', 'TEST LAST']]) {
+    const data = {
+      title: 'TEST SYNTHETIC', note: 'TEST ONLY',
+      clinics: [
+        { id: 'clinic-1', schedule: {}, changes },
+        { id: 'clinic-2', schedule: {}, changes: ['TEST OTHER'] },
+      ],
+    };
+    const harness = createHarness([headers]);
+    assert.equal(harness.post({ secret, action: 'save', month: '2026-10', data }).ok, true);
+    const result = harness.post({ secret, action: 'load', month: '2026-10' });
+    assert.equal(result.found, true);
+    assert.deepEqual(result.data, data);
+    assert.equal(harness.rows[1][2], 1, 'existing schema version');
+  }
+});

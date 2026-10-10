@@ -1,0 +1,21 @@
+{
+  "base": "538b426b951f90e85d6e398d9bd441f48a709e94",
+  "branch": "fix/timetable-exception-row-delete",
+  "parentTrackedDiffEmpty": true,
+  "parentAssetFilesUnchanged": 23,
+  "exactThreeUIReplacementsOnly": true,
+  "CRLFCountPreserved": 284,
+  "indexSha256": "17733e5f3b54472f8d48909fbbeed9f37bea66767ae54597be6c25d121046883",
+  "node": {
+    "pass": 504,
+    "fail": 0,
+    "skip": 0
+  },
+  "python": {
+    "pass": 8
+  },
+  "networkForwarded": 0,
+  "realPublish": 0,
+  "serverStarted": false,
+  "browserClosedInFinally": true
+}

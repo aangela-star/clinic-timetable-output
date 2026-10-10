@@ -1,0 +1,91 @@
+{
+  "status": "PASS_WITH_PRINT_LIMITATION",
+  "cases": [
+    {
+      "device": "desktop",
+      "status": "PASS",
+      "runtime": {
+        "react": "18.3.1",
+        "reactDOM": "18.3.1-next-f1338f8080-20240426",
+        "babel": "8.0.4"
+      },
+      "saves": 2,
+      "loads": 3,
+      "publishes": 0,
+      "print": "mock invoked once; no product print UI",
+      "png": {
+        "file": "desktop-download.png",
+        "sha256": "a6fc4f5bb01d896489f433b9de5f822a735e456cd4c25cdf962be828289fade8",
+        "bytes": 615392,
+        "width": 2160,
+        "height": 3840,
+        "different": 58565
+      },
+      "fonts": [
+        {
+          "family": "Noto Sans TC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Noto Sans TC",
+          "weight": "700",
+          "status": "loaded"
+        },
+        {
+          "family": "Noto Sans TC",
+          "weight": "800",
+          "status": "loaded"
+        }
+      ],
+      "preview": "desktop-preview.png"
+    },
+    {
+      "device": "mobile",
+      "status": "PASS",
+      "runtime": {
+        "react": "18.3.1",
+        "reactDOM": "18.3.1-next-f1338f8080-20240426",
+        "babel": "8.0.4"
+      },
+      "saves": 2,
+      "loads": 3,
+      "publishes": 0,
+      "print": "mock invoked once; no product print UI",
+      "png": {
+        "file": "mobile-download.png",
+        "sha256": "a6fc4f5bb01d896489f433b9de5f822a735e456cd4c25cdf962be828289fade8",
+        "bytes": 615392,
+        "width": 2160,
+        "height": 3840,
+        "different": 58565
+      },
+      "fonts": [
+        {
+          "family": "Noto Sans TC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Noto Sans TC",
+          "weight": "700",
+          "status": "loaded"
+        },
+        {
+          "family": "Noto Sans TC",
+          "weight": "800",
+          "status": "loaded"
+        }
+      ],
+      "preview": "mobile-preview.png"
+    }
+  ],
+  "limitations": [
+    "No product print control exists: print is an explicitly mocked direct window.print invocation.",
+    "Authentication config/response are synthetic; no real auth, CMS, Google, GAS, publish or image endpoints are contacted.",
+    "Production target fingerprint does not cover siblings/month/order. Browser regression does not establish production publication readiness."
+  ],
+  "forwardedRequests": 0,
+  "realPublishes": 0,
+  "sourceUnchanged": true
+}

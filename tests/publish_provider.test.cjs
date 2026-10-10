@@ -28,7 +28,7 @@ test('factory defaults and incomplete configuration fail closed without transpor
   let calls=0;const p=createProvider({config:c,getSecret:()=> 'synthetic',fetchImpl:()=>{calls++;throw Error();}});
   assert.equal((await p.adapter.handle('pointer')).status,'CMS_RESPONSE_CONTRACT_UNVERIFIED');assert.equal(calls,0);assert.equal(Boolean(p.store),c.PUBLISH_IMAGE_ENABLED==='true');
  }
- const imageOnly=createProvider({config:{PUBLISH_IMAGE_ENABLED:'true'},getSecret:()=> 'synthetic'});assert.ok(imageOnly.store);assert.equal((await imageOnly.adapter.handle('pointer')).status,'CMS_RESPONSE_CONTRACT_UNVERIFIED');
+ const imageOnly=createProvider({config:{PUBLISH_IMAGE_ENABLED:'true'},getSecret:()=> 'synthetic',fetchImpl:async()=>{throw Error('synthetic unavailable');}});assert.ok(imageOnly.store);assert.deepEqual(await imageOnly.adapter.handle('pointer'),{status:'BASELINE',classification:'UNKNOWN'});
 });
 test('real factory composes saved facts, page binding, transport, hash, CAS and dropped response reconciliation',async()=>{
  const s=setup(),p=await prepare(s);assert.equal(p.status,'PREPARED');assert.equal((await s.store.call('pointer')).pointerVersion,0);
@@ -100,7 +100,7 @@ test('real image route preserves bytes with invalid/incomplete flow config while
  ];
  for(const c of configs){
   const provider=()=>createProvider({config:c,fetchImpl:s.fetchImpl,getSecret:()=> 'synthetic-only-secret'});
-  assert.equal((await provider().adapter.handle('pointer')).status,'CMS_RESPONSE_CONTRACT_UNVERIFIED');
+  assert.equal((await provider().adapter.handle('pointer')).status,c.PUBLISH_FLOW_ENABLED==='false'?'BASELINE':'CMS_RESPONSE_CONTRACT_UNVERIFIED');
   const context={module:{exports:{}},require:name=>name==='../lib/publish-provider'?{createProvider:provider}:require(name)};
   vm.runInNewContext(fs.readFileSync(require.resolve('../api/publish-image'),'utf8'),context);
   const headers={};let body;const res={statusCode:200,setHeader:(k,v)=>headers[k]=v,end:b=>body=b};
@@ -176,5 +176,25 @@ test('image 503 classification: early failures make zero upstream calls; downstr
   assert.equal(secrets,early&&kind!=='construction'?0:1,kind);
   assert.equal(headers['Cache-Control'],'no-store');assert.equal(headers['X-Content-Type-Options'],'nosniff');
   if(kind==='success')assert.deepEqual(body,fixture.png);else assert.equal(body,undefined);
+ }
+});
+
+test('image-only provider reads pointer once, ignores flow target config, and never activates writes or public reads',async()=>{
+ const empty={pointerVersion:0,pointerEtag:'empty',targetPointerId:'jinan-website/current'};
+ for(const flow of [undefined,'false','TRUE',' true ']){
+  let calls=0,secrets=0;
+  const p=createProvider({config:{PUBLISH_IMAGE_ENABLED:'true',PUBLISH_FLOW_ENABLED:flow,PUBLISH_PUBLIC_PAGE_URL:'invalid',PUBLISH_PUBLIC_IMAGE_URL:'invalid'},getSecret:()=>{secrets++;return 'synthetic-only';},fetchImpl:async(_,o)=>{
+   calls++;assert.equal(o.method,'POST');const body=JSON.parse(o.body);
+   assert.deepEqual(body,{action:'publish',op:'pointer',input:{},secret:'synthetic-only'});
+   return Response.json({ok:true,result:empty});
+  }});
+  for(const op of ['prepare','confirm','reconcile','blob','bytes','unexpected'])assert.deepEqual(await p.adapter.handle(op,{}),{status:'CMS_RESPONSE_CONTRACT_UNVERIFIED'});
+  assert.equal(calls,0);assert.equal(secrets,1);
+  assert.deepEqual(await p.adapter.handle('pointer'),{status:'BASELINE',classification:'VERIFIED_EMPTY'});
+  assert.equal(calls,1);
+ }
+ for(const image of [undefined,'false','TRUE',' true ']){
+  let touches=0;const p=createProvider({config:{PUBLISH_IMAGE_ENABLED:image},getSecret:()=>{touches++;throw Error();},fetchImpl:()=>{touches++;throw Error();}});
+  assert.deepEqual(await p.adapter.handle('pointer'),{status:'CMS_RESPONSE_CONTRACT_UNVERIFIED'});assert.equal(touches,0);
  }
 });

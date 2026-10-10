@@ -276,3 +276,61 @@ test('malformed pointer and journal reads fail closed without repair writes',()=
   assert.ok(!h.events.some(e=>/insert|write|flush|drive.create|drive.folder/.test(e)));
  }
 });
+
+test('pointer diagnostic validates real baseline and returns only safe existing fields', async () => {
+ const {createPointerOnlyAdapter,classifyPointerBaseline}=require('../lib/publish-store-adapter');
+ const s=setup(),p=await prepare(s);
+ assert.equal((await s.adapter.handle('confirm',binding(p),'a')).status,'PUBLISHED');
+ const pointer=await s.store.call('pointer');
+ const expected={status:'BASELINE',baseline:{pointerVersion:pointer.pointerVersion,pointerEtag:pointer.pointerEtag,pngSha256:pointer.pngSha256}};
+ assert.deepEqual(classifyPointerBaseline(pointer),expected);
+ const calls=[];
+ const adapter=createPointerOnlyAdapter({store:{call:async(...args)=>{calls.push(args);return pointer;},bytes:()=>assert.fail('unexpected bytes')}});
+ assert.deepEqual(await adapter.handle('pointer',{op:'confirm'},'ignored'),expected);
+ assert.deepEqual(calls,[['pointer']]);
+});
+
+test('pointer diagnostic rejects malformed sentinels, conflicts and unsafe baseline types', async () => {
+ const {classifyPointerBaseline,createPointerOnlyAdapter}=require('../lib/publish-store-adapter');
+ const empty={pointerVersion:0,pointerEtag:'empty',targetPointerId:'jinan-website/current'};
+ const baseline={pointerVersion:1,pointerEtag:'11111111-2222-4333-8444-555555555555',pngSha256:'a'.repeat(64),targetPointerId:'jinan-website/current'};
+ const canary='SYNTHETIC_CLASSIFIER_CANARY',unknown={status:'BASELINE',classification:'UNKNOWN'};
+ const invalid=[undefined,null,true,0,'empty',[],new Date(),Object.create(empty),Object.assign(Object.create(null),empty),
+  {...empty,pointerVersion:-0},{...empty,pointerVersion:'0'},{...empty,pointerVersion:1},{...empty,pointerEtag:'EMPTY'},
+  {...empty,targetPointerId:'other/current'}, {pointerVersion:0,pointerEtag:'empty'},
+  ...['blobId','pngSha256','approvalId','nonce','unexpected'].flatMap(k=>[undefined,null,'',canary,{secret:canary}].map(v=>({...empty,[k]:v}))),
+  {...empty,[Symbol('extra')]:canary},Object.defineProperty({...empty},'extra',{value:canary}),
+  ...[-1,0,1.5,NaN,Infinity,Number.MAX_SAFE_INTEGER,Number.MAX_SAFE_INTEGER+1,'1',null,{}].map(v=>({...baseline,pointerVersion:v})),
+  ...['', 'empty',canary,{},null,42,baseline.pointerEtag+'\n'].map(v=>({...baseline,pointerEtag:v})),
+  ...['',canary,'A'.repeat(64),'a'.repeat(63),{},null,42,baseline.pngSha256+'\n'].map(v=>({...baseline,pngSha256:v})),
+  {...baseline,targetPointerId:'other/current'}, {...baseline,unexpected:canary},
+  {...baseline,blobId:{}},{...baseline,approvalId:canary},{...baseline,nonce:[]},
+ ];
+ let getterCalls=0;
+ invalid.push(Object.defineProperty({...empty},'pointerEtag',{enumerable:true,get(){getterCalls++;return 'empty';}}));
+ let calls=0;
+ for(const pointer of invalid){
+  assert.deepEqual(classifyPointerBaseline(pointer),unknown);
+  const adapter=createPointerOnlyAdapter({store:{call:async(op)=>{assert.equal(op,'pointer');calls++;return pointer;},bytes:()=>assert.fail('unexpected bytes')}});
+  const result=await adapter.handle('pointer');assert.deepEqual(result,unknown);
+  assert.equal(JSON.stringify(result).includes(canary),false);
+ }
+ assert.equal(calls,invalid.length);assert.equal(getterCalls,0);
+ for(const failure of [Error(canary),canary,{secret:canary}]){
+  const adapter=createPointerOnlyAdapter({store:{call:async()=>{throw failure;}}});
+  assert.deepEqual(await adapter.handle('pointer'),unknown);
+ }
+ assert.deepEqual(classifyPointerBaseline(empty),{status:'BASELINE',classification:'VERIFIED_EMPTY'});
+});
+
+test('pointer diagnostic closes every other operation without touching the store or input', async () => {
+ const {createPointerOnlyAdapter}=require('../lib/publish-store-adapter');
+ let touches=0;
+ const store=new Proxy({}, {get(){touches++;throw Error('unexpected store access');}});
+ const input=new Proxy({}, {get(){assert.fail('unexpected input access');},ownKeys(){assert.fail('unexpected input inspection');}});
+ const adapter=createPointerOnlyAdapter({store});
+ for(const op of ['prepare','confirm','reconcile','blob','bytes','POINTER',' pointer',undefined,null,0,{},['pointer']]){
+  assert.deepEqual(await adapter.handle(op,input,input),{status:'CMS_RESPONSE_CONTRACT_UNVERIFIED'});
+ }
+ assert.equal(touches,0);
+});

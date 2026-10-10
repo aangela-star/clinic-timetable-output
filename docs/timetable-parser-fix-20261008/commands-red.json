@@ -1,0 +1,11 @@
+{
+  "red": {
+    "command": [
+      "/Users/iaiangela/.local/bin/node",
+      "--test",
+      "tests/publish_target.test.cjs",
+      "tests/timetable_parser_realhtml.test.cjs"
+    ],
+    "exit_code": 1
+  }
+}

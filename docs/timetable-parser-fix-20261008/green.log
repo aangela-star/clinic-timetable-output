@@ -1,0 +1,604 @@
+TAP version 13
+# Subtest: target fingerprint tolerates announcement and footer
+ok 1 - target fingerprint tolerates announcement and footer
+  ---
+  duration_ms: 0.749917
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates unrelated picture
+ok 2 - target fingerprint tolerates unrelated picture
+  ---
+  duration_ms: 0.201208
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates unrelated template svg
+ok 3 - target fingerprint tolerates unrelated template svg
+  ---
+  duration_ms: 0.084084
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates comment false target
+ok 4 - target fingerprint tolerates comment false target
+  ---
+  duration_ms: 0.060917
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates raw text false targets
+ok 5 - target fingerprint tolerates raw text false targets
+  ---
+  duration_ms: 0.200625
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates attribute semantics
+ok 6 - target fingerprint tolerates attribute semantics
+  ---
+  duration_ms: 0.062083
+  type: 'test'
+  ...
+# Subtest: target fingerprint tolerates unquoted URL
+ok 7 - target fingerprint tolerates unquoted URL
+  ---
+  duration_ms: 0.098167
+  type: 'test'
+  ...
+# Subtest: target scanner rejects target removal
+ok 8 - target scanner rejects target removal
+  ---
+  duration_ms: 0.153666
+  type: 'test'
+  ...
+# Subtest: target scanner rejects changed src
+ok 9 - target scanner rejects changed src
+  ---
+  duration_ms: 0.220042
+  type: 'test'
+  ...
+# Subtest: target scanner rejects duplicate
+ok 10 - target scanner rejects duplicate
+  ---
+  duration_ms: 0.518125
+  type: 'test'
+  ...
+# Subtest: target scanner rejects duplicate attribute
+ok 11 - target scanner rejects duplicate attribute
+  ---
+  duration_ms: 0.091834
+  type: 'test'
+  ...
+# Subtest: target scanner rejects base
+ok 12 - target scanner rejects base
+  ---
+  duration_ms: 0.060666
+  type: 'test'
+  ...
+# Subtest: target scanner rejects picture target
+ok 13 - target scanner rejects picture target
+  ---
+  duration_ms: 0.042208
+  type: 'test'
+  ...
+# Subtest: target scanner rejects template target
+ok 14 - target scanner rejects template target
+  ---
+  duration_ms: 0.038583
+  type: 'test'
+  ...
+# Subtest: target scanner rejects svg target
+ok 15 - target scanner rejects svg target
+  ---
+  duration_ms: 0.0365
+  type: 'test'
+  ...
+# Subtest: target scanner rejects noscript target
+ok 16 - target scanner rejects noscript target
+  ---
+  duration_ms: 0.02875
+  type: 'test'
+  ...
+# Subtest: target scanner rejects srcset
+ok 17 - target scanner rejects srcset
+  ---
+  duration_ms: 0.061625
+  type: 'test'
+  ...
+# Subtest: target scanner rejects other source aliases target
+ok 18 - target scanner rejects other source aliases target
+  ---
+  duration_ms: 0.044333
+  type: 'test'
+  ...
+# Subtest: target scanner rejects data src
+ok 19 - target scanner rejects data src
+  ---
+  duration_ms: 0.039333
+  type: 'test'
+  ...
+# Subtest: target scanner rejects event
+ok 20 - target scanner rejects event
+  ---
+  duration_ms: 0.036333
+  type: 'test'
+  ...
+# Subtest: target scanner rejects usemap
+ok 21 - target scanner rejects usemap
+  ---
+  duration_ms: 0.036125
+  type: 'test'
+  ...
+# Subtest: target scanner rejects encoded style url
+ok 22 - target scanner rejects encoded style url
+  ---
+  duration_ms: 0.038583
+  type: 'test'
+  ...
+# Subtest: target scanner rejects escaped style
+ok 23 - target scanner rejects escaped style
+  ---
+  duration_ms: 0.03525
+  type: 'test'
+  ...
+# Subtest: target scanner rejects unbalanced
+ok 24 - target scanner rejects unbalanced
+  ---
+  duration_ms: 0.040083
+  type: 'test'
+  ...
+# Subtest: target scanner rejects misnested p
+ok 25 - target scanner rejects misnested p
+  ---
+  duration_ms: 0.033917
+  type: 'test'
+  ...
+# Subtest: target scanner rejects implicit tbody
+ok 26 - target scanner rejects implicit tbody
+  ---
+  duration_ms: 0.033375
+  type: 'test'
+  ...
+# Subtest: target scanner rejects foster parenting
+ok 27 - target scanner rejects foster parenting
+  ---
+  duration_ms: 0.036542
+  type: 'test'
+  ...
+# Subtest: target scanner rejects nested button
+ok 28 - target scanner rejects nested button
+  ---
+  duration_ms: 0.039
+  type: 'test'
+  ...
+# Subtest: target scanner rejects quoted greater than
+ok 29 - target scanner rejects quoted greater than
+  ---
+  duration_ms: 0.03175
+  type: 'test'
+  ...
+# Subtest: target scanner rejects unknown entity
+ok 30 - target scanner rejects unknown entity
+  ---
+  duration_ms: 0.040875
+  type: 'test'
+  ...
+# Subtest: target scanner rejects raw target only
+ok 31 - target scanner rejects raw target only
+  ---
+  duration_ms: 0.068291
+  type: 'test'
+  ...
+# Subtest: target scanner rejects comment target only
+ok 32 - target scanner rejects comment target only
+  ---
+  duration_ms: 0.037959
+  type: 'test'
+  ...
+# Subtest: target scanner rejects script escaped state
+ok 33 - target scanner rejects script escaped state
+  ---
+  duration_ms: 0.04425
+  type: 'test'
+  ...
+# Subtest: target scanner rejects ancestor hidden
+ok 34 - target scanner rejects ancestor hidden
+  ---
+  duration_ms: 0.038667
+  type: 'test'
+  ...
+# Subtest: target scanner rejects unclosed quote
+ok 35 - target scanner rejects unclosed quote
+  ---
+  duration_ms: 0.083083
+  type: 'test'
+  ...
+# Subtest: fingerprint changes on moved context
+ok 36 - fingerprint changes on moved context
+  ---
+  duration_ms: 0.104792
+  type: 'test'
+  ...
+# Subtest: fingerprint changes on changed style whitespace string
+ok 37 - fingerprint changes on changed style whitespace string
+  ---
+  duration_ms: 0.04725
+  type: 'test'
+  ...
+# Subtest: fingerprint changes on ancestor style
+ok 38 - fingerprint changes on ancestor style
+  ---
+  duration_ms: 0.048958
+  type: 'test'
+  ...
+# Subtest: additional browser repair ambiguity rejected
+ok 39 - additional browser repair ambiguity rejected
+  ---
+  duration_ms: 0.1515
+  type: 'test'
+  ...
+# Subtest: additional browser repair ambiguity rejected
+ok 40 - additional browser repair ambiguity rejected
+  ---
+  duration_ms: 0.046417
+  type: 'test'
+  ...
+# Subtest: additional browser repair ambiguity rejected
+ok 41 - additional browser repair ambiguity rejected
+  ---
+  duration_ms: 0.045334
+  type: 'test'
+  ...
+# Subtest: additional browser repair ambiguity rejected
+ok 42 - additional browser repair ambiguity rejected
+  ---
+  duration_ms: 0.04475
+  type: 'test'
+  ...
+# Subtest: non-ASCII class whitespace is significant
+ok 43 - non-ASCII class whitespace is significant
+  ---
+  duration_ms: 0.05175
+  type: 'test'
+  ...
+# Subtest: semantic normalization ambiguity fails closed
+ok 44 - semantic normalization ambiguity fails closed
+  ---
+  duration_ms: 0.051167
+  type: 'test'
+  ...
+# Subtest: semantic normalization ambiguity fails closed
+ok 45 - semantic normalization ambiguity fails closed
+  ---
+  duration_ms: 0.047916
+  type: 'test'
+  ...
+# Subtest: semantic normalization ambiguity fails closed
+ok 46 - semantic normalization ambiguity fails closed
+  ---
+  duration_ms: 0.03425
+  type: 'test'
+  ...
+# Subtest: semantic normalization ambiguity fails closed
+ok 47 - semantic normalization ambiguity fails closed
+  ---
+  duration_ms: 0.024708
+  type: 'test'
+  ...
+# Subtest: common semantic ancestor attributes are supported and pinned
+ok 48 - common semantic ancestor attributes are supported and pinned
+  ---
+  duration_ms: 0.318458
+  type: 'test'
+  ...
+# Subtest: document mode is pinned and ambiguous doctypes rejected
+ok 49 - document mode is pinned and ambiguous doctypes rejected
+  ---
+  duration_ms: 0.1055
+  type: 'test'
+  ...
+# Subtest: conditional comment text is inert
+ok 50 - conditional comment text is inert
+  ---
+  duration_ms: 0.053625
+  type: 'test'
+  ...
+# Subtest: conditional comment text is inert
+ok 51 - conditional comment text is inert
+  ---
+  duration_ms: 0.037917
+  type: 'test'
+  ...
+# Subtest: ambiguous or unterminated comment remains rejected
+ok 52 - ambiguous or unterminated comment remains rejected
+  ---
+  duration_ms: 0.031792
+  type: 'test'
+  ...
+# Subtest: ambiguous or unterminated comment remains rejected
+ok 53 - ambiguous or unterminated comment remains rejected
+  ---
+  duration_ms: 0.022667
+  type: 'test'
+  ...
+# Subtest: ambiguous or unterminated comment remains rejected
+ok 54 - ambiguous or unterminated comment remains rejected
+  ---
+  duration_ms: 0.022542
+  type: 'test'
+  ...
+# Subtest: boolean attribute whitespace: "async src=\\"/local.js\\""
+ok 55 - boolean attribute whitespace: "async src=\\"/local.js\\""
+  ---
+  duration_ms: 0.046959
+  type: 'test'
+  ...
+# Subtest: boolean attribute whitespace: "async defer src=\\"/local.js\\""
+ok 56 - boolean attribute whitespace: "async defer src=\\"/local.js\\""
+  ---
+  duration_ms: 0.041125
+  type: 'test'
+  ...
+# Subtest: boolean attribute whitespace: "async\\tdefer\\nsrc = \\"/local.js\\""
+ok 57 - boolean attribute whitespace: "async\\tdefer\\nsrc = \\"/local.js\\""
+  ---
+  duration_ms: 0.039375
+  type: 'test'
+  ...
+# Subtest: boolean attribute whitespace: "async   "
+ok 58 - boolean attribute whitespace: "async   "
+  ---
+  duration_ms: 0.034958
+  type: 'test'
+  ...
+# Subtest: boolean attribute whitespace: "async"
+ok 59 - boolean attribute whitespace: "async"
+  ---
+  duration_ms: 0.037708
+  type: 'test'
+  ...
+# Subtest: boolean attribute and explicit empty value are equivalent
+ok 60 - boolean attribute and explicit empty value are equivalent
+  ---
+  duration_ms: 0.061917
+  type: 'test'
+  ...
+# Subtest: boolean input attributes accept following separator
+ok 61 - boolean input attributes accept following separator
+  ---
+  duration_ms: 0.038958
+  type: 'test'
+  ...
+# Subtest: boolean input attributes accept following separator
+ok 62 - boolean input attributes accept following separator
+  ---
+  duration_ms: 0.053
+  type: 'test'
+  ...
+# Subtest: malformed attributes still reject
+ok 63 - malformed attributes still reject
+  ---
+  duration_ms: 0.033583
+  type: 'test'
+  ...
+# Subtest: malformed attributes still reject
+ok 64 - malformed attributes still reject
+  ---
+  duration_ms: 0.025958
+  type: 'test'
+  ...
+# Subtest: malformed attributes still reject
+ok 65 - malformed attributes still reject
+  ---
+  duration_ms: 0.027917
+  type: 'test'
+  ...
+# Subtest: nested ul list scope with three levels and siblings
+ok 66 - nested ul list scope with three levels and siblings
+  ---
+  duration_ms: 0.07575
+  type: 'test'
+  ...
+# Subtest: nested ol list scope with three levels and siblings
+ok 67 - nested ol list scope with three levels and siblings
+  ---
+  duration_ms: 0.059667
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <ul><li><li></li></li></ul>
+ok 68 - same-scope repair or unsupported tag still rejects: <ul><li><li></li></li></ul>
+  ---
+  duration_ms: 0.034542
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <ul><li><div><li></li></div></li></ul>
+ok 69 - same-scope repair or unsupported tag still rejects: <ul><li><div><li></li></div></li></ul>
+  ---
+  duration_ms: 0.027958
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <ul><li><ul><li><li></li></li></ul></li></ul>
+ok 70 - same-scope repair or unsupported tag still rejects: <ul><li><ul><li><li></li></li></ul></li></ul>
+  ---
+  duration_ms: 0.029333
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <ul><li><ul></ul><li></li></li></ul>
+ok 71 - same-scope repair or unsupported tag still rejects: <ul><li><ul></ul><li></li></li></ul>
+  ---
+  duration_ms: 0.028166
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <a><a></a></a>
+ok 72 - same-scope repair or unsupported tag still rejects: <a><a></a></a>
+  ---
+  duration_ms: 0.026334
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <form><form></form></form>
+ok 73 - same-scope repair or unsupported tag still rejects: <form><form></form></form>
+  ---
+  duration_ms: 0.0255
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <button><button></button></button>
+ok 74 - same-scope repair or unsupported tag still rejects: <button><button></button></button>
+  ---
+  duration_ms: 0.025667
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <dl><dt><dd></dd></dt></dl>
+ok 75 - same-scope repair or unsupported tag still rejects: <dl><dt><dd></dd></dt></dl>
+  ---
+  duration_ms: 0.029292
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <h1><h2></h2></h1>
+ok 76 - same-scope repair or unsupported tag still rejects: <h1><h2></h2></h1>
+  ---
+  duration_ms: 0.03175
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <option><option></option></option>
+ok 77 - same-scope repair or unsupported tag still rejects: <option><option></option></option>
+  ---
+  duration_ms: 0.0365
+  type: 'test'
+  ...
+# Subtest: same-scope repair or unsupported tag still rejects: <menu><li></li></menu>
+ok 78 - same-scope repair or unsupported tag still rejects: <menu><li></li></menu>
+  ---
+  duration_ms: 0.026792
+  type: 'test'
+  ...
+# Subtest: recovered real bytes and exact ordered raw tags pinned independently
+ok 79 - recovered real bytes and exact ordered raw tags pinned independently
+  ---
+  duration_ms: 0.878042
+  type: 'test'
+  ...
+# Subtest: two-only offline proposal preserves every outside byte and unresolved third
+ok 80 - two-only offline proposal preserves every outside byte and unresolved third
+  ---
+  duration_ms: 0.321042
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: clinic order
+ok 81 - real contract fails closed: clinic order
+  ---
+  duration_ms: 0.559792
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: first image month
+ok 82 - real contract fails closed: first image month
+  ---
+  duration_ms: 0.116791
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: second image month
+ok 83 - real contract fails closed: second image month
+  ---
+  duration_ms: 0.09175
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: heading month
+ok 84 - real contract fails closed: heading month
+  ---
+  duration_ms: 0.084416
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: SEO title month
+ok 85 - real contract fails closed: SEO title month
+  ---
+  duration_ms: 0.106875
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: third entity spelling
+ok 86 - real contract fails closed: third entity spelling
+  ---
+  duration_ms: 0.109208
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: missing third
+ok 87 - real contract fails closed: missing third
+  ---
+  duration_ms: 0.46525
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: extra group image
+ok 88 - real contract fails closed: extra group image
+  ---
+  duration_ms: 0.276667
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: duplicate target group
+ok 89 - real contract fails closed: duplicate target group
+  ---
+  duration_ms: 0.204708
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: unrelated logo
+ok 90 - real contract fails closed: unrelated logo
+  ---
+  duration_ms: 0.076708
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: intervening breaks
+ok 91 - real contract fails closed: intervening breaks
+  ---
+  duration_ms: 0.061792
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: newline normalization
+ok 92 - real contract fails closed: newline normalization
+  ---
+  duration_ms: 0.052541
+  type: 'test'
+  ...
+# Subtest: real contract fails closed: unrelated appended image
+ok 93 - real contract fails closed: unrelated appended image
+  ---
+  duration_ms: 0.080583
+  type: 'test'
+  ...
+# Subtest: actual swap, full month drift, truncated body, and repeat apply fail closed
+ok 94 - actual swap, full month drift, truncated body, and repeat apply fail closed
+  ---
+  duration_ms: 0.167333
+  type: 'test'
+  ...
+# Subtest: real full-page three-image compatibility, singleton and byte preservation
+ok 95 - real full-page three-image compatibility, singleton and byte preservation
+  ---
+  duration_ms: 4.785375
+  type: 'test'
+  ...
+# Subtest: raw unwired fixture still rejects with the production image URL
+ok 96 - raw unwired fixture still rejects with the production image URL
+  ---
+  duration_ms: 1.235917
+  type: 'test'
+  ...
+# Subtest: unapproved real proposals fail mock verification without an approved target hash
+ok 97 - unapproved real proposals fail mock verification without an approved target hash
+  ---
+  duration_ms: 17.916834
+  type: 'test'
+  ...
+# Subtest: empirical fingerprints: target style differs, sibling breaks/month/order do not
+ok 98 - empirical fingerprints: target style differs, sibling breaks/month/order do not
+  ---
+  duration_ms: 6.053166
+  type: 'test'
+  ...
+# Subtest: LOCAL legacy whole-page mock pin rejects image, month, and order drift
+ok 99 - LOCAL legacy whole-page mock pin rejects image, month, and order drift
+  ---
+  duration_ms: 4.908167
+  type: 'test'
+  ...
+1..99
+# tests 99
+# suites 0
+# pass 99
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 87.811958

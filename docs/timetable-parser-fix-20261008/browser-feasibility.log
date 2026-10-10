@@ -1,0 +1,27 @@
+Inspect local assets: /Users/iaiangela/Projects/clinic-timetable-parser-fix-20261008
+react.production.min.js []
+react-dom.production.min.js []
+babel.min.js []
+html2canvas.min.js []
+lucide.min.js []
+react False
+react-dom False
+@babel/standalone False
+tailwindcss False
+html2canvas False
+lucide False
+playwright False
+Inspect local assets: /Users/iaiangela/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules
+react.production.min.js []
+react-dom.production.min.js []
+babel.min.js []
+html2canvas.min.js []
+lucide.min.js ['/Users/iaiangela/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/lucide/dist/umd/lucide.min.js']
+react False
+react-dom False
+@babel/standalone False
+tailwindcss False
+html2canvas False
+lucide True
+playwright True
+No assets fetched. Product browser test NOT RUN: pinned runtime assets unavailable. No browser/server started.

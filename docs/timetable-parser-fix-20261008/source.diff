@@ -1,0 +1,63 @@
+diff --git a/lib/publish-target.js b/lib/publish-target.js
+index 5f955dc..95159f5 100644
+--- a/lib/publish-target.js
++++ b/lib/publish-target.js
+@@ -32,7 +32,7 @@ function targetFingerprint(html,pageUrl,imageUrl) {
+   })];
+   while(i<html.length) {
+     if(html[i]!=='<'){const end=html.indexOf('<',i);const text=html.slice(i,end<0?html.length:end);if(/[^\t\n\f\r ]/.test(text)&&(['html','head'].includes(stack.at(-1)?.name)||(singletons.has('html')&&!stack.length)))fail();if(stack.some(n=>['table','tbody','thead','tfoot','tr'].includes(n.name))&&!stack.some(n=>['td','th'].includes(n.name))&&/[^\t\n\f\r ]/.test(text))fail();i=end<0?html.length:end;continue;}
+-    if(html.startsWith('<!--',i)){const end=html.indexOf('-->',i+4);if(end<0||/--|<!/.test(html.slice(i+4,end)))fail();i=end+3;continue;}
++    if(html.startsWith('<!--',i)){const end=html.indexOf('-->',i+4);if(end<0||/--/.test(html.slice(i+4,end)))fail();i=end+3;continue;}
+     if(/^<!doctype html[\t\n\f\r ]*>/i.test(html.slice(i))){if(doctype||seenToken)fail();doctype=true;i+=html.slice(i).match(/^<!doctype html[\t\n\f\r ]*>/i)[0].length;continue;}
+     seenToken=true;
+     i++;const closing=html[i]==='/';if(closing)i++;
+@@ -42,8 +42,9 @@ function targetFingerprint(html,pageUrl,imageUrl) {
+     for(;;){const hadSpace=space(html[i]);while(space(html[i]))i++;if(html[i]==='>'){i++;break;}if(html[i]==='/'&&html[i+1]==='>'){self=true;i+=2;break;}if(closing||!hadSpace||i>=html.length)fail();
+       const a=i;while(/[^\t\n\f\r />="'<`]/.test(html[i]||'')&&i<html.length)i++;
+       const key=html.slice(a,i).toLowerCase();if(!key||Object.hasOwn(attrs,key)||!/^[a-z_:][a-z0-9_:.-]*$/.test(key))fail();
+-      while(space(html[i]))i++;let value='';
++      const afterKey=i;while(space(html[i]))i++;let value='';
+       if(html[i]==='='){i++;while(space(html[i]))i++;const quote=html[i];if(quote==='"'||quote==="'"){i++;const v=i;while(i<html.length&&html[i]!==quote)i++;if(i===html.length)fail();value=html.slice(v,i++);if(/[<>]/.test(value))fail();}else{const v=i;while(i<html.length&&!space(html[i])&&html[i]!=='>')i++;value=html.slice(v,i);if(!value||/["'<=`]/.test(value))fail();}}
++      else i=afterKey; // Boolean attribute: leave its separator for the next iteration.
+       attrs[key]=value;
+     }
+     if(name==='base'||name==='noscript')fail();
+@@ -60,7 +61,9 @@ function targetFingerprint(html,pageUrl,imageUrl) {
+     if(parent==='head'&&!['title','style','script','meta','link'].includes(name))fail();
+     if(name==='body'&&stack.some(n=>n.name==='body'))fail();
+     if((['dt','dd'].includes(name)&&stack.some(n=>['dt','dd'].includes(n.name)))||(/^h[1-6]$/.test(name)&&stack.some(n=>/^h[1-6]$/.test(n.name))))fail();
+-    if((blocks.has(name)&&stack.some(n=>n.name==='p'))||(['a','button','form','li','dt','dd','option','h1','h2','h3','h4','h5','h6'].includes(name)&&stack.some(n=>n.name===name)))fail();
++    // A nested list starts a new li scope; same-list implicit closing still fails.
++    if(name==='li')for(let j=stack.length-1;j>=0;j--){if(['ul','ol','menu'].includes(stack[j].name))break;if(stack[j].name==='li')fail();}
++    if((blocks.has(name)&&stack.some(n=>n.name==='p'))||(['a','button','form','dt','dd','option','h1','h2','h3','h4','h5','h6'].includes(name)&&stack.some(n=>n.name===name)))fail();
+     const parents={thead:['table'],tbody:['table'],tfoot:['table'],tr:['thead','tbody','tfoot'],td:['tr'],th:['tr'],colgroup:['table'],col:['colgroup']};
+     if(parents[name]&&!parents[name].includes(parent))fail();
+     if(['table','thead','tbody','tfoot','tr','colgroup'].includes(parent)&&!({table:['thead','tbody','tfoot','caption','colgroup'],thead:['tr'],tbody:['tr'],tfoot:['tr'],tr:['td','th'],colgroup:['col']}[parent].includes(name)))fail();
+diff --git a/tests/publish_target.test.cjs b/tests/publish_target.test.cjs
+index 529b3bd..72bb616 100644
+--- a/tests/publish_target.test.cjs
++++ b/tests/publish_target.test.cjs
+@@ -57,3 +57,23 @@ test('document mode is pinned and ambiguous doctypes rejected',()=>{
+  for(const prefix of ['<!DOCTYPE html\u00a0>','<!DOCTYPE html><!DOCTYPE html>'])assert.throws(()=>f(prefix+wrap(img),page,image));
+  assert.throws(()=>f(wrap(img)+'<noscript>unrelated scripting-dependent content</noscript>',page,image));
+ });
++
++// Real-page grammar regressions: no change to target/ancestor fingerprint semantics.
++for(const comment of ['<!--[if lt IE 9]><script src="/local.js"></script><![endif]-->','<!--<![endif]-->'])
++ test('conditional comment text is inert',()=>assert.equal(f(comment+wrap(img),page,image),pin));
++for(const comment of ['<!-- nested <!-- comment -->','<!-- bare -- comment -->','<!-- unterminated'])
++ test('ambiguous or unterminated comment remains rejected',()=>assert.throws(()=>f(comment+wrap(img),page,image),/PUBLIC_BASELINE_DRIFT/));
++for(const attrs of ['async src="/local.js"','async defer src="/local.js"','async\tdefer\nsrc = "/local.js"','async   ','async'])
++ test('boolean attribute whitespace: '+JSON.stringify(attrs),()=>assert.equal(f('<script '+attrs+'></script>'+wrap(img),page,image),pin));
++test('boolean attribute and explicit empty value are equivalent',()=>assert.equal(f('<script async src="/local.js"></script>'+wrap(img),page,image),f('<script async="" src="/local.js"></script>'+wrap(img),page,image)));
++for(const tag of ['<input disabled name="x">','<input disabled />'])
++ test('boolean input attributes accept following separator',()=>assert.equal(f(tag+wrap(img),page,image),pin));
++for(const tag of ['<script async=""src="/local.js"></script>','<input disabled disabled>','<input disabled name=>'])
++ test('malformed attributes still reject',()=>assert.throws(()=>f(tag+wrap(img),page,image),/PUBLIC_BASELINE_DRIFT/));
++for(const list of ['ul','ol'])
++ test('nested '+list+' list scope with three levels and siblings',()=>{
++  const nav='<'+list+'><li><div><'+list+'><li><'+list+'><li></li></'+list+'></li><li></li></'+list+'></div></li><li></li></'+list+'>';
++  assert.equal(f(nav+wrap(img),page,image),pin);
++ });
++for(const nav of ['<ul><li><li></li></li></ul>','<ul><li><div><li></li></div></li></ul>','<ul><li><ul><li><li></li></li></ul></li></ul>','<ul><li><ul></ul><li></li></li></ul>','<a><a></a></a>','<form><form></form></form>','<button><button></button></button>','<dl><dt><dd></dd></dt></dl>','<h1><h2></h2></h1>','<option><option></option></option>','<menu><li></li></menu>'])
++ test('same-scope repair or unsupported tag still rejects: '+nav,()=>assert.throws(()=>f(nav+wrap(img),page,image),/PUBLIC_BASELINE_DRIFT/));

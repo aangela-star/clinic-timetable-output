@@ -1,0 +1,188 @@
+[
+  {
+    "file": ".gitignore",
+    "baselineSha256": "4069c5af779b9bfca3fc906ad3620fac4a368a076075edbf50b4a7fa94622888",
+    "currentSha256": "4069c5af779b9bfca3fc906ad3620fac4a368a076075edbf50b4a7fa94622888",
+    "unchanged": true
+  },
+  {
+    "file": "AGENTS.md",
+    "baselineSha256": "91f76a51f77259483e2dd640af2c152ec07329f654c98ba9ca46ccdd09fb9aa1",
+    "currentSha256": "91f76a51f77259483e2dd640af2c152ec07329f654c98ba9ca46ccdd09fb9aa1",
+    "unchanged": true
+  },
+  {
+    "file": "README.md",
+    "baselineSha256": "7dcc6429b1ba1ff53c6f7eb2e568abc843e20b0715d889a5936e02b08feb1559",
+    "currentSha256": "7dcc6429b1ba1ff53c6f7eb2e568abc843e20b0715d889a5936e02b08feb1559",
+    "unchanged": true
+  },
+  {
+    "file": "api/auth.js",
+    "baselineSha256": "8920a4094dbc9f75f8ef6354e7241f109129d3629bff197b9b3d97daa567c0cb",
+    "currentSha256": "8920a4094dbc9f75f8ef6354e7241f109129d3629bff197b9b3d97daa567c0cb",
+    "unchanged": true
+  },
+  {
+    "file": "api/prepare-validation.js",
+    "baselineSha256": "2678a8184684ed5619ab3eabf4ba16fed3c182f28d4383a6cb68941d19caaba6",
+    "currentSha256": "2678a8184684ed5619ab3eabf4ba16fed3c182f28d4383a6cb68941d19caaba6",
+    "unchanged": true
+  },
+  {
+    "file": "api/publish-image.js",
+    "baselineSha256": "4ad9dba8a13ed17abc0a8d80d8b84c1cb78abacc5dafac04710dffc79a7b24b3",
+    "currentSha256": "4ad9dba8a13ed17abc0a8d80d8b84c1cb78abacc5dafac04710dffc79a7b24b3",
+    "unchanged": true
+  },
+  {
+    "file": "api/publish.js",
+    "baselineSha256": "124826a822a509c8b30ed6fe5f889aa41fde28c20d64d4932b32b8acd20332eb",
+    "currentSha256": "124826a822a509c8b30ed6fe5f889aa41fde28c20d64d4932b32b8acd20332eb",
+    "unchanged": true
+  },
+  {
+    "file": "api/schedule.js",
+    "baselineSha256": "d7986adfaf9250e94ce409013f66b66b1bdaedeee81391e5004b6235a137b7c2",
+    "currentSha256": "d7986adfaf9250e94ce409013f66b66b1bdaedeee81391e5004b6235a137b7c2",
+    "unchanged": true
+  },
+  {
+    "file": "apps-script/Code.gs",
+    "baselineSha256": "7e97d5af818b5520db5ff2f93602f1918305f34e83bbfe8d24009d9e89587a09",
+    "currentSha256": "7e97d5af818b5520db5ff2f93602f1918305f34e83bbfe8d24009d9e89587a09",
+    "unchanged": true
+  },
+  {
+    "file": "apps-script/PrepareValidation.gs",
+    "baselineSha256": "c092f3a9cc1e79358be8ff30796cc4dc46d7cc8b5b44f92e0ce96422e61b5858",
+    "currentSha256": "c092f3a9cc1e79358be8ff30796cc4dc46d7cc8b5b44f92e0ce96422e61b5858",
+    "unchanged": true
+  },
+  {
+    "file": "apps-script/PublishStore.gs",
+    "baselineSha256": "5e8fdc09794aaf944bc08dbe22bd883f1f15581edfd6737168d3005cb3fd1ec8",
+    "currentSha256": "5e8fdc09794aaf944bc08dbe22bd883f1f15581edfd6737168d3005cb3fd1ec8",
+    "unchanged": true
+  },
+  {
+    "file": "apps-script/appsscript.json",
+    "baselineSha256": "1b2d0a7070c7a18add4feba6625152777c79b8ddceef7efd7be8d6485c56c515",
+    "currentSha256": "1b2d0a7070c7a18add4feba6625152777c79b8ddceef7efd7be8d6485c56c515",
+    "unchanged": true
+  },
+  {
+    "file": "auth-config.js",
+    "baselineSha256": "9e8e481dd1eeb72e12bd42b22ae17400cc641b79e614fcb4964c1625b5e3be2a",
+    "currentSha256": "9e8e481dd1eeb72e12bd42b22ae17400cc641b79e614fcb4964c1625b5e3be2a",
+    "unchanged": true
+  },
+  {
+    "file": "auth-gate.js",
+    "baselineSha256": "d60f9fa512f42712d80f06fd43441d4c77aa3c8f57e8bec8bef9587e59325940",
+    "currentSha256": "d60f9fa512f42712d80f06fd43441d4c77aa3c8f57e8bec8bef9587e59325940",
+    "unchanged": true
+  },
+  {
+    "file": "clinic-order.js",
+    "baselineSha256": "e5bfae47a3c4e08e1d07331efa448e8ecb7028cc624e478a39dd89d8f97a8ec6",
+    "currentSha256": "e5bfae47a3c4e08e1d07331efa448e8ecb7028cc624e478a39dd89d8f97a8ec6",
+    "unchanged": true
+  },
+  {
+    "file": "index.html",
+    "baselineSha256": "a83a255d4d2d102b7fe1eda2bab90047547d6db5c235698b394cd3fac9690f27",
+    "currentSha256": "a83a255d4d2d102b7fe1eda2bab90047547d6db5c235698b394cd3fac9690f27",
+    "unchanged": true
+  },
+  {
+    "file": "lib/jinan-cms.js",
+    "baselineSha256": "ea02aa6e6a9097586dac60b5c336eb52a948df4ff2156eddddb8d94959bc71de",
+    "currentSha256": "ea02aa6e6a9097586dac60b5c336eb52a948df4ff2156eddddb8d94959bc71de",
+    "unchanged": true
+  },
+  {
+    "file": "lib/prepare-validation.js",
+    "baselineSha256": "3a7225a52aa86e86eba0a5fdf5a485a1214980311740d94a327037696171d6cf",
+    "currentSha256": "3a7225a52aa86e86eba0a5fdf5a485a1214980311740d94a327037696171d6cf",
+    "unchanged": true
+  },
+  {
+    "file": "lib/publish-api.js",
+    "baselineSha256": "24c1ff22cb342a96b0e23a7d43fa781e0d3d2b6b2073d8356aca0283e1b3f528",
+    "currentSha256": "24c1ff22cb342a96b0e23a7d43fa781e0d3d2b6b2073d8356aca0283e1b3f528",
+    "unchanged": true
+  },
+  {
+    "file": "lib/publish-contract.js",
+    "baselineSha256": "931461811733af267fbd247cdd9e1ccfbd941fa5058614b6020573ad484f2620",
+    "currentSha256": "931461811733af267fbd247cdd9e1ccfbd941fa5058614b6020573ad484f2620",
+    "unchanged": true
+  },
+  {
+    "file": "lib/publish-http.js",
+    "baselineSha256": "818ba547e1d18fd05a08f5a7510027c46822a5bd91123098c03a401dee3a8519",
+    "currentSha256": "818ba547e1d18fd05a08f5a7510027c46822a5bd91123098c03a401dee3a8519",
+    "unchanged": true
+  },
+  {
+    "file": "lib/publish-provider.js",
+    "baselineSha256": "cbc4430ac854ec257970593bab429ee7a6ec8e12d0ff2dad48314d92eb7e254b",
+    "currentSha256": "cbc4430ac854ec257970593bab429ee7a6ec8e12d0ff2dad48314d92eb7e254b",
+    "unchanged": true
+  },
+  {
+    "file": "lib/publish-store-adapter.js",
+    "baselineSha256": "8f90802bdb894ed55c76bb3fdf093154db2227582d73f510d9d454a804055c43",
+    "currentSha256": "8f90802bdb894ed55c76bb3fdf093154db2227582d73f510d9d454a804055c43",
+    "unchanged": true
+  },
+  {
+    "file": "lib/publish-store-engine.js",
+    "baselineSha256": "3fc6b1f03fd48b01423fefb36bac60d266e903991a21ba92d2c16fe149713c54",
+    "currentSha256": "3fc6b1f03fd48b01423fefb36bac60d266e903991a21ba92d2c16fe149713c54",
+    "unchanged": true
+  },
+  {
+    "file": "lib/publish-store-mock.js",
+    "baselineSha256": "d3aff50ab0f90e7172e6450ee810d2c402a293e153050366395b21e9b5a01baa",
+    "currentSha256": "d3aff50ab0f90e7172e6450ee810d2c402a293e153050366395b21e9b5a01baa",
+    "unchanged": true
+  },
+  {
+    "file": "lib/publish-target.js",
+    "baselineSha256": "b9ab7d751507204b4e765ce4fa9098022c4364a90a02ac73c00323369bd4a61b",
+    "currentSha256": "7d4d5911af298bf46adb349a8a2f3852430b3336ff36864439399d336ef51429",
+    "unchanged": false
+  },
+  {
+    "file": "lib/server-session.js",
+    "baselineSha256": "9171865b59eec560211c19957984e2ac38b58d8acd6e13caef2d353032f14717",
+    "currentSha256": "9171865b59eec560211c19957984e2ac38b58d8acd6e13caef2d353032f14717",
+    "unchanged": true
+  },
+  {
+    "file": "publish-core.js",
+    "baselineSha256": "55da403e723304bef2c896a0219c3d63918d2256b86b848190960e98e2f0dfef",
+    "currentSha256": "55da403e723304bef2c896a0219c3d63918d2256b86b848190960e98e2f0dfef",
+    "unchanged": true
+  },
+  {
+    "file": "schedule-api-config.js",
+    "baselineSha256": "1803f344fe9adb23af761a51273f5d9ff8c29b092d90fd3a213d7df078858ad3",
+    "currentSha256": "1803f344fe9adb23af761a51273f5d9ff8c29b092d90fd3a213d7df078858ad3",
+    "unchanged": true
+  },
+  {
+    "file": "schedule-save-load-core.js",
+    "baselineSha256": "aa6d15cae5f812117dd7c0d5cafca8bacdaf348be9d2e32fb3530cc5cbcc02f3",
+    "currentSha256": "aa6d15cae5f812117dd7c0d5cafca8bacdaf348be9d2e32fb3530cc5cbcc02f3",
+    "unchanged": true
+  },
+  {
+    "file": "tools/mock-publish-store-server.js",
+    "baselineSha256": "d9f62e231a3f9d334a33adc207f2b57a95e61ecaf04ea2f465246c2ff6ec0f37",
+    "currentSha256": "d9f62e231a3f9d334a33adc207f2b57a95e61ecaf04ea2f465246c2ff6ec0f37",
+    "unchanged": true
+  }
+]

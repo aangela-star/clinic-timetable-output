@@ -889,7 +889,7 @@ test('pointer diagnostic route returns a validated baseline or fixed UNKNOWN wit
     const handler=createHandler(),headers={cookie:signedCookie(),host:'localhost','content-type':'application/json'};
     const fixtures=[
       [{ok:true,result:pointer},{ok:true,status:'BASELINE',baseline:{pointerVersion:1,pointerEtag:pointer.pointerEtag,pngSha256:pointer.pngSha256}}],
-      ...[new Error(canary),{ok:false,error:canary},{ok:true,result:{...pointer,pointerEtag:canary}},{ok:true,result:{...pointer,pngSha256:{secret:canary}}},{ok:true,result:{...pointer,targetPointerId:canary}},{ok:true,result:{pointerVersion:0,pointerEtag:'empty',targetPointerId:'jinan-website/current',secret:canary}}].map(value=>[value,{ok:true,status:'BASELINE',classification:'UNKNOWN'}]),
+      ...[new Error(canary),{ok:false,error:canary},{ok:true,result:{...pointer,pointerEtag:canary}},{ok:true,result:{...pointer,pngSha256:{secret:canary}}},{ok:true,result:{...pointer,targetPointerId:canary}},{ok:true,result:{pointerVersion:0,pointerEtag:'empty',targetPointerId:'jinan-website/current',secret:canary}}].map((value,index)=>[value,{ok:true,status:'BASELINE',classification:'UNKNOWN',reason:index===0?'HTTP_TRANSPORT_ERROR':index===1?'ENVELOPE_INVALID':'POINTER_SHAPE_INVALID'}]),
     ];
     for(const [value,expected] of fixtures){
       current=value;const before=calls.length,res=responseRecorder();

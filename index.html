@@ -31,6 +31,25 @@
 <body class="bg-slate-100 text-slate-900">
     <div id="root"></div>
 
+    <script>
+        const ManualPublishSection = React.lazy(() => import("./manual-publish.mjs"));
+        class ManualPublishBoundary extends React.Component {
+            constructor(props) {
+                super(props);
+                this.state = { failed: false };
+            }
+            static getDerivedStateFromError() {
+                return { failed: true };
+            }
+            render() {
+                return this.state.failed
+                    ? React.createElement('p', { role: 'status', className: 'rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700' },
+                        '手動發布說明暫時無法使用。既有編輯、預覽與 PNG 下載不受影響；未進行任何發布。')
+                    : this.props.children;
+            }
+        }
+    </script>
+
     <script type="text/babel">
         const { useState, useEffect, useRef, forwardRef } = React;
 
@@ -648,6 +667,11 @@
                             <button ref={publishButtonRef} onClick={handleOpenPublish} className="w-full py-4 rounded-2xl font-black text-white flex items-center justify-center gap-2 shadow-lg transition-all bg-slate-700 active:scale-95">
                                 <i data-lucide="send"></i> 發布
                             </button>
+                            <ManualPublishBoundary>
+                                <React.Suspense fallback={<p role="status" className="text-sm text-slate-600">正在載入手動發布說明…</p>}>
+                                    <ManualPublishSection clinicName={data.clinics.find(clinic => clinic.id === primaryClinicId)?.name} monthKey={monthKey} posterTitle={data.title} />
+                                </React.Suspense>
+                            </ManualPublishBoundary>
                         </div>
                     </div>
 

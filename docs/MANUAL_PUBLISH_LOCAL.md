@@ -1,9 +1,15 @@
+## 毅安 Facebook 公開頁本機更新（2026-10-11）
+
+本輪基底為 `1510fa431766a2fbb84179dc363283a0b1b895c4`，分支 `feat/timetable-manual-links`。使用者提供精確網址 `https://www.facebook.com/IANCLINICTAINAN/?locale=zh_TW`，僅啟用既有毅安卡片的安全新分頁連結（`_blank`、`noopener noreferrer`）。五張卡皆有已知入口，零停用。Facebook 新增貼文或更換既有相片仍未確認；公開頁不是已驗證的管理編輯入口，未進行真實登入或發布驗證。
+
+本輪只做本機 module／文件／測試更新；未連線 Facebook、未 commit／push／PR／部署、未改外部設定。下方移植與發布歷史保留其來源時間，不代表本輪授權或驗證。新驗證與獨立 Claude 唯讀審查交接見 `.local/manual-links/yian-facebook-update.md`／`.json`；後續原始碼發布或新 Preview 需另行明確批准，不沿用舊批准。
+
 # 目前狀態：五個手動入口（本機移植，待獨立審查）
 
 此節取代下方歷史段落的「兩個 FB 未知／四個入口」描述；下方保留原始驗證與操作來源，不當作本輪測試結果。
 
 - 基底：已由 secretary 記錄為 live source 的 `1f465c900dbd94c77ab8930cc25cff9d8d221057`，不是較新的 main。獨立 worktree：`feat/timetable-manual-links`；未部署。
-- 晉安官網、毅安官網、晉安 FB、毅安 FB、FarBar 共五張卡；只有毅安 FB URL 未確認，維持 null／停用。晉安 FB 為使用者確認的 `https://www.facebook.com/tainanrehab`。
+- 晉安官網、毅安官網、晉安 FB、毅安 FB、FarBar 共五張卡；五個已知入口皆可開啟，停用入口為零。毅安 FB 為使用者提供的公開頁 `https://www.facebook.com/IANCLINICTAINAN/?locale=zh_TW`（保留尾斜線與 query），不是已驗證的管理編輯入口；管理介面仍未驗證。晉安 FB 為使用者確認的 `https://www.facebook.com/tainanrehab`。
 - FarBar 精確入口：`https://w3.farbar.ai/channels/channel30/cms31/editChannel.php?chcode=rG2vq&cntcode=NVJkF&`。標籤「頻道管理入口」，先確認「台南毅安／門診時間」；上傳／儲存流程尚未驗證，未確認前不上傳、不儲存。無已確認公開網址，需人工核對實際／頻道顯示。
 - FB 新增貼文或更換既有相片尚未確認。既有新增貼文文字保留為條件式草稿，不代表使用者已選定此操作。
 - 晉安官網手冊是歷史成功操作來源，當次仍須核對頁面／目標與授權；毅安內部換圖流程仍未驗證。下方四圖敘述是當時觀察，不是本輪線上讀取。

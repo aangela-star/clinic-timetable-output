@@ -16,7 +16,7 @@ function text(node) {
   return typeof node === 'object' && node ? node.children.map(text).join('') : String(node ?? '');
 }
 
-test('manual section renders five labelled destinations, safe supplied/verified links and disabled unknowns below PNG download', async () => {
+test('manual section renders five labelled destinations, safe supplied/verified links and no disabled destinations below PNG download', async () => {
   const tree = await render();
   const all = nodes(tree);
   assert.deepEqual(all.filter(n => n.tag === 'h3').map(text), ['晉安官網後台', '毅安官網後台', '晉安 FB 粉專', '毅安 FB 粉專', 'FarBar 院內顯示']);
@@ -29,9 +29,8 @@ test('manual section renders five labelled destinations, safe supplied/verified 
     assert.equal(link.props.onClick, undefined);
   }
   const disabled = all.filter(n => n.tag === 'button' && n.props.disabled);
-  assert.equal(disabled.length, 1);
-  assert.ok(disabled.every(n => text(n).includes('待確認')));
-  assert.equal(links.filter(n => /facebook/.test(n.props.href)).length, 1);
+  assert.equal(disabled.length, 0);
+  assert.equal(links.filter(n => /facebook/.test(n.props.href)).length, 2);
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(html.includes('React.lazy(() => import("./manual-publish.mjs"))'));
   assert.ok(html.indexOf('<ManualPublishSection clinicName=') > html.indexOf('下載高清 PNG 海報'));
@@ -53,7 +52,7 @@ test('each destination has its own native disclosure with honest platform-specif
   assert.ok(nodes(articles[0]).some(n => n.props.href === 'https://www.tainanrehab.com/time.html'));
   for (const phrase of ['尚未驗證', '停止', '後台登入URL：使用者提供', '內部換圖流程/截圖：待確認', '操作流程']) assert.ok(text(articles[1]).includes(phrase), phrase);
   for (const article of articles.slice(3, 4)) {
-    for (const phrase of ['介面可能變更', '管理介面尚未驗證', '專屬頁', '診所', '月份', '公告', '預覽', '操作人員', '公開', '不重複']) assert.ok(text(article).includes(phrase), phrase);
+    for (const phrase of ['介面可能變更', '管理介面尚未驗證', '專屬公開頁', '診所', '月份', '公告', '預覽', '操作人員', '公開', '不重複']) assert.ok(text(article).includes(phrase), phrase);
   }
 });
 
@@ -113,7 +112,7 @@ test('both manuals identify the verified Yian public page and preserve all four 
 });
 
 
-test('Jinan Facebook supplied entry is enabled safely while Yian remains disabled', async () => {
+test('Jinan Facebook supplied entry is enabled safely alongside the supplied Yian public page', async () => {
   const articles = nodes(await render()).filter(n => n.tag === 'article');
   const jinan = nodes(articles[2]);
   const links = jinan.filter(n => n.tag === 'a');
@@ -123,8 +122,9 @@ test('Jinan Facebook supplied entry is enabled safely while Yian remains disable
   assert.equal(links[0].props.rel, 'noopener noreferrer');
   assert.equal(links[0].props.onClick, undefined);
   assert.equal(jinan.filter(n => n.tag === 'button').length, 0);
-  assert.equal(nodes(articles[3]).filter(n => n.tag === 'a').length, 0);
-  assert.equal(nodes(articles[3]).find(n => n.tag === 'button').props.disabled, true);
+  assert.equal(nodes(articles[3]).filter(n => n.tag === 'a').length, 1);
+  assert.equal(nodes(articles[3]).find(n => n.tag === 'a').props.href, 'https://www.facebook.com/IANCLINICTAINAN/?locale=zh_TW');
+  assert.equal(nodes(articles[3]).filter(n => n.tag === 'button').length, 0);
 });
 
 

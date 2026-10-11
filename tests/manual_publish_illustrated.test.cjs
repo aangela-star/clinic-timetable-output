@@ -24,7 +24,9 @@ test('real illustrations are local, responsive and only in Jinan; every enlargem
   }
   for (const article of articles.slice(1)) assert.equal(nodes(article).filter(n => n.tag === 'img').length, 0);
   assert.equal(nodes(articles[1]).filter(n => n.tag === 'button' && n.props.disabled).length, 0);
-  for (const article of articles.slice(3, 4)) assert.equal(nodes(article).filter(n => n.tag === 'a').length, 0);
+  const yianLinks = nodes(articles[3]).filter(n => n.tag === 'a');
+  assert.equal(yianLinks.length, 1);
+  assert.equal(yianLinks[0].props.href, 'https://www.facebook.com/IANCLINICTAINAN/?locale=zh_TW');
 });
 test('missing screenshots and limits are explicit, and confirm is distinct from publication', async () => {
   const tree = await render();

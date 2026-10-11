@@ -2,8 +2,8 @@
 export default function ManualPublishSection({ clinicName, monthKey, posterTitle } = {}) {
     const h = React.createElement;
     const yianFacebookSteps = clinic => [
-        '一般操作草稿：介面可能變更，管理介面尚未驗證；專屬頁連結待提供及確認。未確認前請停止，不以搜尋結果或通用 Facebook 網址代替。',
-        '取得確認的專屬頁後，由具權限的操作人員開啟管理介面，確認目前選擇的是「' + clinic + '」粉專，避免使用個人帳號或另一間診所的粉專。',
+        '一般操作草稿：介面可能變更，管理介面尚未驗證；專屬公開頁連結由使用者提供，不是已驗證的管理編輯入口。新增貼文或更換既有相片的本次操作尚未確認。未確認前請停止，不以搜尋結果或通用 Facebook 網址代替。',
+        '本次操作方式經確認後，由具權限的操作人員開啟管理介面，確認目前選擇的是「' + clinic + '」粉專，避免使用個人帳號或另一間診所的粉專。',
         '選用本次經人工核准 PNG，核對圖片及文字中的診所、月份、門診異動與公告；不要自行補上未確認資訊。',
         '在平台預覽圖片與貼文，核對內容完整、清晰且無裁切。若找不到相符操作或無法確認目標，停止並請管理員協助。',
         '核對完成且取得本次發布授權後，由操作人員在平台執行發布一次。本區開啟連結不會發布。',
@@ -45,7 +45,7 @@ export default function ManualPublishSection({ clinicName, monthKey, posterTitle
             publicUrl: 'https://www.ian-tainan.com/time.html', publicLabel: '毅安公開門診表'
         },
         { id: 'jinan-fb', label: '晉安 FB 粉專', url: 'https://www.facebook.com/tainanrehab', steps: jinanFacebookSteps() },
-        { id: 'yian-fb', label: '毅安 FB 粉專', url: null, steps: yianFacebookSteps('毅安') },
+        { id: 'yian-fb', label: '毅安 FB 粉專', url: 'https://www.facebook.com/IANCLINICTAINAN/?locale=zh_TW', steps: yianFacebookSteps('毅安') },
         {
             id: 'farbar', label: 'FarBar 院內顯示',
             url: 'https://w3.farbar.ai/channels/channel30/cms31/editChannel.php?chcode=rG2vq&cntcode=NVJkF&',
@@ -79,7 +79,7 @@ export default function ManualPublishSection({ clinicName, monthKey, posterTitle
         'jinan-web': ['已知入口・有歷史操作紀錄', '先核對晉安圖片，再依既有手冊操作並到公開頁驗收。'],
         'yian-web': ['已知入口・換圖流程未驗證', '可開啟毅安登入頁確認目標；換圖步驟待確認，先不上傳或送出。'],
         'jinan-fb': ['已知入口・發文方式未確認', '先確認晉安粉專與本次操作：新增貼文或更換既有相片仍待確認。'],
-        'yian-fb': ['入口待確認・流程未驗證', '毅安粉專連結待提供及確認，暫不操作。'],
+        'yian-fb': ['已知公開頁・流程未驗證', '毅安粉專公開頁由使用者提供；管理介面與本次新增貼文或更換既有相片仍待確認，未確認前不操作。'],
         'farbar': ['已知入口・上傳／儲存未驗證', '開啟頻道管理入口，先確認台南毅安／門診時間；未確認前不上傳、不儲存。']
     };
     const linkClass = 'inline-block rounded-lg px-3 py-2 text-sm font-bold bg-teal-700 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700';

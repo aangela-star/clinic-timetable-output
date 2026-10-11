@@ -60,14 +60,18 @@ async function download(page,name){
  }
  for(const [device,viewport] of [['desktop',{width:1440,height:1000}],['ipad',{width:1024,height:1366}],['phone',{width:390,height:844}]]){
   const t=await setup('popup',viewport),p=t.page;await p.goto(origin+'/?month=2099-01');await p.getByText('已載入 2099-01 門診資料。',{exact:true}).waitFor();
-  const region=p.getByRole('region',{name:'手動發布',exact:true});await region.waitFor();assert.equal(await region.locator('article').count(),5);assert.equal(await region.locator('details[open]').count(),0);assert.equal(await region.locator('button').count(),1);assert.equal(await region.locator('input').count(),0);
+  const region=p.getByRole('region',{name:'手動發布',exact:true});await region.waitFor();assert.equal(await region.locator('article').count(),5);assert.equal(await region.locator('details[open]').count(),0);assert.equal(await region.locator('button').count(),0);assert.equal(await region.locator('input').count(),0);
   assert.match(await region.textContent(),/晉安測試診所/);assert.match(await region.textContent(),/2099-01/);
+  assert.equal(await region.locator('article > a').count(),5);
+  const yian=region.locator('article[aria-labelledby="yian-fb-title"]');
+  assert.equal(await yian.locator('a').getAttribute('href'),'https://www.facebook.com/IANCLINICTAINAN/?locale=zh_TW');
+  assert.match(await yian.textContent(),/管理介面尚未驗證/);
   const before=JSON.stringify(t.api);
   for(const article of await region.locator('article').all()){
    const s=article.locator('summary');await s.focus();await p.keyboard.press('Enter');assert.equal(await article.locator('details').getAttribute('open'),'');await p.keyboard.press('Space');assert.equal(await article.locator('details').getAttribute('open'),null);
   }
   for(const a of await region.locator('article > a').all()){
-   assert.equal(await a.getAttribute('rel'),'noopener noreferrer');const promised=t.context.waitForEvent('page');await a.click();const popup=await promised;await popup.waitForLoadState();assert.equal(await popup.evaluate(()=>window.opener),null);await popup.close();
+   assert.equal(await a.getAttribute('target'),'_blank');assert.equal(await a.getAttribute('rel'),'noopener noreferrer');const expectedUrl=await a.getAttribute('href');const promised=t.context.waitForEvent('page');await a.click();const popup=await promised;await popup.waitForLoadState();assert.equal(popup.url(),expectedUrl);assert.equal(await popup.evaluate(()=>window.opener),null);await popup.close();
   }
   assert.equal(JSON.stringify(t.api),before,'manual actions make no API calls');
   const priority=p.locator('select').filter({has:p.locator('option[value="clinic-2"]')});await priority.selectOption('clinic-2');assert.match(await region.locator('[data-manual-context]').textContent(),/毅安測試診所/);assert.equal(await priority.inputValue(),'clinic-2');
@@ -78,8 +82,8 @@ async function download(page,name){
   assert.ok(await region.locator('[data-manual-context]').evaluate(el=>{const r=el.getBoundingClientRect();const parent=el.closest('.overflow-y-auto').getBoundingClientRect();return r.top>=0&&r.bottom<=Math.min(innerHeight,parent.bottom);}), 'selected context visible beside existing download at trigger time');
   await shot(p,device+'-download-context');
   await region.scrollIntoViewIfNeeded();await shot(p,device+'-integrated');
-  await p.goto(origin+'/fixture');await p.locator('article').first().waitFor();assert.match(await p.locator('[data-manual-context]').textContent(),/毅安測試診所/);await shot(p,device+'-cards');assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'fixture has no horizontal overflow');
-  assert.deepEqual(t.errors,[]);report.cases.push({name:device,status:'PASS',manualApiCalls:0,enabledPopups:4});await t.context.close();
+  await p.goto(origin+'/fixture');await p.locator('article').first().waitFor();assert.match(await p.locator('[data-manual-context]').textContent(),/毅安測試診所/);await shot(p,device+'-cards');await p.locator('article[aria-labelledby="yian-fb-title"] summary').click();await shot(p,device+'-yian-facebook-guide');assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'fixture has no horizontal overflow');
+  assert.deepEqual(t.errors,[]);report.cases.push({name:device,status:'PASS',manualApiCalls:0,enabledPopups:5});await t.context.close();
  }
  for(const mode of ['baseline','current']){
   const t=await setup(mode,{width:1440,height:1000});await t.page.goto(origin+'/?month=2099-01');await t.page.getByText('已載入 2099-01 門診資料。',{exact:true}).waitFor();report[mode+'Png']=await download(t.page,mode+'-actual-download');assert.deepEqual(t.errors,[]);await t.context.close();

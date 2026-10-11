@@ -36,8 +36,8 @@ async function checkSection(page, context, mode, api, blocked) {
   await section.waitFor();
   assert.deepEqual(await section.locator('h3').allTextContents(), labels);
   assert.equal(await section.getByText('開啟連結不代表已發布。完成操作後，請到公開頁面或實際顯示確認。', { exact: true }).count(), 1);
-  assert.equal(await section.locator('button:disabled').count(), 1);
-  for (const button of await section.locator('button').all()) assert.match(await button.textContent(), /待確認/);
+  assert.equal(await section.locator('button:disabled').count(), 0);
+  assert.equal(await section.locator('article > a').count(), 5);
   const links = await section.locator('a').evaluateAll(elements => elements.map(a => ({ href: a.href, target: a.target, rel: a.rel })));
   assert.equal(links.filter(link => link.href.startsWith(origin)).length, 6, 'five local image enlargements and offline manual');
   assert.deepEqual(links.filter(link => !link.href.startsWith(origin)), [
@@ -46,6 +46,7 @@ async function checkSection(page, context, mode, api, blocked) {
     { href: 'https://www.ian-tainan.com/admin/login.php', target: '_blank', rel: 'noopener noreferrer' },
     { href: 'https://www.ian-tainan.com/time.html', target: '_blank', rel: 'noopener noreferrer' },
     { href: 'https://www.facebook.com/tainanrehab', target: '_blank', rel: 'noopener noreferrer' },
+    { href: 'https://www.facebook.com/IANCLINICTAINAN/?locale=zh_TW', target: '_blank', rel: 'noopener noreferrer' },
     { href: 'https://w3.farbar.ai/channels/channel30/cms31/editChannel.php?chcode=rG2vq&cntcode=NVJkF&', target: '_blank', rel: 'noopener noreferrer' }
   ]);
   assert.ok(await section.evaluate(el => !!(document.querySelector('button').compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)));
@@ -87,11 +88,15 @@ async function checkSection(page, context, mode, api, blocked) {
         assert.equal(await page.locator(':focus').getAttribute('href'), 'https://www.facebook.com/tainanrehab');
         await page.keyboard.press('Tab');
       }
+      if (i === 2) {
+        assert.equal(await page.locator(':focus').getAttribute('href'), 'https://www.facebook.com/IANCLINICTAINAN/?locale=zh_TW');
+        await page.keyboard.press('Tab');
+      }
       if (i === 3) {
         assert.equal(await page.locator(':focus').getAttribute('href'), 'https://w3.farbar.ai/channels/channel30/cms31/editChannel.php?chcode=rG2vq&cntcode=NVJkF&');
         await page.keyboard.press('Tab');
       }
-      assert.equal(await page.locator(':focus').textContent(), labels[i + 1] + '操作手冊', 'disabled destinations skipped in tab order');
+      assert.equal(await page.locator(':focus').textContent(), labels[i + 1] + '操作手冊', 'each known destination precedes its disclosure in tab order');
     }
   }
   assert.deepEqual(api, beforeApi, 'manual interaction makes no API calls');
@@ -102,7 +107,7 @@ async function checkSection(page, context, mode, api, blocked) {
   const screenshot = path.join(evidence, mode + '-integrated.png');
   await page.screenshot({ path: screenshot, fullPage: true });
   report.screenshots.push(screenshot);
-  report.results.push(mode + ': five entries, safe URLs, disabled unknowns, warning, independent mouse/keyboard disclosures, tab order, no side effects PASS');
+  report.results.push(mode + ': five entries, safe URLs, zero disabled destinations, warning, independent mouse/keyboard disclosures, tab order, no side effects PASS');
 }
 
 (async () => {

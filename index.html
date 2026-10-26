@@ -92,15 +92,16 @@
             );
         }
 
-        function CalendarApp({onLogout,onCloudLogin,preview=false}) {
+        function CalendarApp({onLogout,onCloudLogin,cloudReady=false,preview=false}) {
             const host=useRef(null);
             useEffect(()=>{ host.current.innerHTML=window.CalendarMarkup; return window.startCalendarEditor({preview}); },[preview]);
-            return <><nav id="calendar-toolbar" style={{padding:16,background:'#fff'}}><a href="https://clinic-system-portal.vercel.app/">診所工具總入口</a>　<a href="legacy.html" target="_blank" rel="noopener">舊版資料編輯／PNG</a>　{preview && <button onClick={()=>{if(window.calendarCanLeave?.())onCloudLogin()}}>雲端登入（跨設備儲存／載入）</button>}　{!preview && <button onClick={()=>{if(window.calendarCanLeave?.())onLogout()}}>登出</button>}</nav><div ref={host}/></>;
+            return <><nav id="calendar-toolbar" style={{padding:16,background:'#fff'}}><a href="https://clinic-system-portal.vercel.app/">診所工具總入口</a>　<a href="legacy.html" target="_blank" rel="noopener">舊版資料編輯／PNG</a>　{preview && <button disabled={!cloudReady} onClick={()=>{if(window.calendarCanLeave?.())onCloudLogin()}}>雲端登入（跨設備儲存／載入）</button>}　{!preview && <button onClick={()=>{if(window.calendarCanLeave?.())onLogout()}}>登出</button>}</nav>{preview&&!cloudReady&&<p role="status" style={{padding:16}}>雲端服務設定尚未生效，暫停登入；本機編輯、備份及輸出仍可使用。</p>}<div ref={host}/></>;
         }
         function AuthenticatedApp() {
             const [editorMode,setEditorMode]=useState(null);
             const [cloudLogin,setCloudLogin]=useState(false);
-            useEffect(()=>{let active=true;fetch('/api/editor-mode',{credentials:'same-origin',cache:'no-store'}).then(r=>r.ok?r.json():{}).then(m=>{if(active)setEditorMode(m.preview===true)}).catch(()=>{if(active)setEditorMode(false)});return()=>{active=false}},[]);
+            const [cloudReady,setCloudReady]=useState(false);
+            useEffect(()=>{let active=true;fetch('/api/editor-mode',{credentials:'same-origin',cache:'no-store'}).then(r=>r.ok?r.json():{}).then(m=>{if(active){setEditorMode(m.preview===true);setCloudReady(m.cloudLoginReady===true)}}).catch(()=>{if(active)setEditorMode(false)});return()=>{active=false}},[]);
             const [authenticated, setAuthenticated] = useState(AuthGate.isAuthenticated());
 
             useEffect(() => {
@@ -116,7 +117,7 @@
 
             if(editorMode===null)return <p style={{padding:24}}>正在開啟門診表…</p>;
             if(cloudLogin&&!authenticated)return <><button style={{margin:16}} onClick={()=>setCloudLogin(false)}>返回本機編輯</button><LoginScreen onLogin={()=>{setAuthenticated(true);setCloudLogin(false)}}/></>;
-            if(editorMode===true&&!authenticated)return <CalendarApp preview={true} onCloudLogin={()=>setCloudLogin(true)}/>;
+            if(editorMode===true&&!authenticated)return <CalendarApp preview={true} cloudReady={cloudReady} onCloudLogin={()=>setCloudLogin(true)}/>;
             return authenticated ? <CalendarApp onLogout={handleLogout} /> : <LoginScreen onLogin={() => setAuthenticated(true)} />;
         }
 

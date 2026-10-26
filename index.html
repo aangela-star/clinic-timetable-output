@@ -92,12 +92,14 @@
             );
         }
 
-        function CalendarApp({onLogout}) {
+        function CalendarApp({onLogout,preview=false}) {
             const host=useRef(null);
-            useEffect(()=>{ host.current.innerHTML=window.CalendarMarkup; return window.startCalendarEditor(); },[]);
-            return <><nav id="calendar-toolbar" style={{padding:16,background:'#fff'}}><a href="https://clinic-system-portal.vercel.app/">診所工具總入口</a>　<a href="legacy.html" target="_blank" rel="noopener">舊版資料編輯／PNG</a>　<button onClick={()=>{if(window.calendarCanLeave?.())onLogout()}}>登出</button></nav><div ref={host}/></>;
+            useEffect(()=>{ host.current.innerHTML=window.CalendarMarkup; return window.startCalendarEditor({preview}); },[]);
+            return <><nav id="calendar-toolbar" style={{padding:16,background:'#fff'}}><a href="https://clinic-system-portal.vercel.app/">診所工具總入口</a>　<a href="legacy.html" target="_blank" rel="noopener">舊版資料編輯／PNG</a>　{!preview && <button onClick={()=>{if(window.calendarCanLeave?.())onLogout()}}>登出</button>}</nav><div ref={host}/></>;
         }
         function AuthenticatedApp() {
+            const [editorMode,setEditorMode]=useState(null);
+            useEffect(()=>{let active=true;fetch('/api/editor-mode',{credentials:'same-origin',cache:'no-store'}).then(r=>r.ok?r.json():{}).then(m=>{if(active)setEditorMode(m.preview===true)}).catch(()=>{if(active)setEditorMode(false)});return()=>{active=false}},[]);
             const [authenticated, setAuthenticated] = useState(AuthGate.isAuthenticated());
 
             useEffect(() => {
@@ -111,6 +113,8 @@
                 setAuthenticated(false);
             };
 
+            if(editorMode===null)return <p style={{padding:24}}>正在開啟門診表…</p>;
+            if(editorMode===true)return <CalendarApp preview={true}/>;
             return authenticated ? <CalendarApp onLogout={handleLogout} /> : <LoginScreen onLogin={() => setAuthenticated(true)} />;
         }
 

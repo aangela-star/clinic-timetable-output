@@ -1,5 +1,6 @@
-window.startCalendarEditor=function(){
+window.startCalendarEditor=function(options){
 'use strict';
+const preview=options?.preview===true;
 const subscriptions=[];function listen(type,fn){window.addEventListener(type,fn);subscriptions.push([type,fn])}
 const M=TimetableModelV2,P=TimetablePosterV2,V=TimetableView,D=CalendarDraft,META=TEST_DATA,KEY='clinic-timetable.calendar-integrated-draft.v1';
 const $=id=>document.getElementById(id);let state=M.init(META),currentMonth=META.month,view={template:'calendar',format:'dual',clinicId:META.clinics[0].id},editing=null,dirty=false,eventDirty=false,newDoctorDirty=false,lastRaw=null,readFailed=false;let doctorEditors=[],cellEditors=[],rotationEditors=[];let visibleClinic=META.clinics[0].id;
@@ -45,7 +46,7 @@ function backupCloud(month,payload){const key='clinic-timetable.cloud-backup.'+m
 async function remote(month){const u=new URL(window.SCHEDULE_SAVE_LOAD_CONFIG.webAppUrl);u.searchParams.set('month',month);u.searchParams.set('action','load');const r=await fetch(u,{credentials:'same-origin',cache:'no-store'});const p=await r.json();if(!r.ok||p.ok!==true)throw Error(p.message||p.error||'雲端讀取失敗');return p}
 function fingerprint(p){return JSON.stringify([p.found,p.data||null,p.updatedAt||null])}
 function envelope(){const snapshot={...structuredClone(state),months:{[currentMonth]:structuredClone(state.months[currentMonth])}};return {title:currentMonth,note:'月曆版；儲存不等於發布',clinics:structuredClone(META.clinics),calendarVersion:1,calendar:{state:snapshot,currentMonth,view}}}
-async function cloudAction(load){if(busy)return;if(!guardSwitch())return;busy=true;document.querySelector('.editor').inert=true;$('cloud-load').disabled=$('cloud-save').disabled=true;try{
+async function cloudAction(load){if(preview){cloudStatus('測試版免密碼：請使用本機草稿及 JSON 備份；雲端資料未開放讀寫。');return}if(busy)return;if(!guardSwitch())return;busy=true;document.querySelector('.editor').inert=true;$('cloud-load').disabled=$('cloud-save').disabled=true;try{
  const month=load?$('cloud-month').value:currentMonth;if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw Error('請選有效月份');
  cloudStatus('正在核對雲端月份…');const p=await remote(month);backupCloud(month,p);
  if(load){
@@ -64,6 +65,7 @@ async function cloudAction(load){if(busy)return;if(!guardSwitch())return;busy=tr
 $('cloud-load').addEventListener('click',()=>cloudAction(true));$('cloud-save').addEventListener('click',()=>cloudAction(false));
 $('download-png').addEventListener('click',async()=>{if(!guardSwitch())return;const r=V.render(state,currentMonth,META,M,P,{...view,template:'calendar',format:'dual'});if(r.fatal){report('請先處理衝突／超量，再下載。');return}const b=$('download-png');b.disabled=true;try{await document.fonts.ready;const svg=new DOMParser().parseFromString(r.clinics,'image/svg+xml').documentElement;svg.setAttribute('width','1080');svg.setAttribute('height','1920');const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));try{const image=new Image();image.src=url;await image.decode();const canvas=document.createElement('canvas');canvas.width=2160;canvas.height=3840;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,2160,3840);ctx.drawImage(image,0,0,2160,3840);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('PNG 產生失敗');const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=currentMonth+'_'+(view.topClinicId==='yi'?'毅安在上':'晉安在上')+'_雙院門診表.png';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);report('已下載 2160 × 3840 PNG，尚未發布。')}finally{URL.revokeObjectURL(url)}}catch(e){report('下載失敗：'+e.message)}finally{b.disabled=false}});
 
+if(preview){for(const id of ['cloud-load','cloud-save','cloud-month'])$(id).disabled=true;cloudStatus('月曆測試版免密碼：可編輯、儲存本機、備份 JSON、下載 PNG 及列印；雲端資料未開放讀寫。')}
 window.calendarCanLeave=()=>!busy&&guardSwitch();
 return ()=>{closed=true;manualRoot?.unmount();for(const [t,f] of subscriptions)window.removeEventListener(t,f);delete window.calendarCanLeave};
 };

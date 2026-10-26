@@ -1,0 +1,4 @@
+const test=require('node:test'),assert=require('node:assert/strict');
+const handler=require('../api/editor-mode');
+function mode(env,branch){const oldEnv=process.env.VERCEL_ENV,oldBranch=process.env.VERCEL_GIT_COMMIT_REF;try{process.env.VERCEL_ENV=env;process.env.VERCEL_GIT_COMMIT_REF=branch;let payload;handler({}, {setHeader(){},end(s){payload=JSON.parse(s)}});return payload.preview}finally{if(oldEnv===undefined)delete process.env.VERCEL_ENV;else process.env.VERCEL_ENV=oldEnv;if(oldBranch===undefined)delete process.env.VERCEL_GIT_COMMIT_REF;else process.env.VERCEL_GIT_COMMIT_REF=oldBranch}}
+test('only the approved calendar preview is passwordless',()=>{assert.equal(mode('preview','feat/calendar-release'),true);assert.equal(mode('production','feat/calendar-release'),false);assert.equal(mode('preview','other'),false);assert.equal(mode('development','feat/calendar-release'),false)});

@@ -95,7 +95,7 @@
         function CalendarApp({onLogout,onCloudLogin,cloudReady=false,preview=false}) {
             const host=useRef(null);
             useEffect(()=>{ host.current.innerHTML=window.CalendarMarkup; return window.startCalendarEditor({preview}); },[preview]);
-            return <><nav id="calendar-toolbar" style={{padding:16,background:'#fff'}}><a href="https://clinic-system-portal.vercel.app/">診所工具總入口</a>　<a href="legacy.html" target="_blank" rel="noopener">舊版資料編輯／PNG</a>　{preview && <button disabled={!cloudReady} onClick={()=>{if(window.calendarCanLeave?.())onCloudLogin()}}>雲端登入（跨設備儲存／載入）</button>}　{!preview && <button onClick={()=>{if(window.calendarCanLeave?.())onLogout()}}>登出</button>}</nav>{preview&&!cloudReady&&<p role="status" style={{padding:16}}>雲端服務設定尚未生效，暫停登入；本機編輯、備份及輸出仍可使用。</p>}<div ref={host}/></>;
+            return <><nav id="calendar-toolbar" aria-label="工具與使用說明"><a className="manual-button" href="clinic-calendar-guide.pdf" target="_blank" rel="noopener">使用手冊 PDF（開啟／下載）</a><a href="https://clinic-system-portal.vercel.app/">診所工具總入口</a><a href="legacy.html" target="_blank" rel="noopener">舊版資料編輯／PNG</a>{preview && <button disabled={!cloudReady} onClick={()=>{if(window.calendarCanLeave?.())onCloudLogin()}}>雲端登入（跨設備儲存／載入）</button>}{!preview && <button onClick={()=>{if(window.calendarCanLeave?.())onLogout()}}>登出</button>}</nav>{preview&&!cloudReady&&<p role="status" style={{padding:16}}>雲端服務設定尚未生效，暫停登入；本機編輯、備份及輸出仍可使用。</p>}<div ref={host}/></>;
         }
         function AuthenticatedApp() {
             const [editorMode,setEditorMode]=useState(null);

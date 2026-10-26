@@ -15,3 +15,19 @@
 #manual-publish{margin-top:24px}#manual-publish a{width:auto}#manual-publish summary{white-space:normal}
 
 #cloud-panel{position:relative;top:auto;z-index:0}
+
+/* Explicit control styles survive Tailwind's button reset. */
+#calendar-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:16px;background:#fff;border-bottom:1px solid #c7d8dd}
+#calendar-toolbar a,#calendar-toolbar button,.editor button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 16px;border:1px solid #577c87;border-radius:8px;background:#f1f7f8;color:#183f4c;font:inherit;font-weight:700;line-height:1.5;text-decoration:none;cursor:pointer;box-shadow:0 2px 0 #173f4c16;transition:background .15s}
+#calendar-toolbar .manual-button,#cloud-save,.editor #save-all{background:#126b68;color:#fff;border-color:#126b68}
+#download-png,#print-test{background:#e5f0fb;border-color:#416c9b;color:#19446e}
+#calendar-toolbar a:hover,#calendar-toolbar button:hover,.editor button:hover{background:#dceced}
+#calendar-toolbar .manual-button:hover,#cloud-save:hover,.editor #save-all:hover{background:#0c5552}
+#calendar-toolbar button:disabled,.editor button:disabled{background:#e6e9ec;color:#65717a;border-color:#b7c0c6;box-shadow:none;cursor:not-allowed}
+#calendar-toolbar a:focus-visible,.editor summary:focus-visible,.editor input[type=file]:focus-visible{outline:3px solid #25838b;outline-offset:3px}
+.editor summary{border:1px solid #b9cfd5;border-radius:8px;padding:12px!important;background:#edf5f6;cursor:pointer}
+.editor summary:hover{background:#dceced}
+.editor select,.editor input[type=month],.editor input[type=date]{min-height:44px;cursor:pointer}
+.editor input[type=file]{display:block;max-width:100%;margin-top:8px}
+.editor input[type=file]::file-selector-button{padding:10px 14px;border:1px solid #577c87;border-radius:6px;background:#edf5f6;color:#183f4c;font:inherit;font-weight:700;cursor:pointer}
+@media(max-width:600px){#cloud-panel button,#calendar-toolbar a{width:100%}}

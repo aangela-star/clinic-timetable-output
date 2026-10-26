@@ -88,3 +88,11 @@ vercel --prod
 ## Portal URL Field
 
 Use the canonical production URL in any Portal URL field after deployment, for example `https://clinic-timetable-output.vercel.app`. Do not use preview deployment URLs for production portal configuration. After rollback, update the Portal URL field only if the canonical production URL changes.
+
+## Calendar editor integration
+
+`index.html` opens the authenticated calendar editor. `legacy.html` retains the deployed editor for older saved months; neither editor silently converts the other format. Calendar cloud snapshots use the existing signed-session `/api/schedule` boundary with `calendarVersion: 1` inside the existing data envelope. Before load/save, original data is backed up to localStorage; a backup failure stops replacement. Export JSON for a portable backup. Local draft and cloud save are separate from publishing.
+
+The sidebar mounts the unchanged `manual-publish.mjs` with the current month, title and upper clinic. All five manual destinations and website illustrations remain available. It only opens links and does not publish. Dual preview, PNG and print share the selected upper clinic.
+
+Cloud preflight detects a change since the last load, but the existing backend does not support atomic compare-and-swap: simultaneous users must coordinate saves. Production rollback reference before this release: b68f074885d956c69bfedb97535778a27db8029b / dpl_FcsFKLLXo8iRyngdqEB6vFbxYe3R. No Apps Script deployment or data migration is part of this release.

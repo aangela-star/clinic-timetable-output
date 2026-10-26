@@ -152,7 +152,7 @@ test('shared-password login establishes a server session before marking browser 
 });
 
 test('front end auto-loads on authenticated App mount and retains manual controls', () => {
-  const html = read('index.html');
+  const html = read('legacy.html');
   assert.match(html, /getInitialMonthKey\(window\)/);
   assert.doesNotMatch(html, /getInitialMonthKey\(window, INITIAL_DATA\.title\)/);
   assert.match(html, /onClick=\{handleLoadSchedule\}/);
@@ -162,13 +162,13 @@ test('front end auto-loads on authenticated App mount and retains manual control
 });
 
 test('front end remembers month only after successful load or save responses', () => {
-  const html = read('index.html');
+  const html = read('legacy.html');
   assert.match(html, /if \(!payload\.found\)[^]*return;[^]*setData\(payload\.data\);[^]*rememberLoadedMonth\(window, monthKey, payload\)/);
   assert.match(html, /if \(!payload\.ok\) throw[^]*rememberSavedMonth\(window, monthKey, payload\)/);
 });
 
 test('preview and PNG capture invariants remain present', () => {
-  const html = read('index.html');
+  const html = read('legacy.html');
   assert.match(html, /width: '1080px', height: '1920px'/);
   assert.match(html, /scale: 2, useCORS: true, backgroundColor: "#f8fafc", width: 1080, height: 1920/);
   assert.match(html, /<PosterContent ref=\{captureRef\} data=\{renderData\} isForCapture=\{true\} \/>/);
@@ -178,7 +178,7 @@ test('preview and PNG capture invariants remain present', () => {
 // Execute the actual non-JSX App load code with minimal hook/transport mocks.
 function loadHarness(responses) {
   const vm = require('node:vm');
-  const html = read('index.html');
+  const html = read('legacy.html');
   const body = html.slice(html.indexOf('function App({ onLogout }) {') + 'function App({ onLogout }) {'.length,
     html.indexOf('            const handleSaveSchedule ='));
   const monthInput = html.slice(html.indexOf('type="month"'));
@@ -187,7 +187,7 @@ function loadHarness(responses) {
   let stateIndex = 0, refIndex = 0;
   const seed = { title: '115/4月', note: 'old note', clinics: [{ id: 'clinic-1', name: '晉安', theme: 'teal', changes: ['4/5'], schedule: { '週一': { '早診': '舊醫師' } } }] };
   const context = vm.createContext({
-    INITIAL_DATA: seed, ScheduleSaveLoadCore: core,
+    INITIAL_DATA: seed, ScheduleSaveLoadCore: core, localStorage: {setItem(){}},
     window: { ...septemberRuntime(), SCHEDULE_SAVE_LOAD_CONFIG: { webAppUrl: 'https://local.test/api/schedule' } },
     ClinicOrder: { orderClinicsByPriority: clinics => clinics },
     PublishCore: { evaluatePublishSelection: () => ({}), PUBLISH_CHANNELS: [] },

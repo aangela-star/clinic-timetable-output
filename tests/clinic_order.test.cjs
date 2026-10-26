@@ -58,7 +58,7 @@ test('unknown priority preserves original order', () => {
 });
 
 test('UI wires primary clinic ordering only into poster rendering', () => {
-  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'legacy.html'), 'utf8');
   const missingContracts = [];
 
   const clinicOrderScriptIndex = indexHtml.indexOf('<script src="clinic-order.js"></script>');

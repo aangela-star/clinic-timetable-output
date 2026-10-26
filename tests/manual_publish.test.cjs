@@ -31,7 +31,7 @@ test('manual section renders five labelled destinations, safe supplied/verified 
   const disabled = all.filter(n => n.tag === 'button' && n.props.disabled);
   assert.equal(disabled.length, 0);
   assert.equal(links.filter(n => /facebook/.test(n.props.href)).length, 2);
-  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'legacy.html'), 'utf8');
   assert.ok(html.includes('React.lazy(() => import("./manual-publish.mjs"))'));
   assert.ok(html.indexOf('<ManualPublishSection clinicName=') > html.indexOf('下載高清 PNG 海報'));
 });

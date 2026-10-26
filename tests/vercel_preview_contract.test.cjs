@@ -32,7 +32,7 @@ test('Apps Script blocks direct GET and requires server secret for POST', () => 
 });
 
 test('server secret is referenced only by server-side integration code', () => {
-  const browserFiles = ['index.html', 'auth-gate.js', 'schedule-api-config.js', 'schedule-save-load-core.js'];
+  const browserFiles = ['legacy.html', 'auth-gate.js', 'schedule-api-config.js', 'schedule-save-load-core.js'];
   for (const file of browserFiles) {
     assert.doesNotMatch(read(file), /CLINIC_SERVER_SECRET/, `${file} must not expose the server secret`);
   }

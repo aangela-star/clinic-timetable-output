@@ -39,7 +39,7 @@ test('FB operation remains conditional and no apparent publication success is re
 test('manual module has no API, storage, download, business state or hidden publication side effects',()=>{
  const source=fs.readFileSync(path.join(__dirname,'../manual-publish.mjs'),'utf8');
  assert.doesNotMatch(source,/\b(fetch|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage|useState|useEffect|handleDownload)\b|\/api\/|html2canvas|\.click\(/);
- const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
+ const html=fs.readFileSync(path.join(__dirname,'../legacy.html'),'utf8');
  assert.match(html,/<ManualPublishSection clinicName=\{data\.clinics\.find/);
  assert.match(html,/monthKey=\{monthKey\} posterTitle=\{data\.title\}/);
 });

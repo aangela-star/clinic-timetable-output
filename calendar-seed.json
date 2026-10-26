@@ -1,0 +1,266 @@
+{
+  "schemaVersion": 3,
+  "source": {
+    "version": "2026-07",
+    "status": "authorized-source-transcription",
+    "note": "使用者原圖；父對話已獨立看圖核對轉錄一致。本機原圖材料化未完成。不是目前月份正式公告。",
+    "images": [
+      "libfile_73bac049dd088191a82d72cbeadf13d4",
+      "libfile_75073df189a4819194a5d4e012b9aa41"
+    ],
+    "nameToVerify": null
+  },
+  "doctors": [
+    {
+      "id": "liu-jinwei",
+      "name": "劉晉瑋",
+      "color": "#b32625"
+    },
+    {
+      "id": "zhuang-yimei",
+      "name": "莊逸玫",
+      "color": "#264a9a",
+      "needsNameVerification": false
+    },
+    {
+      "id": "xue-xiufang",
+      "name": "薛琇方",
+      "color": "#95700b"
+    },
+    {
+      "id": "wang-wenda",
+      "name": "王文達",
+      "color": "#22703e"
+    }
+  ],
+  "baseline": {
+    "jin": [
+      [
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "liu-jinwei"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "zhuang-yimei"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "liu-jinwei"
+          ]
+        }
+      ],
+      [
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "zhuang-yimei"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "liu-jinwei"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "xue-xiufang"
+          ]
+        }
+      ],
+      [
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "xue-xiufang"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "wang-wenda"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "wang-wenda"
+          ]
+        }
+      ],
+      [
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "zhuang-yimei"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "wang-wenda"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "wang-wenda"
+          ]
+        }
+      ],
+      [
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "liu-jinwei"
+          ]
+        },
+        {
+          "status": "no-doctor",
+          "doctorIds": []
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "zhuang-yimei"
+          ]
+        }
+      ],
+      [
+        {
+          "status": "rotation",
+          "doctorIds": []
+        },
+        {
+          "status": "unconfirmed",
+          "doctorIds": []
+        },
+        {
+          "status": "unconfirmed",
+          "doctorIds": []
+        }
+      ]
+    ],
+    "yi": [
+      [
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "xue-xiufang"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "liu-jinwei"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "zhuang-yimei"
+          ]
+        }
+      ],
+      [
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "xue-xiufang"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "wang-wenda"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "wang-wenda"
+          ]
+        }
+      ],
+      [
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "liu-jinwei"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "zhuang-yimei"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "zhuang-yimei"
+          ]
+        }
+      ],
+      [
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "liu-jinwei"
+          ]
+        },
+        {
+          "status": "no-doctor",
+          "doctorIds": []
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "liu-jinwei"
+          ]
+        }
+      ],
+      [
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "xue-xiufang"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "zhuang-yimei"
+          ]
+        },
+        {
+          "status": "scheduled",
+          "doctorIds": [
+            "liu-jinwei"
+          ]
+        }
+      ],
+      [
+        {
+          "status": "rotation",
+          "doctorIds": []
+        },
+        {
+          "status": "unconfirmed",
+          "doctorIds": []
+        },
+        {
+          "status": "unconfirmed",
+          "doctorIds": []
+        }
+      ]
+    ]
+  }
+}

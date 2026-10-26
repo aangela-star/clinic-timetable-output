@@ -43,7 +43,7 @@ test('reject wrong/multiple channels, clinic, missing confirmation and invalid P
 });
 
 test('actual confirm sends prepared approval through same-origin API, no JSON download', async () => {
-  const html = fs.readFileSync(require.resolve('../index.html'), 'utf8');
+  const html = fs.readFileSync(require.resolve('../legacy.html'), 'utf8');
   const handler = html.slice(html.indexOf('const handleConfirmPublish ='), html.indexOf('            useEffect(() => {', html.indexOf('const handleConfirmPublish =')));
   const statuses = [], calls = [];
   const data={title:'115/九月'};
@@ -60,7 +60,7 @@ test('actual confirm sends prepared approval through same-origin API, no JSON do
   assert.equal(context.publishRequestInFlightRef.current,false);
 });
 test('actual preparation handler stages automatically, blocks unsaved facts, and does not confirm',async()=>{
- const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
+ const html=fs.readFileSync(require.resolve('../legacy.html'),'utf8');
  const source=html.slice(html.indexOf('const handleOpenPublish ='),html.indexOf('            const togglePublishChannel ='));
  const data={title:'115/九月',note:'',clinics:[]};const calls=[],statuses=[],prepared=[];
  const context={data,monthKey:'2026-09',primaryClinicId:'clinic-1',publishGenerationRef:{current:0},publishSnapshotRef:{current:null},latestPublishEditorRef:{current:{data,monthKey:'2026-09',primaryClinicId:'clinic-1'}},

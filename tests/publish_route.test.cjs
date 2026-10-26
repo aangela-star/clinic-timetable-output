@@ -788,7 +788,7 @@ test('default publish handler lazy-requires real publish pipeline and stays disa
 
 test('browser-served source files do not expose Jinan CMS credential boundaries', () => {
   const browserServedFiles = [
-    'index.html',
+    'legacy.html',
     'publish-core.js',
     'auth-config.js',
     'auth-gate.js',

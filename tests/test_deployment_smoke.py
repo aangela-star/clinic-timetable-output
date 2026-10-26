@@ -49,7 +49,7 @@ class IndexParser(HTMLParser):
 class DeploymentSmokeTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.html = Path("index.html").read_text(encoding="utf-8")
+        cls.html = Path("legacy.html").read_text(encoding="utf-8")
         cls.parser = IndexParser()
         cls.parser.feed(cls.html)
 

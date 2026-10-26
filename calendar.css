@@ -13,3 +13,5 @@
 @media print{#calendar-toolbar,#cloud-panel,#manual-publish{display:none!important}}
 
 #manual-publish{margin-top:24px}#manual-publish a{width:auto}#manual-publish summary{white-space:normal}
+
+#cloud-panel{position:relative;top:auto;z-index:0}

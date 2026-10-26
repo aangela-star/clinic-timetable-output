@@ -1,6 +1,6 @@
-window.startCalendarEditor=function(options){
+window.startCalendarEditor=function(editorConfig){
 'use strict';
-const preview=options?.preview===true;
+const preview=editorConfig?.preview===true;
 const subscriptions=[];function listen(type,fn){window.addEventListener(type,fn);subscriptions.push([type,fn])}
 const M=TimetableModelV2,P=TimetablePosterV2,V=TimetableView,D=CalendarDraft,META=TEST_DATA,KEY='clinic-timetable.calendar-integrated-draft.v1';
 const $=id=>document.getElementById(id);let state=M.init(META),currentMonth=META.month,view={template:'calendar',format:'dual',clinicId:META.clinics[0].id},editing=null,dirty=false,eventDirty=false,newDoctorDirty=false,lastRaw=null,readFailed=false;let doctorEditors=[],cellEditors=[],rotationEditors=[];let visibleClinic=META.clinics[0].id;

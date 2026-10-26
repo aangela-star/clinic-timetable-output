@@ -35,7 +35,11 @@
                 credentials: "same-origin",
                 body: JSON.stringify({ password: password }),
             });
-            return response.ok;
+            if (response.ok) return true;
+            if (response.status === 401) return false;
+            const error = new Error("登入服務未能建立連線，請管理者檢查此部署的環境設定；不用重設密碼。");
+            error.code = "SERVER_SESSION_FAILED";
+            throw error;
         }
 
         async function verifyPassword(password) {

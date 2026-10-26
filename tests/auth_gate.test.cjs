@@ -35,7 +35,7 @@ function makeGate(storage = makeStorage(), fetchImpl = async () => ({ ok: true }
 }
 
 test('correct password also requires a successful server session', async () => {
-  const gate = makeGate(makeStorage(), async () => ({ ok: false }));
+  const gate = makeGate(makeStorage(), async () => ({ ok: false, status: 401 }));
 
   assert.equal(await gate.verifyPassword(TEST_PASSWORD), false);
   assert.equal(gate.isAuthenticated(), false);
@@ -78,3 +78,5 @@ test('new storage starts unauthenticated like a new browser session', async () =
   const nextSessionGate = makeGate(makeStorage());
   assert.equal(nextSessionGate.isAuthenticated(), false);
 });
+
+ test('server configuration failure does not report incorrect password or authenticate',async()=>{const gate=makeGate(makeStorage(),async()=>({ok:false,status:500}));await assert.rejects(gate.verifyPassword(TEST_PASSWORD),{code:'SERVER_SESSION_FAILED'});assert.equal(gate.isAuthenticated(),false)});

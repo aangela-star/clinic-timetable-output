@@ -769,6 +769,8 @@
                     } else {
                         setError("密碼不正確");
                     }
+                } catch (_) {
+                    setError("密碼檢查已通過，但伺服器登入失敗。請檢查部署環境或連線，不用重設密碼。");
                 } finally {
                     setIsChecking(false);
                 }

@@ -1,0 +1,586 @@
+{
+  "state": {
+    "version": 3,
+    "source": {
+      "version": "2026-11-draft",
+      "status": "pending-approval",
+      "approved": false,
+      "note": "由下列兩張使用者提供原圖逐格轉錄，並由兩個各自獨立的 AI 判讀來回核對（本次與 Hermes），姓名另有診所官網佐證。**未經人類逐格覆核**，上線寫入仍須父層核准。原圖只標示「11 月」與星期，未標示西元年份；2026 年為本次工作階段的使用者脈絡，非來自影像。週固定班表為多數決推導，非原圖明列；「誰算固定班、誰算代診」屬推論，逐日呈現已與原圖一致。醫師姓名依原圖字面轉錄，見 nameCorrections；醫師 id 未變，calendar-seed.json 未改動。週六午診／晚診在原圖為空白（如實記錄為空白，原圖不證明休診），休診結論來自使用者 2026-11-22 的明確確認，見 saturdayClosure。資料語意已完整，但「資料完整」不等於「已核准發布」：approved 仍為 false。",
+      "images": [
+        {
+          "clinic": "yi",
+          "name": "毅安診所",
+          "file": "yi-november-2026-source-photo.jpg",
+          "availability": "local evidence, not shipped（原圖保留在使用者本機，未隨此測試資料提供）"
+        },
+        {
+          "clinic": "jin",
+          "name": "晉安復健科診所",
+          "file": "jin-november-2026-source-photo.jpg",
+          "availability": "local evidence, not shipped（原圖保留在使用者本機，未隨此測試資料提供）"
+        }
+      ],
+      "imagesAvailability": "local evidence, not shipped（兩張原圖為使用者提供的本機檔案，僅以描述性檔名記錄，未隨此測試資料提供）",
+      "yearSource": "user-session-context (2026)，影像本身未標示年份",
+      "nameCorrections": [
+        {
+          "id": "zhuang-yimei",
+          "printedInNovember": "莊逸玟",
+          "historicalSeedName": "莊逸玫",
+          "appliedToDraft": true,
+          "seedEdited": false,
+          "seedRole": "historical built-in 2026-07 transcription, not an authoritative staff register",
+          "sources": [
+            {
+              "kind": "ai-vision",
+              "who": "this pass",
+              "what": "pixel crops of both November sheets",
+              "artifact": "compare-right-component.png",
+              "artifactAvailability": "local evidence, not shipped（裁切圖留在本機工作目錄，未隨此測試資料提供）"
+            },
+            {
+              "kind": "ai-vision",
+              "who": "Hermes",
+              "what": "independent read of both full images, the final-character crop, and an independent 150-cell matrix"
+            },
+            {
+              "kind": "published-page",
+              "who": "診所官網",
+              "what": "https://www.tainanrehab.com/doctors.html lists 莊逸玟 (副院長) -> doctorsview_2.html"
+            }
+          ]
+        }
+      ],
+      "openQuestions": [],
+      "resolvedQuestions": [
+        {
+          "question": "週六午診／晚診在兩張原圖皆為空白：是尚未公布，還是本來就沒有這個診次？",
+          "answeredBy": "user (operator)",
+          "answeredOn": "2026-11-22",
+          "answer": "星期六下午晚上都一定是休診",
+          "appliedAs": "兩院週六午／晚的週固定基準格改為 closed（休診），影響 16 個呈現格",
+          "previousEncoding": "unconfirmed（待確認）",
+          "note": "原圖空白仍如實記錄為空白；此為使用者確認的語意，非原圖證明的休診。"
+        }
+      ],
+      "saturdayClosure": {
+        "slots": [
+          "pm",
+          "eve"
+        ],
+        "weekday": 5,
+        "status": "closed",
+        "confirmedBy": "user (operator)",
+        "confirmedOn": "2026-11-22",
+        "statement": "星期六下午晚上都一定是休診",
+        "baselineSlotsSet": [
+          "jin|週六|午診",
+          "jin|週六|晚診",
+          "yi|週六|午診",
+          "yi|週六|晚診"
+        ],
+        "renderedCellsAffected": 16,
+        "sourceImageShows": "空白：既無醫師姓名，也無本表專用的灰色 X 停診標記",
+        "imageProvesClosure": false,
+        "supersedes": "前一版以 unconfirmed（待確認）呈現，並把空白語意列為唯一待答資料問題；該問題已由使用者回答。",
+        "note": "休診結論來自使用者確認，不是從原圖推得。原圖空白仍如實記錄為空白；任何說「原圖證明週六午／晚休診」的敘述都是錯的。"
+      },
+      "statedAssumptions": [
+        "新醫師「陳爾駿」代表色原圖為紫色但無色碼，保守暫定 #6b3fa0（白底對比 7.38:1）。",
+        "週固定班表為多數決推導，非原圖明列；逐日呈現已與原圖轉錄一致。",
+        "年份 2026 來自本次工作階段脈絡，非來自影像；已驗證 11 月星期排列與原圖相容。",
+        "週六午／晚的「休診」來自使用者 2026-11-22 的確認，不是原圖的內容；原圖該處為空白。"
+      ],
+      "imageVerification": {
+        "cellsCompared": 150,
+        "aiReaders": [
+          "this pass (pixel crops + model round-trip)",
+          "Hermes (independent read + 150-cell matrix)"
+        ],
+        "aiReadersAgree": true,
+        "differencesFound": 44,
+        "differencesAllOneCause": "莊逸玫 -> 莊逸玟 (corrected in this draft)",
+        "publishedPageCrossCheck": "https://www.tainanrehab.com/doctors.html",
+        "humanCellByCellVerified": false,
+        "note": "兩個 AI 判讀彼此一致，但同為 AI 視覺，不等同兩個人分別看圖。對外公告前建議仍由人抽查。"
+      }
+    },
+    "doctors": [
+      {
+        "id": "liu-jinwei",
+        "name": "劉晉瑋",
+        "color": "#b32625"
+      },
+      {
+        "id": "zhuang-yimei",
+        "name": "莊逸玟",
+        "color": "#264a9a",
+        "needsNameVerification": false
+      },
+      {
+        "id": "xue-xiufang",
+        "name": "薛琇方",
+        "color": "#95700b"
+      },
+      {
+        "id": "wang-wenda",
+        "name": "王文達",
+        "color": "#22703e"
+      },
+      {
+        "id": "chen-erjun",
+        "name": "陳爾駿",
+        "color": "#6b3fa0"
+      }
+    ],
+    "months": {
+      "2026-11": {
+        "clinics": {
+          "jin": [
+            [
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "liu-jinwei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "zhuang-yimei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "liu-jinwei"
+                ]
+              }
+            ],
+            [
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "zhuang-yimei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "liu-jinwei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "xue-xiufang"
+                ]
+              }
+            ],
+            [
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "xue-xiufang"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "wang-wenda"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "wang-wenda"
+                ]
+              }
+            ],
+            [
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "zhuang-yimei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "wang-wenda"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "wang-wenda"
+                ]
+              }
+            ],
+            [
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "liu-jinwei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "liu-jinwei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "zhuang-yimei"
+                ]
+              }
+            ],
+            [
+              {
+                "status": "rotation",
+                "doctorIds": []
+              },
+              {
+                "status": "closed",
+                "doctorIds": []
+              },
+              {
+                "status": "closed",
+                "doctorIds": []
+              }
+            ]
+          ],
+          "yi": [
+            [
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "xue-xiufang"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "liu-jinwei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "zhuang-yimei"
+                ]
+              }
+            ],
+            [
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "xue-xiufang"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "wang-wenda"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "wang-wenda"
+                ]
+              }
+            ],
+            [
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "liu-jinwei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "zhuang-yimei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "zhuang-yimei"
+                ]
+              }
+            ],
+            [
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "liu-jinwei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "zhuang-yimei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "liu-jinwei"
+                ]
+              }
+            ],
+            [
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "xue-xiufang"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "zhuang-yimei"
+                ]
+              },
+              {
+                "status": "scheduled",
+                "doctorIds": [
+                  "liu-jinwei"
+                ]
+              }
+            ],
+            [
+              {
+                "status": "rotation",
+                "doctorIds": []
+              },
+              {
+                "status": "closed",
+                "doctorIds": []
+              },
+              {
+                "status": "closed",
+                "doctorIds": []
+              }
+            ]
+          ]
+        },
+        "events": [
+          {
+            "id": "nov-yi-2026-11-05-eve-sub",
+            "date": "2026-11-05",
+            "clinicId": "yi",
+            "slot": "eve",
+            "type": "substitute",
+            "originalDoctorId": "liu-jinwei",
+            "doctorId": "zhuang-yimei",
+            "source": "date-override"
+          },
+          {
+            "id": "nov-jin-2026-11-13-am-cancel",
+            "date": "2026-11-13",
+            "clinicId": "jin",
+            "slot": "am",
+            "type": "cancel",
+            "originalDoctorId": "liu-jinwei",
+            "doctorId": null,
+            "source": "date-override"
+          },
+          {
+            "id": "nov-jin-2026-11-13-pm-sub",
+            "date": "2026-11-13",
+            "clinicId": "jin",
+            "slot": "pm",
+            "type": "substitute",
+            "originalDoctorId": "liu-jinwei",
+            "doctorId": "chen-erjun",
+            "source": "date-override"
+          },
+          {
+            "id": "nov-yi-2026-11-13-eve-sub",
+            "date": "2026-11-13",
+            "clinicId": "yi",
+            "slot": "eve",
+            "type": "substitute",
+            "originalDoctorId": "liu-jinwei",
+            "doctorId": "chen-erjun",
+            "source": "date-override"
+          },
+          {
+            "id": "nov-jin-2026-11-16-am-sub",
+            "date": "2026-11-16",
+            "clinicId": "jin",
+            "slot": "am",
+            "type": "substitute",
+            "originalDoctorId": "liu-jinwei",
+            "doctorId": "zhuang-yimei",
+            "source": "date-override"
+          },
+          {
+            "id": "nov-jin-2026-11-16-eve-sub",
+            "date": "2026-11-16",
+            "clinicId": "jin",
+            "slot": "eve",
+            "type": "substitute",
+            "originalDoctorId": "liu-jinwei",
+            "doctorId": "chen-erjun",
+            "source": "date-override"
+          },
+          {
+            "id": "nov-yi-2026-11-16-pm-sub",
+            "date": "2026-11-16",
+            "clinicId": "yi",
+            "slot": "pm",
+            "type": "substitute",
+            "originalDoctorId": "liu-jinwei",
+            "doctorId": "xue-xiufang",
+            "source": "date-override"
+          },
+          {
+            "id": "nov-yi-2026-11-23-am-sub",
+            "date": "2026-11-23",
+            "clinicId": "yi",
+            "slot": "am",
+            "type": "substitute",
+            "originalDoctorId": "xue-xiufang",
+            "doctorId": "zhuang-yimei",
+            "source": "date-override"
+          },
+          {
+            "id": "nov-jin-2026-11-24-eve-sub",
+            "date": "2026-11-24",
+            "clinicId": "jin",
+            "slot": "eve",
+            "type": "substitute",
+            "originalDoctorId": "xue-xiufang",
+            "doctorId": "liu-jinwei",
+            "source": "date-override"
+          },
+          {
+            "id": "nov-yi-2026-11-24-am-sub",
+            "date": "2026-11-24",
+            "clinicId": "yi",
+            "slot": "am",
+            "type": "substitute",
+            "originalDoctorId": "xue-xiufang",
+            "doctorId": "liu-jinwei",
+            "source": "date-override"
+          },
+          {
+            "id": "nov-jin-2026-11-25-am-cancel",
+            "date": "2026-11-25",
+            "clinicId": "jin",
+            "slot": "am",
+            "type": "cancel",
+            "originalDoctorId": "xue-xiufang",
+            "doctorId": null,
+            "source": "date-override"
+          },
+          {
+            "id": "nov-yi-2026-11-27-am-cancel",
+            "date": "2026-11-27",
+            "clinicId": "yi",
+            "slot": "am",
+            "type": "cancel",
+            "originalDoctorId": "xue-xiufang",
+            "doctorId": null,
+            "source": "date-override"
+          }
+        ],
+        "rotations": [
+          {
+            "clinicId": "jin",
+            "date": "2026-11-07",
+            "slot": "am",
+            "status": "scheduled",
+            "doctorIds": [
+              "liu-jinwei"
+            ],
+            "source": "saturday-rotation"
+          },
+          {
+            "clinicId": "yi",
+            "date": "2026-11-07",
+            "slot": "am",
+            "status": "scheduled",
+            "doctorIds": [
+              "xue-xiufang"
+            ],
+            "source": "saturday-rotation"
+          },
+          {
+            "clinicId": "jin",
+            "date": "2026-11-14",
+            "slot": "am",
+            "status": "scheduled",
+            "doctorIds": [
+              "xue-xiufang"
+            ],
+            "source": "saturday-rotation"
+          },
+          {
+            "clinicId": "yi",
+            "date": "2026-11-14",
+            "slot": "am",
+            "status": "scheduled",
+            "doctorIds": [
+              "zhuang-yimei"
+            ],
+            "source": "saturday-rotation"
+          },
+          {
+            "clinicId": "jin",
+            "date": "2026-11-21",
+            "slot": "am",
+            "status": "scheduled",
+            "doctorIds": [
+              "zhuang-yimei"
+            ],
+            "source": "saturday-rotation"
+          },
+          {
+            "clinicId": "yi",
+            "date": "2026-11-21",
+            "slot": "am",
+            "status": "scheduled",
+            "doctorIds": [
+              "liu-jinwei"
+            ],
+            "source": "saturday-rotation"
+          },
+          {
+            "clinicId": "jin",
+            "date": "2026-11-28",
+            "slot": "am",
+            "status": "scheduled",
+            "doctorIds": [
+              "zhuang-yimei"
+            ],
+            "source": "saturday-rotation"
+          },
+          {
+            "clinicId": "yi",
+            "date": "2026-11-28",
+            "slot": "am",
+            "status": "scheduled",
+            "doctorIds": [
+              "liu-jinwei"
+            ],
+            "source": "saturday-rotation"
+          }
+        ]
+      }
+    }
+  },
+  "currentMonth": "2026-11",
+  "view": {
+    "template": "calendar",
+    "format": "dual",
+    "clinicId": "jin",
+    "topClinicId": "jin"
+  }
+}

@@ -76,6 +76,27 @@
     }
   }
 
+  function readLastScheduleMonth(runtime) {
+    try {
+      const storage = runtime && runtime.localStorage;
+      if (!storage || typeof storage.getItem !== "function") return null;
+      const stored = storage.getItem(LAST_SCHEDULE_MONTH_STORAGE_KEY);
+      return isValidMonthKey(stored) ? stored : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Which month the calendar editor should open on. A device without a local draft must never fall
+  // back to a hardcoded source month, or devices drift apart (Mac/iPhone showed 2026-10 while
+  // Windows showed 2026-11). Order: unsaved local draft, then the last month this device loaded or
+  // saved from the cloud, then the device's real current month.
+  function resolveCalendarBootMonth(runtime, options) {
+    const draftMonth = options && options.draftMonth;
+    if (isValidMonthKey(draftMonth)) return draftMonth;
+    return readLastScheduleMonth(runtime) || getInitialMonthKey(runtime);
+  }
+
   function rememberLoadedMonth(runtime, monthKey, payload) {
     if (!payload || payload.ok !== true || payload.found !== true) return false;
     return rememberLastScheduleMonth(runtime, monthKey);
@@ -95,6 +116,8 @@
     getMonthTitleMismatch,
     isValidScheduleData,
     rememberLastScheduleMonth,
+    readLastScheduleMonth,
+    resolveCalendarBootMonth,
     rememberLoadedMonth,
     rememberSavedMonth,
   });

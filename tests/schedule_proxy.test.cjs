@@ -38,6 +38,8 @@ test('schedule proxy rejects unauthenticated load without contacting Apps Script
   }
 });
 
+// The forwarded action is 'loadReadOnly', not 'load': the legacy action can insert the Schedules
+// sheet and write its header row. Fail-closed behaviour is pinned in schedule_proxy_read_only.test.cjs.
 test('authenticated load forwards month and server-only secret to Apps Script', async () => {
   const originalFetch = global.fetch;
   let forwarded;
@@ -47,7 +49,7 @@ test('authenticated load forwards month and server-only secret to Apps Script', 
       ok: true,
       status: 200,
       headers: { get: () => 'application/json' },
-      text: async () => JSON.stringify({ ok: true, found: false, month: '2026-08' }),
+      text: async () => JSON.stringify({ ok: true, found: false, readOnly: true, month: '2026-08' }),
     };
   };
   try {
@@ -55,7 +57,7 @@ test('authenticated load forwards month and server-only secret to Apps Script', 
     await handler(authenticatedRequest(), res);
     assert.equal(res.statusCode, 200);
     assert.deepEqual(forwarded, {
-      action: 'load',
+      action: 'loadReadOnly',
       month: '2026-08',
       secret: process.env.CLINIC_SERVER_SECRET,
     });

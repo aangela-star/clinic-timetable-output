@@ -6,6 +6,26 @@ const http = require('node:http');
 const { chromium } = require(process.env.MANUAL_PUBLISH_PLAYWRIGHT || 'playwright');
 
 const root = path.resolve(__dirname, '..');
+// The recorded /api/* traffic must be: at most one editor-mode probe (index.html's React shell
+// fetches it, legacy.html does not), exactly ONE schedule GET, and nothing else -- no POST on any
+// /api route, so no publish, no upload and no cloud save can hide in here.
+// `expectedAction` is asserted EXACTLY, per page, rather than accepting either read action:
+// legacy.html still puts `action=load` in its query string (the proxy ignores the client action
+// and always chooses the read-only Apps Script action server-side), while the calendar editor
+// sends `action=loadReadOnly` to match what the proxy actually does.
+function assertReadOnlyApi(api, label, expectedAction) {
+  const other = api.filter((c) => c.path !== '/api/schedule' && c.path !== '/api/editor-mode');
+  assert.deepEqual(other, [], label + ': unexpected /api traffic');
+  assert.deepEqual(api.filter((c) => c.method !== 'GET'), [],
+    label + ': no non-GET API call is permitted (no publish, upload or cloud save)');
+  const editorMode = api.filter((c) => c.path === '/api/editor-mode');
+  assert.ok(editorMode.length <= 1, label + ': editor-mode probed more than once');
+  const schedule = api.filter((c) => c.path === '/api/schedule');
+  assert.equal(schedule.length, 1, label + ': expected exactly one schedule request, got ' + JSON.stringify(api));
+  assert.equal(schedule[0].action, expectedAction,
+    label + ': the schedule GET must use ' + expectedAction + ', got ' + schedule[0].action);
+}
+
 const evidence = process.env.MANUAL_PUBLISH_EVIDENCE || '/private/tmp/clinic-manual-publish-evidence';
 const deps = process.env.MANUAL_PUBLISH_DEPS || path.join(evidence, 'dependencies');
 const cdn = new Map([
@@ -16,7 +36,15 @@ const cdn = new Map([
   ['https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', 'html2canvas.js'],
   ['https://unpkg.com/lucide@1.33.0/dist/umd/lucide.min.js', 'lucide.js']
 ]);
-const staticFiles = new Set(['index.html', 'manual-publish.mjs', 'schedule-save-load-core.js', 'clinic-order.js', 'publish-core.js']);
+// legacy.html is the page whose controls these assertions describe (年份月份, 下載高清 PNG 海報);
+// index.html is now the calendar editor, which ships the same manual-publish section through a
+// dynamic import, so its own first-party assets are served too. Everything here is a repo file on
+// the test origin; every other request is still either a stubbed CDN bundle or blocked.
+const legacyAssets = ['legacy.html', 'schedule-save-load-core.js', 'clinic-order.js', 'publish-core.js'];
+const calendarAssets = ['index.html', 'calendar.css', 'calendar-assets.js', 'schedule-core.js',
+  'timetable-model.js', 'calendar-layout.js', 'timetable-poster.js', 'timetable-view.js',
+  'calendar-draft.js', 'calendar-meta.js', 'calendar-template.js', 'calendar-editor.js'];
+const staticFiles = new Set(['manual-publish.mjs', ...legacyAssets, ...calendarAssets]);
 const imageFiles = fs.readdirSync(path.join(root, 'docs/assets/website-guide')).filter(f => f.endsWith('.png')).map(f => 'docs/assets/website-guide/' + f);
 imageFiles.forEach(f => staticFiles.add(f));
 staticFiles.add('docs/官網門診表操作手冊.html');
@@ -27,11 +55,11 @@ let origin;
 const server = http.createServer((req, res) => {
   const name = decodeURIComponent(new URL(req.url, origin).pathname).slice(1) || 'index.html';
   if (!staticFiles.has(name)) { res.writeHead(404); res.end(); return; }
-  res.setHeader('Content-Type', name.endsWith('.png') ? 'image/png' : name.endsWith('.html') ? 'text/html; charset=utf-8' : 'application/javascript; charset=utf-8');
+  res.setHeader('Content-Type', name.endsWith('.png') ? 'image/png' : name.endsWith('.html') ? 'text/html; charset=utf-8' : name.endsWith('.css') ? 'text/css; charset=utf-8' : name.endsWith('.json') ? 'application/json; charset=utf-8' : 'application/javascript; charset=utf-8');
   res.end(fs.readFileSync(path.join(root, name)));
 });
 
-async function checkSection(page, context, mode, api, blocked) {
+async function checkSection(page, context, mode, api, blocked, page_profile) {
   const section = page.getByRole('region', { name: '手動發布', exact: true });
   await section.waitFor();
   assert.deepEqual(await section.locator('h3').allTextContents(), labels);
@@ -50,16 +78,37 @@ async function checkSection(page, context, mode, api, blocked) {
     { href: 'https://w3.farbar.ai/channels/channel30/cms31/editChannel.php?chcode=rG2vq&cntcode=NVJkF&', target: '_blank', rel: 'noopener noreferrer' }
   ]);
   assert.ok(await section.evaluate(el => !!(document.querySelector('button').compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)));
-  const download = page.getByRole('button', { name: '下載高清 PNG 海報', exact: true });
+  const download = page.getByRole('button', { name: page_profile.pngButton, exact: true });
   const downloadHandle = await download.elementHandle();
   assert.ok(await section.evaluate((el, button) => !!(button.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING), downloadHandle));
   await section.locator('a').first().focus();
   await page.keyboard.press('Tab');
   assert.equal(await page.locator(':focus').textContent(), labels[0] + '操作手冊');
   const beforeStorage = await page.evaluate(() => window.manualTestStorageAttempts);
-  assert.equal(beforeStorage.length, 1, 'only Babel startup probes storage');
-  assert.equal(beforeStorage[0].method, 'getItem');
-  assert.ok(beforeStorage[0].stack.includes('https://unpkg.com/@babel/standalone@8.0.4/babel.min.js'));
+  if (page_profile.storage === 'blocked') {
+    // legacy.html touches no storage at startup, so the only probe is Babel's own.
+    assert.equal(beforeStorage.length, 1, 'only Babel startup probes storage');
+    assert.equal(beforeStorage[0].method, 'getItem');
+    assert.ok(beforeStorage[0].stack.includes('https://unpkg.com/@babel/standalone@8.0.4/babel.min.js'));
+  } else {
+    // The calendar editor legitimately reads its own local draft key on open. Storage is recorded
+    // and allowed here, but it must only touch that editor's own keys, and the manual-publish
+    // interactions below must still add nothing (asserted against beforeStorage at the end).
+    const keys = beforeStorage.filter((attempt) => attempt.key).map((attempt) => attempt.key);
+    assert.ok(keys.includes('clinic-timetable.calendar-integrated-draft.v1'),
+      'the calendar editor is expected to read its own local draft key: ' + JSON.stringify(keys));
+    // The vendor bundles probe their own debug switches on load; those two reads are named here
+    // rather than blanket-allowed, so any other foreign key still fails.
+    const vendorReadProbes = new Set(['debug', 'DEBUG']);
+    assert.deepEqual(keys.filter((key) => !key.startsWith('clinic-timetable.') && !vendorReadProbes.has(key)),
+      [], 'unexpected foreign storage key: ' + JSON.stringify(keys));
+    // The safety property: nothing outside the editor's own keys may be WRITTEN or REMOVED.
+    assert.deepEqual(beforeStorage
+      .filter((attempt) => attempt.method !== 'getItem' && attempt.method !== 'key')
+      .filter((attempt) => !/^clinic-timetable\./.test(attempt.key || ''))
+      .map((attempt) => ({ method: attempt.method, key: attempt.key })),
+    [], 'no key outside clinic-timetable.* may be written or removed');
+  }
   const beforeApi = [...api];
   const beforeBlocked = [...blocked];
   for (let i = 0; i < labels.length; i++) {
@@ -121,18 +170,69 @@ async function checkSection(page, context, mode, api, blocked) {
   let browser;
   try {
     browser = await chromium.launch({ headless: true });
-    for (const [mode, viewport] of (yianOnly ? [['desktop', { width: 700, height: 1000 }]] : [['desktop', { width: 1440, height: 1000 }], ['mobile', { width: 390, height: 844 }]])) {
+    // PROFILES. The first two are the original legacy-editor coverage, now naming its page
+    // explicitly instead of relying on index.html having been that page. The third is NEW
+    // coverage of the same manual-publish section inside the current calendar editor, which is
+    // what index.html serves today -- added rather than swapped, so neither page loses coverage.
+    const profiles = yianOnly
+      ? [{ mode: 'desktop', viewport: { width: 700, height: 1000 }, page: '/legacy.html',
+        pngButton: '下載高清 PNG 海報', storage: 'blocked', action: 'load' }]
+      : [
+        { mode: 'legacy-desktop', viewport: { width: 1440, height: 1000 }, page: '/legacy.html',
+          pngButton: '下載高清 PNG 海報', storage: 'blocked', action: 'load', png: true },
+        { mode: 'legacy-mobile', viewport: { width: 390, height: 844 }, page: '/legacy.html',
+          pngButton: '下載高清 PNG 海報', storage: 'blocked', action: 'load' },
+        { mode: 'calendar-desktop', viewport: { width: 1440, height: 1000 }, page: '/index.html',
+          pngButton: '下載高清 PNG', storage: 'recorded', action: 'loadReadOnly',
+          png: true, calendar: true },
+      ];
+    for (const profile of profiles) {
+      const { mode, viewport } = profile;
       const context = await browser.newContext({ viewport, deviceScaleFactor: 1, acceptDownloads: true, serviceWorkers: 'block' });
       const api = [], blocked = [], errors = [];
-      await context.addInitScript(() => {
-        window.manualTestStorageAttempts = [];
-        for (const method of ['getItem', 'setItem', 'removeItem', 'clear', 'key']) {
-          Storage.prototype[method] = function () {
-            window.manualTestStorageAttempts.push({ method, stack: new Error().stack });
-            throw new Error('Storage disabled in isolated manual test');
-          };
-        }
-      });
+      if (profile.storage === 'blocked') {
+        await context.addInitScript(() => {
+          window.manualTestStorageAttempts = [];
+          for (const method of ['getItem', 'setItem', 'removeItem', 'clear', 'key']) {
+            Storage.prototype[method] = function () {
+              window.manualTestStorageAttempts.push({ method, stack: new Error().stack });
+              throw new Error('Storage disabled in isolated manual test');
+            };
+          }
+        });
+      } else {
+        // The calendar editor cannot run without its own local draft storage, so here storage is
+        // RECORDED and allowed instead of disabled. Every attempt keeps its key so the assertions
+        // can still prove nothing outside clinic-timetable.* is touched.
+        await context.addInitScript(() => {
+          window.manualTestStorageAttempts = [];
+          for (const method of ['getItem', 'setItem', 'removeItem', 'clear', 'key']) {
+            const real = Storage.prototype[method];
+            Storage.prototype[method] = function (...args) {
+              window.manualTestStorageAttempts.push({ method, key: args[0], stack: new Error().stack });
+              return real.apply(this, args);
+            };
+          }
+        });
+      }
+      if (profile.calendar) {
+        // Deterministic "current month". The calendar editor derives its boot month from the
+        // device clock (ScheduleSaveLoadCore.getInitialMonthKey), so without this the expected
+        // month would change with the calendar date. Timers are left real: the editor's startup
+        // read has a 15 s abort that must still be able to fire.
+        await context.addInitScript(() => {
+          const FIXED = 1795000000000; // 2026-11-22T08:26:40.000Z
+          const RealDate = Date;
+          function FixedDate(...args) {
+            return args.length ? new RealDate(...args) : new RealDate(FIXED);
+          }
+          FixedDate.prototype = RealDate.prototype;
+          FixedDate.now = () => FIXED;
+          FixedDate.parse = RealDate.parse;
+          FixedDate.UTC = RealDate.UTC;
+          window.Date = FixedDate;
+        });
+      }
       await context.route('**/*', async route => {
         const request = route.request();
         const url = new URL(request.url());
@@ -145,9 +245,24 @@ async function checkSection(page, context, mode, api, blocked) {
         if (url.pathname === '/schedule-api-config.js') return route.fulfill({ contentType: 'application/javascript', body: 'window.SCHEDULE_SAVE_LOAD_CONFIG = { webAppUrl: location.origin + "/api/schedule" };' });
         if (url.pathname === '/manual-fixture') return route.fulfill({ contentType: 'text/html; charset=utf-8', body: `<!doctype html><html lang="zh-Hant"><head><meta name="viewport" content="width=device-width, initial-scale=1"><script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script><script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script><script src="https://cdn.tailwindcss.com/3.4.17"></script></head><body style="background:#f1f5f9"><main id="fixture" style="max-width:450px;margin:0 auto;padding:12px"></main><script type="module">import ManualPublishSection from '/manual-publish.mjs'; ReactDOM.createRoot(document.getElementById('fixture')).render(React.createElement(ManualPublishSection));</script></body></html>` });
         if (url.pathname.startsWith('/api/')) {
-          api.push({ method: request.method(), path: url.pathname, action: url.searchParams.get('action') });
-          if (url.pathname === '/api/schedule' && request.method() === 'GET' && url.searchParams.get('action') === 'load') {
-            return route.fulfill({ contentType: 'application/json', body: '{"ok":true,"found":false}' });
+          const action = url.searchParams.get('action');
+          api.push({ method: request.method(), path: url.pathname, action, month: url.searchParams.get('month') });
+          // Mirrors the real proxy: a GET is answered on the read-only Apps Script path, and a
+          // read-only answer carries readOnly:true (api/schedule.js fails closed without it).
+          if (url.pathname === '/api/schedule' && request.method() === 'GET'
+            && action === profile.action) {
+            // Mirrors the real proxy: a GET is answered on the read-only Apps Script path, and a
+            // read-only answer carries readOnly:true (api/schedule.js fails closed without it).
+            const month = url.searchParams.get('month');
+            return route.fulfill({ contentType: 'application/json',
+              body: action === 'loadReadOnly'
+                ? JSON.stringify({ ok: true, found: false, readOnly: true, month, storage: 'MONTH_MISSING' })
+                : '{"ok":true,"found":false}' });
+          }
+          // index.html's shell probes this before mounting the editor; answering it keeps the
+          // recorded traffic honest instead of leaving an aborted request in the list.
+          if (url.pathname === '/api/editor-mode' && request.method() === 'GET') {
+            return route.fulfill({ contentType: 'application/json', body: '{"preview":false}' });
           }
           return route.abort();
         }
@@ -191,25 +306,40 @@ async function checkSection(page, context, mode, api, blocked) {
         await context.close();
         continue;
       }
-      await page.goto(origin, { waitUntil: 'networkidle' });
+      await page.goto(origin + profile.page, { waitUntil: 'networkidle' });
       await page.getByRole('region', { name: '手動發布', exact: true }).waitFor();
       const overview = path.join(evidence, mode + '-overview.png');
       await page.screenshot({ path: overview, fullPage: true });
       report.screenshots.push(overview);
-      await checkSection(page, context, mode, api, blocked);
+      await checkSection(page, context, mode, api, blocked, profile);
       const startupStorageBlocked = await page.evaluate(() => window.manualTestStorageAttempts);
-      assert.deepEqual(api, [{ method: 'GET', path: '/api/schedule', action: 'load' }], 'only initial mocked schedule load');
-      if (mode === 'desktop') {
+      assertReadOnlyApi(api, mode + ' startup traffic', profile.action);
+      if (profile.calendar) {
+        // The calendar editor's automatic startup read, observed in a real browser: it must be the
+        // read-only action, on the month the pinned device clock makes current, and it must not
+        // claim to have loaded cloud content when the mock says the month is absent.
+        const schedule = api.filter((c) => c.path === '/api/schedule');
+        assert.equal(schedule[0].action, 'loadReadOnly', 'the calendar boot read must be read-only');
+        assert.equal(schedule[0].month, '2026-11', 'the boot read must use the pinned current month');
+        const cloudStatus = await page.locator('#cloud-status').textContent();
+        assert.match(cloudStatus, /雲端目前沒有 2026-11/, cloudStatus);
+        assert.match(cloudStatus, /不是雲端內容/, cloudStatus);
+        assert.equal(await page.locator('#manual-publish').getByRole('region', { name: '手動發布', exact: true }).count(),
+          1, 'the manual-publish section must be mounted by the calendar editor itself');
+        report.results.push(mode + ': calendar editor boot read is month=2026-11 action=loadReadOnly, '
+          + 'no cloud content claimed, manual-publish section mounted PASS');
+      }
+      if (profile.png) {
         const downloadPromise = page.waitForEvent('download');
-        await page.getByRole('button', { name: '下載高清 PNG 海報', exact: true }).click();
+        await page.getByRole('button', { name: profile.pngButton, exact: true }).click();
         const download = await downloadPromise;
-        const pngPath = path.join(evidence, 'png-regression.png');
+        const pngPath = path.join(evidence, mode + '-png-regression.png');
         await download.saveAs(pngPath);
         const png = fs.readFileSync(pngPath);
         assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
         assert.equal(png.readUInt32BE(16), 2160);
         assert.equal(png.readUInt32BE(20), 3840);
-        report.results.push('unchanged handleDownload + real html2canvas: PNG 2160 × 3840 PASS');
+        report.results.push(mode + ': real ' + profile.pngButton + ' download produced a 2160 × 3840 PNG PASS');
       }
       // Separate screenshot fixture uses the exact production component with no app scroller,
       // so every manual line is visible in the evidence. Integrated screenshots remain above.
@@ -225,7 +355,7 @@ async function checkSection(page, context, mode, api, blocked) {
         await summary.click();
       }
       assert.deepEqual(errors, [], mode + ' runtime errors');
-      assert.deepEqual(api, [{ method: 'GET', path: '/api/schedule', action: 'load' }]);
+      assertReadOnlyApi(api, mode + ' traffic after the run', profile.action);
       assert.deepEqual(await page.evaluate(() => window.manualTestStorageAttempts), []);
       report.requests[mode] = { mockedApi: api, blocked, runtimeErrors: errors, startupStorageBlocked };
       await context.close();

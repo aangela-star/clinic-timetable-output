@@ -70,7 +70,18 @@ test('editor performs a startup cloud read, gated to the authenticated editor', 
   const s = read('calendar-editor.js');
   assert.match(s, /async function bootCloudRead\(\)/);
   assert.match(s, /if\(!preview\)bootCloudRead\(\)/, 'boot read must not run in passwordless preview');
-  assert.match(s, /if\(preview\|\|busy\)return/, 'boot read must bail out in preview or while busy');
+  // The boot read must not run in preview, must not overlap an operator cloud action or itself,
+  // and must not start after teardown. Behavioural coverage: calendar_boot_read_behavior.test.cjs.
+  assert.match(s, /if\(preview\|\|busy\|\|bootBusy\|\|bootStarted\|\|closed\)return/,
+    'boot read must bail out in preview, while busy, while already running, or after teardown');
+  // It must NOT reuse `busy`: that flag arms the beforeunload dialog and blocks SPA navigation.
+  const bootBody = s.slice(s.indexOf('async function bootCloudRead()'), s.indexOf('if(!preview)bootCloudRead()'));
+  assert.ok(!/(^|[^t])busy=true/.test(bootBody.replace(/bootBusy=true/g, '')),
+    'the boot read must not set the operator-action busy flag');
+  assert.match(s, /window\.calendarCanLeave=\(\)=>!busy&&guardSwitch\(\)/,
+    'leaving must only be blocked by an operator cloud action, never by the startup read');
+  assert.match(s, /listen\('beforeunload',e=>\{if\(dirty\|\|busy\)/,
+    'the unsaved-work dialog must only be armed by real unsaved work or an operator action');
 });
 
 test('startup cloud read never writes: no POST and no draft persistence on boot', () => {
@@ -121,12 +132,12 @@ test('startup read grants write eligibility only after validated adoption', () =
 test('a late startup response cannot overwrite intervening local work', () => {
   const s = read('calendar-editor.js');
   const body = s.slice(s.indexOf('async function bootCloudRead()'), s.indexOf('if(!preview)bootCloudRead()'));
-  assert.match(body, /const guard=\{month,raw:lastRaw,state,view\}/, 'must snapshot pre-request inputs');
+  assert.match(body, /const guard=\{month,raw:lastRaw,state,view,editing\}/, 'must snapshot pre-request inputs');
   // Every snapshotted input, plus dirty, has to be rechecked before anything is applied.
   const recheck = body.match(/if\(guard\.month!==currentMonth[^)]*\)\{/);
   assert.ok(recheck, 'missing staleness recheck');
   for (const part of ['guard.month!==currentMonth', 'guard.raw!==lastRaw', 'guard.state!==state',
-    'guard.view!==view', 'dirty']) {
+    'guard.view!==view', 'guard.editing!==editing', 'dirty']) {
     assert.ok(recheck[0].includes(part), `staleness recheck does not cover ${part}`);
   }
   const at = body.indexOf('guard.month!==currentMonth');
@@ -138,7 +149,10 @@ test('startup read is bounded by a timeout so the editor never stays locked', ()
   assert.match(s, /BOOT_CLOUD_TIMEOUT_MS=\d+/);
   assert.match(s, /new AbortController\(\)/);
   assert.match(s, /setTimeout\(\(\)=>control\.abort\(\),BOOT_CLOUD_TIMEOUT_MS\)/);
-  assert.match(s, /finally\{clearTimeout\(timer\);busy=false;/, 'busy must always be released');
+  assert.match(s, /finally\{clearTimeout\(timer\);bootTimer=null;bootControl=null;bootBusy=false;/,
+    'the boot flag and the timer must always be released');
+  // Teardown must not leave the abort timer pending or the request in flight.
+  assert.match(s, /closed=true;if\(bootTimer\)clearTimeout\(bootTimer\);bootTimer=null;if\(bootControl\)bootControl\.abort\(\)/);
   assert.match(s, /CLOUD_TIMEOUT/, 'an aborted read must be reported as a timeout, not as offline');
 });
 

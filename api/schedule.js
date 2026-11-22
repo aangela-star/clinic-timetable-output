@@ -2,6 +2,12 @@ const { getServerSecret, hasValidSession } = require('../lib/server-session');
 
 const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz5OXGNDZJWEj2-W1g-1r_SISPjYYcI-7gsUsivt3Rx7-zY6AzpQqqZTIFROVKMU1eh3w/exec';
 
+// The only Apps Script action a browser read is allowed to trigger. The legacy 'load' action
+// shares the sheet bootstrap helper with 'save': on a missing or empty Schedules sheet it inserts
+// the sheet and writes its header row, so a read could create state in the bound spreadsheet.
+// This action is read-only by construction in apps-script/Code.gs and says so in its response.
+const READ_ONLY_LOAD_ACTION = 'loadReadOnly';
+
 function json(res, status, payload) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -53,8 +59,35 @@ module.exports = async function handler(req, res) {
     if (req.method === 'GET') {
       const month = String(req.query?.month || '');
       if (!validMonth(month)) return json(res, 400, { ok: false, error: 'INVALID_MONTH_KEY' });
-      const result = await forwardToAppsScript({ action: 'load', month });
-      return json(res, result.ok ? 200 : 400, result);
+      // The action is chosen here, never taken from the request: a client cannot steer this GET
+      // onto a writable backend path.
+      const result = await forwardToAppsScript({ action: READ_ONLY_LOAD_ACTION, month });
+
+      if (result.ok === true) {
+        // Fail closed. A backend that does not confirm the read-only path may be an older
+        // deployment answering some other way; we do not fall back to the legacy 'load' action,
+        // because falling back is exactly the write risk this exists to remove.
+        if (result.readOnly !== true) {
+          console.error(`schedule read-only load unverified month=${month}`);
+          return json(res, 502, {
+            ok: false,
+            error: 'READ_ONLY_LOAD_UNVERIFIED',
+            message: '雲端沒有確認這次讀取是唯讀路徑，已停止讀取，未改用舊的讀取方式。請先部署最新的 Apps Script 後端。',
+          });
+        }
+        return json(res, 200, result);
+      }
+
+      if (result.error === 'UNSUPPORTED_ACTION' || result.error === 'METHOD_NOT_ALLOWED') {
+        console.error(`schedule read-only load unsupported by deployed backend month=${month}`);
+        return json(res, 502, {
+          ok: false,
+          error: 'READ_ONLY_LOAD_UNSUPPORTED',
+          message: '雲端後端尚未部署唯讀讀取路徑，已停止讀取，未改用可能寫入的舊讀取方式。請先部署最新的 Apps Script 後端。',
+        });
+      }
+
+      return json(res, 400, result);
     }
 
     if (req.method === 'POST') {

@@ -45,20 +45,31 @@ const manual=document.createElement('div');manual.id='manual-publish';document.q
 var manualRoot=null,ManualSection=null,closed=false;
 function context(){if(!manualRoot||!ManualSection)return;const clinicId=view.format==='dual'?(view.topClinicId||META.clinics[0].id):view.clinicId;manualRoot.render(React.createElement(ManualSection,{clinicName:META.clinics.find(c=>c.id===clinicId).name,monthKey:currentMonth,posterTitle:(Number(currentMonth.slice(0,4))-1911)+'年'+Number(currentMonth.slice(5))+'月'}))}
 import('./manual-publish.mjs').then(mod=>{if(closed)return;ManualSection=mod.default;manualRoot=ReactDOM.createRoot(manual);context()}).catch(()=>{manual.textContent='手動發布說明暫時無法載入，請重新開啟或使用舊版入口。尚未發布。'});
-let busy=false;const observed=new Map();
+// `busy` means an OPERATOR-initiated cloud action is running: it blocks leaving the page, because
+// leaving could lose work the operator asked for. The startup read is deliberately NOT `busy`:
+// it is an automatic read that owns nothing, so it must never refuse navigation or raise the
+// unsaved-work dialog. `bootBusy` keeps the two mutually exclusive without that side effect.
+let busy=false,bootBusy=false,bootStarted=false,bootControl=null,bootTimer=null;const observed=new Map();
 function cloudStatus(t){$('cloud-status').textContent=t}
 function backupCloud(month,payload){const key='clinic-timetable.cloud-backup.'+month+'.'+crypto.randomUUID();localStorage.setItem(key,JSON.stringify(payload));return key}
 // Classify cloud read failures so the operator can tell "offline", "logged out" and "the proxy
 // returned a login page" apart. Previously any of these surfaced as a raw JSON parse error.
 function cloudFail(code,message){const e=Error(message);e.code=code;return e}
-async function remote(month,signal){const u=new URL(window.SCHEDULE_SAVE_LOAD_CONFIG.webAppUrl);u.searchParams.set('month',month);u.searchParams.set('action','load');
+// READ ONLY. 'loadReadOnly' is the Apps Script action that cannot create or modify anything; the
+// proxy chooses it server-side and fails closed if the deployed backend does not confirm it, so
+// this request can never fall back to the legacy 'load' action that can insert the Schedules
+// sheet and write its header row. The action here is informational and matches what the proxy does.
+async function remote(month,signal){const u=new URL(window.SCHEDULE_SAVE_LOAD_CONFIG.webAppUrl);u.searchParams.set('month',month);u.searchParams.set('action','loadReadOnly');
  let r;try{r=await fetch(u,{credentials:'same-origin',cache:'no-store',signal})}catch(_){throw signal&&signal.aborted?cloudFail('CLOUD_TIMEOUT','雲端讀取逾時，已停止等待'):cloudFail('CLOUD_OFFLINE','無法連線雲端（離線或網路被阻擋）')}
  if(r.status===401||r.status===403)throw cloudFail('CLOUD_UNAUTHORIZED','雲端未授權或登入已過期，請重新登入後再試');
- let p;try{p=await r.json()}catch(_){throw cloudFail('CLOUD_MALFORMED','雲端回應不是有效 JSON（可能被登入頁或代理攔截）')}
- if(!r.ok||p.ok!==true)throw cloudFail('CLOUD_ERROR',p.message||p.error||'雲端讀取失敗（HTTP '+r.status+'）');return p}
+ // An abort can land while the BODY is still streaming, which arrives here as an AbortError, not
+ // as bad JSON. Reporting that as 「可能被登入頁攔截」 would send the operator to re-authenticate
+ // for a plain timeout, so the abort is checked before the malformed-response wording is used.
+ let p;try{p=await r.json()}catch(_){throw signal&&signal.aborted?cloudFail('CLOUD_TIMEOUT','雲端讀取逾時，已停止等待'):cloudFail('CLOUD_MALFORMED','雲端回應不是有效 JSON（可能被登入頁或代理攔截）')}
+ if(!r.ok||p.ok!==true)throw cloudFail(p.error==='READ_ONLY_LOAD_UNSUPPORTED'||p.error==='READ_ONLY_LOAD_UNVERIFIED'?p.error:'CLOUD_ERROR',p.message||p.error||'雲端讀取失敗（HTTP '+r.status+'）');return p}
 function fingerprint(p){return JSON.stringify([p.found,p.data||null,p.updatedAt||null])}
 function envelope(){const snapshot={...structuredClone(state),months:{[currentMonth]:structuredClone(state.months[currentMonth])}};return {title:currentMonth,note:'月曆版；儲存不等於發布',clinics:structuredClone(META.clinics),calendarVersion:1,calendar:{state:snapshot,currentMonth,view}}}
-async function cloudAction(load){if(preview){cloudStatus('預覽版免密碼：請使用本機草稿及 JSON 備份；如需跨設備，請按上方「雲端登入」。');return}if(busy)return;if(!guardSwitch())return;busy=true;document.querySelector('.editor').inert=true;$('cloud-load').disabled=$('cloud-save').disabled=true;try{
+async function cloudAction(load){if(preview){cloudStatus('預覽版免密碼：請使用本機草稿及 JSON 備份；如需跨設備，請按上方「雲端登入」。');return}if(busy)return;if(bootBusy){cloudStatus('開啟時的雲端讀取還在進行，請稍候再按。沒有送出任何資料。');return}if(!guardSwitch())return;busy=true;document.querySelector('.editor').inert=true;$('cloud-load').disabled=$('cloud-save').disabled=true;try{
  const month=load?$('cloud-month').value:currentMonth;if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw Error('請選有效月份');
  cloudStatus('正在核對雲端月份…');const p=await remote(month);backupCloud(month,p);
  if(load){
@@ -75,7 +86,9 @@ async function cloudAction(load){if(preview){cloudStatus('預覽版免密碼：�
  }
 }catch(e){cloudStatus('操作停止；本機輸入保留：'+e.message)}finally{busy=false;document.querySelector('.editor').inert=false;$('cloud-load').disabled=$('cloud-save').disabled=false}}
 $('cloud-load').addEventListener('click',()=>cloudAction(true));$('cloud-save').addEventListener('click',()=>cloudAction(false));
-$('download-png').addEventListener('click',async()=>{if(!guardSwitch())return;const r=V.render(state,currentMonth,META,M,P,{...view,template:'calendar',format:'dual'});if(r.fatal){report('請先處理衝突／超量，再下載。');return}const b=$('download-png');b.disabled=true;try{await document.fonts.ready;const svg=new DOMParser().parseFromString(r.clinics,'image/svg+xml').documentElement;svg.setAttribute('width','1080');svg.setAttribute('height','1920');const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));try{const image=new Image();image.src=url;await image.decode();const canvas=document.createElement('canvas');canvas.width=2160;canvas.height=3840;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,2160,3840);ctx.drawImage(image,0,0,2160,3840);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('PNG 產生失敗');const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=currentMonth+'_'+(view.topClinicId==='yi'?'毅安在上':'晉安在上')+'_雙院門診表.png';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);report('已下載 2160 × 3840 PNG，尚未發布。')}finally{URL.revokeObjectURL(url)}}catch(e){report('下載失敗：'+e.message)}finally{b.disabled=false}});
+// stampDraft: an incomplete month must leave this page marked as a draft. The PNG is a file that
+// gets forwarded, so it cannot rely on the on-screen banner the way the preview does.
+$('download-png').addEventListener('click',async()=>{if(!guardSwitch())return;const r=V.render(state,currentMonth,META,M,P,{...view,template:'calendar',format:'dual'},{stampDraft:true});if(r.fatal){report('請先處理衝突／超量，再下載。');return}const b=$('download-png');b.disabled=true;try{await document.fonts.ready;const svg=new DOMParser().parseFromString(r.clinics,'image/svg+xml').documentElement;svg.setAttribute('width','1080');svg.setAttribute('height','1920');const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));try{const image=new Image();image.src=url;await image.decode();const canvas=document.createElement('canvas');canvas.width=2160;canvas.height=3840;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,2160,3840);ctx.drawImage(image,0,0,2160,3840);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('PNG 產生失敗');const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=currentMonth+'_'+(view.topClinicId==='yi'?'毅安在上':'晉安在上')+'_雙院門診表.png';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);report('已下載 2160 × 3840 PNG，尚未發布。')}finally{URL.revokeObjectURL(url)}}catch(e){report('下載失敗：'+e.message)}finally{b.disabled=false}});
 
 if(preview){for(const id of ['cloud-load','cloud-save','cloud-month'])$(id).disabled=true;cloudStatus('月曆預覽版免密碼：可編輯、儲存本機、備份 JSON、下載 PNG 及列印；如需跨設備，請按上方「雲端登入」。')}
 
@@ -93,21 +106,25 @@ if(preview){for(const id of ['cloud-load','cloud-save','cloud-month'])$(id).disa
 // 'clinic-timetable.last-schedule-month' — no schedule content.
 const BOOT_CLOUD_TIMEOUT_MS=15000;
 async function bootCloudRead(){
- if(preview||busy)return;
+ if(preview||busy||bootBusy||bootStarted||closed)return;
+ bootStarted=true;
  const month=currentMonth,hadDraft=lastRaw!==null;
  const localSource=hadDraft?'本機草稿':'內建來源固定版（非雲端資料）';
  // Snapshot everything the apply step is allowed to assume. state and view are replaced by new
  // objects on every real mutation (save, import, month switch, view switch), so identity checks
  // detect any intervening edit. A late response must never clobber work done while it was in
  // flight; it defers to the operator instead.
- const guard={month,raw:lastRaw,state,view};
- const control=new AbortController();
- const timer=setTimeout(()=>control.abort(),BOOT_CLOUD_TIMEOUT_MS);
- busy=true;$('cloud-load').disabled=$('cloud-save').disabled=true;
+ // `editing` is included so that opening an event for editing while the read is in flight also
+ // makes the response stale. Unreachable today (adoption requires no draft, and a no-draft month
+ // has no events to edit), so this is an invariant kept explicit rather than a live check.
+ const guard={month,raw:lastRaw,state,view,editing};
+ const control=new AbortController();bootControl=control;
+ const timer=setTimeout(()=>control.abort(),BOOT_CLOUD_TIMEOUT_MS);bootTimer=timer;
+ bootBusy=true;$('cloud-load').disabled=$('cloud-save').disabled=true;
  cloudStatus('開啟時正在讀取雲端 '+month+'…');
  try{
   const p=await remote(month,control.signal);if(closed)return;
-  if(guard.month!==currentMonth||guard.raw!==lastRaw||guard.state!==state||guard.view!==view||dirty){
+  if(guard.month!==currentMonth||guard.raw!==lastRaw||guard.state!==state||guard.view!==view||guard.editing!==editing||dirty){
    cloudStatus('開啟時的雲端讀取已過期：等待期間本機已有編輯、儲存或月份／版面切換，因此未套用任何雲端資料，本機輸入完整保留。如需雲端版本請按「載入雲端月份」比對。');return}
   if(!p.found){cloudStatus('雲端目前沒有 '+month+' 資料。畫面顯示的是'+localSource+'，不是雲端內容。');return}
   if(p.data?.calendarVersion!==1){cloudStatus('雲端 '+month+' 是舊版格式，未自動遷移或覆寫。畫面顯示的是'+localSource+'，不是雲端內容。');return}
@@ -125,9 +142,17 @@ async function bootCloudRead(){
   ScheduleSaveLoadCore.rememberLoadedMonth(window,month,p);context();
   cloudStatus('已於開啟時載入雲端 '+month+'（本機原本沒有草稿，未覆蓋任何輸入）。尚未儲存或發布。');
  }catch(e){if(closed)return;cloudStatus('雲端讀取未成功（'+(e.code||'CLOUD_ERROR')+'）：'+e.message+'。畫面顯示的是'+localSource+'，不是雲端內容。')}
- finally{clearTimeout(timer);busy=false;if(!closed){$('cloud-load').disabled=$('cloud-save').disabled=false}}
+ finally{clearTimeout(timer);bootTimer=null;bootControl=null;bootBusy=false;if(!closed){$('cloud-load').disabled=$('cloud-save').disabled=false}}
 }
-if(!preview)bootCloudRead();
+// Only an operator-initiated cloud action blocks leaving. The startup read does not: it holds no
+// unsaved work, and refusing navigation for up to BOOT_CLOUD_TIMEOUT_MS on every open told clean
+// devices they had changes to lose.
+// Assigned BEFORE the startup read is kicked off: bootCloudRead() runs synchronously up to its
+// fetch, and the toolbar's 登出 ／ 雲端登入 buttons call window.calendarCanLeave?.(), so leaving
+// that window undefined made an early click do nothing at all.
 window.calendarCanLeave=()=>!busy&&guardSwitch();
-return ()=>{closed=true;manualRoot?.unmount();for(const [t,f] of subscriptions)window.removeEventListener(t,f);delete window.calendarCanLeave};
+if(!preview)bootCloudRead();
+// Teardown stops the startup read rather than letting it run to its timeout: the abort settles the
+// request now, and every apply step is additionally gated on `closed`.
+return ()=>{closed=true;if(bootTimer)clearTimeout(bootTimer);bootTimer=null;if(bootControl)bootControl.abort();manualRoot?.unmount();for(const [t,f] of subscriptions)window.removeEventListener(t,f);delete window.calendarCanLeave};
 };

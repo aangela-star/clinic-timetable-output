@@ -134,12 +134,28 @@ function startEditor(options = {}) {
     removeItem: (k) => { storage.delete(k); },
   };
 
+  // The download path builds a Blob and an object URL. Recording the Blob's text lets a test read
+  // what the export actually wrote, instead of asserting on the source of downloadBackup.
+  const blobs = [];
+  class RecordedBlob {
+    constructor(parts = [], options = {}) {
+      this.parts = parts;
+      this.type = options.type || '';
+      this.text = parts.map((p) => String(p)).join('');
+      blobs.push(this);
+    }
+  }
+  class ObjectURL extends URL {}
+  ObjectURL.createObjectURL = () => `blob:test-${blobs.length}`;
+  ObjectURL.revokeObjectURL = () => {};
+
   const sandbox = {
     console,
     Date: FixedDate,
     localStorage,
     structuredClone,
-    URL,
+    URL: ObjectURL,
+    Blob: RecordedBlob,
     AbortController,
     Option: class Option extends El {
       constructor(text, value) { super('option'); this.own = String(text); this.value = String(value); }
@@ -222,6 +238,7 @@ function startEditor(options = {}) {
     context,
     requests,
     storage,
+    blobs,
     timers,
     destroy,
     settle,

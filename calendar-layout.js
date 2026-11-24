@@ -6,7 +6,23 @@ const map=source[(serif?'serif':bold?'bold':'regular')+'|'+size]||{};let width=0
 function make(s,month,meta,M,options={}){const commands=[],warnings=[],cellBounds=[],dual=meta.clinics.length>1,W=3508,H=dual?(options.compactDual?4960:6236):2480;const color='#236d70',ink='#233f49',muted='#536b75';
 function rect(x,y,w,h,fill,stroke=null,lineWidth=2){commands.push({type:'rect',x,y,w,h,fill,stroke,lineWidth})}function line(x1,y1,x2,y2,stroke,width=2){commands.push({type:'line',x1,y1,x2,y2,stroke,width})}
 function text(t,x,y,size=40,fill=ink,bold=false,serif=false,align='left'){const m=measure(t,size,bold,serif),left=align==='center'?x-m.width/2:align==='right'?x-m.width:x,baseline=y-(m.top+m.bottom)/2;const c={type:'text',text:t,x:left,y:baseline,size,fill,bold,serif,bbox:[left,baseline+m.top,left+m.width,baseline+m.bottom]};commands.push(c);return c.bbox}
-function eventParts(group){return [{text:group.dates.map(d=>Number(d.slice(8))).join('、')+' ',size:42,fill:muted,bold:true},...(group.type==='cancel'?[{text:'停診',size:50,fill:'#922f37',bold:true}]:[{text:M.doctor(s,group.doctorId).name,size:50,fill:M.doctor(s,group.doctorId).color,bold:true},{text:group.type==='add'?'加診':'代診',size:50,fill:ink,bold:true}])]}
+// An ordinary cancellation prints 停診; one carrying the allowlisted clinic-rest label prints those
+// words instead. The label can only be one of M.CANCEL_LABELS, so no free text reaches the poster.
+function cancelWords(label){return label||'停診'}
+// A Saturday rotation cell prints ONE line per date, so unlike the weekday grid it has no group
+// structure that could carry a second wording. A labelled cancellation is therefore renderable
+// only when the whole date collapses to that single wording: every cancellation on the date
+// agrees, and no doctor is left on duty to be named instead.
+function rotationCancelLabels(resolved){return new Set((resolved.changes||[]).filter(e=>e.type==='cancel').map(e=>e.cancelLabel||null))}
+function rotationCancelWords(resolved){const labels=rotationCancelLabels(resolved);return labels.size===1?cancelWords([...labels][0]):'停診'}
+// When it is NOT renderable, printing the neutral 停診 (or just the remaining doctor's name) would
+// quietly understate an explicit 診所休息 on an otherwise finished-looking poster. That is the one
+// outcome the wording must never have, so this fails closed exactly like an unresolvable 異動:
+// the words are kept in the data, the date is marked 異動待處理, and printing is blocked.
+function rotationLabelUnrenderable(resolved){
+ if(!(resolved.changes||[]).some(e=>e.type==='cancel'&&e.cancelLabel))return false;
+ return Boolean(resolved.doctors&&resolved.doctors.length)||rotationCancelLabels(resolved).size!==1}
+function eventParts(group){return [{text:group.dates.map(d=>Number(d.slice(8))).join('、')+' ',size:42,fill:muted,bold:true},...(group.type==='cancel'?[{text:cancelWords(group.cancelLabel),size:50,fill:'#922f37',bold:true}]:[{text:M.doctor(s,group.doctorId).name,size:50,fill:M.doctor(s,group.doctorId).color,bold:true},{text:group.type==='add'?'加診':'代診',size:50,fill:ink,bold:true}])]}
 function parts(items,cx,cy){const measured=items.map(v=>({...v,m:measure(v.text,v.size,v.bold)})),width=measured.reduce((n,v)=>n+v.m.width,0),top=Math.min(...measured.map(v=>v.m.top)),bottom=Math.max(...measured.map(v=>v.m.bottom));let x=cx-width/2;const baseline=cy-(top+bottom)/2,boxes=[];for(const v of measured){commands.push({type:'text',text:v.text,x,y:baseline,size:v.size,fill:v.fill,bold:v.bold,serif:false});boxes.push([x,baseline+v.m.top,x+v.m.width,baseline+v.m.bottom]);x+=v.m.width}return [Math.min(...boxes.map(v=>v[0])),Math.min(...boxes.map(v=>v[1])),Math.max(...boxes.map(v=>v[2])),Math.max(...boxes.map(v=>v[3]))]}
 for(let ci=0;ci<meta.clinics.length;ci++){const c=meta.clinics[ci],offset=dual?ci*(options.compactDual?2480:3118):0,brand=c.theme==='blue'?'#2a608d':color,pale=c.theme==='blue'?'#edf3fa':'#edf4f4';
 rect(140,offset+140,415,335,pale);text(month.slice(0,4),182,offset+205,62,brand,true);text(String(Number(month.slice(5))),345,offset+338,218,brand,true,false,'center');text('月',514,offset+445,44,brand,true,false,'right');text(c.name,655,offset+225,104,brand,true);text('醫師門診表',650,offset+385,112,ink,false,true);
@@ -22,7 +38,8 @@ const dates=M.saturdayDates(month),lineHeight=62,total=dates.length*lineHeight,b
 for(const date of dates){const resolved=M.resolveDay(s,meta,c.id,date,slot[0]);let items=[{text:String(Number(date.slice(8)))+' ',size:42,fill:muted,bold:true}];
 if(resolved.status==='unannounced'||resolved.status==='unknown'){items.push({text:'未公布',size:50,fill:muted,bold:true});complete=false;warnings.push(c.name+' '+date+' '+slot[1]+'：輪診未公布。')}
 else if(resolved.status==='needs-review'){items.push({text:'異動待處理',size:50,fill:'#922f37',bold:true});complete=false;fatal=true;warnings.push(c.name+' '+date+' '+slot[1]+'：輪診異動待處理。')}
-else if(!resolved.doctors.length){items.push({text:resolved.status==='cancel'?'停診':'無醫師',size:50,fill:'#922f37',bold:true})}
+else if(rotationLabelUnrenderable(resolved)){items.push({text:'異動待處理',size:50,fill:'#922f37',bold:true});complete=false;fatal=true;warnings.push(c.name+' '+date+' '+slot[1]+'：同日停診字樣無法完整呈現（含「診所休息」），已保留原始資料，不能視為完整海報。')}
+else if(!resolved.doctors.length){items.push({text:resolved.status==='cancel'?rotationCancelWords(resolved):'無醫師',size:50,fill:'#922f37',bold:true})}
 else{resolved.doctors.forEach((person,i)=>{if(i)items.push({text:'／',size:50,fill:ink,bold:true});items.push({text:person.name,size:50,fill:person.color,bold:true})});if(resolved.changes.length)items.push({text:resolved.status==='substitute'?'代診':resolved.status==='add'?'加診':'異動',size:42,fill:ink,bold:true})}
 if(items.reduce((n,t)=>n+measure(t.text,t.size,t.bold).width,0)>cw-24){complete=false;fatal=true;warnings.push(c.name+' '+date+'：輪診姓名行過長，資料保留，需處理排版。');items=[{text:String(Number(date.slice(8)))+' 待處理（內容過長）',size:42,fill:'#922f37',bold:true}]}
 boxes.push(parts(items,(l+r)/2,cy+31));cy+=lineHeight;
